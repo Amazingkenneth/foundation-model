@@ -28,4 +28,9 @@ if [ "${DRY_RUN:-0}" != "1" ] && [ -z "${AICROWD_API_KEY:-}" ] && [ ! -f "${HOME
   echo "warning: no AICROWD_API_KEY set; relying on a previous 'whest login'" >&2
 fi
 echo "== whest submit ${ART} (${DESC})"
-whest submit "${ART}" "${ARGS[@]}"
+if [ "${DRY_RUN:-0}" = "1" ]; then
+  # whest's dry run inspects a folder, not an artifact
+  whest submit --estimator submission "${ARGS[@]}"
+else
+  whest submit "${ART}" "${ARGS[@]}"
+fi

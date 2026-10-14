@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(ROOT, "submission"))
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=1000)
-    ap.add_argument("--scale", type=float, default=30.0, help="output-layer scale of the random operator")
+    ap.add_argument("--scale", type=float, default=10.0, help="output-layer scale of the random operator")
     args = ap.parse_args()
     import torch
     import flopscope as flops
@@ -37,6 +37,7 @@ def main() -> None:
     from fm.model import DEFAULT_ACTIVE, OperatorParams, make_chain, make_operator
 
     torch.set_num_threads(4)
+    torch.manual_seed(0)
     w_np = make_weights(args.seed)
     tw = [torch.from_numpy(w) for w in w_np]
     fw = [fnp.asarray(w) for w in w_np]
@@ -70,6 +71,10 @@ def main() -> None:
         print("  mse(torch, fnp) per layer:", " ".join(f"{v:.1e}" for v in mse))
         if rel.max() > 1e-4 or mse[-1] > 1e-10:
             ok = False
+    # a random operator is only a meaningful parity probe while the chain stays in its
+    # regime (a blown-up chain is chaotic in float32); report it
+    if use_op and not np.all(np.isfinite(rt)):
+        print("  random operator drove the chain non-finite: lower --scale")
     if use_op:
         # how much the random operator moved the output (the corrections are really applied)
         with torch.no_grad():

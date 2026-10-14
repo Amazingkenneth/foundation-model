@@ -1,0 +1,24 @@
+{
+  "_comment": "Strassen-Winograd recursion depth per n^3 family (0 = dense). Deeper = fewer FLOPs, more flopscope ops (residual time, capped at 400 ms per MLP). first_levels applies to the first predict() of a process, which also pays buffer allocation. compact = how many top levels use the coefficient-matmul combinations (6 ops/level, more FLOPs) instead of grouped block additions (15 ops/level). Default is the conservative setting (local residual ~0.31-0.33 s, C/B ~0.327); levels family=3, hub=3 cuts C/B to ~0.309 at ~0.35-0.39 s local residual.",
+  "levels": {
+    "family": 2,
+    "hub": 2,
+    "form": 1,
+    "inner": 1,
+    "sym": 0
+  },
+  "first_levels": {
+    "family": 1,
+    "hub": 1,
+    "form": 0,
+    "inner": 0,
+    "sym": 0
+  },
+  "compact": {
+    "family": 2,
+    "hub": 2,
+    "form": 1,
+    "inner": 1,
+    "sym": 1
+  }
+}

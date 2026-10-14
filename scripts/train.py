@@ -107,7 +107,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", type=int, default=1)
     ap.add_argument("--epochs", type=int, default=8)
-    ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--lr", type=float, default=1e-4, help="1e-3 diverges (corrections blow up)")
     ap.add_argument("--active-from", type=int, default=8, help="0-based first corrected layer")
     ap.add_argument("--train-limit", type=int, default=0)
     ap.add_argument("--val-limit", type=int, default=0)

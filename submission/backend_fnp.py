@@ -23,10 +23,10 @@ F32 = fnp.float32
 STRASSEN_MIN = 32
 # recursion depth per family (0 = dense): transport family, young hub contraction,
 # shared-basis formings, shared-basis contractions, covariance sandwich
-LEVELS = dict(family=4, hub=4, form=1, inner=1, sym=0)
+LEVELS = dict(family=2, hub=2, form=1, inner=1, sym=0)
 # the first predict() of a process also pays buffer allocation and view creation on the
 # residual clock: it runs shallower
-FIRST_LEVELS = dict(family=2, hub=2, form=0, inner=0, sym=0)
+FIRST_LEVELS = dict(family=1, hub=1, form=0, inner=0, sym=0)
 # how many of the top recursion levels use the compact (coefficient-matmul) combinations:
 # 6 ops per level but ~7x the block-addition FLOPs, so they pay at shallow levels only
 COMPACT = dict(family=2, hub=2, form=1, inner=1, sym=1)
@@ -39,48 +39,93 @@ def _alloc(shape):
     return fnp.empty(shape, dtype=F32)
 
 
+# per-source stacks (up to L-1 = 15 sources) are allocated at full size up front
+CAP_NAMES = {"legs", "lap", "ap", "pp", "zl", "mp", "t", "xt", "yt", "lpadd", "pyt", "x3"}
+
+
 class Pool:
-    def __init__(self):
+    """Persistent named buffers and cached views.
+
+    Buffers of rank >= 3 are keyed by (name, trailing shape) and sliced along the leading
+    axis; plain-named stacks are allocated with ``cap`` rows at once (the largest source
+    count), so they never grow and their views stay valid. Every view handed out, and every
+    view derived from one, is cached and tagged with the buffer it lives in; if a buffer
+    has to grow, only the views into that buffer are dropped."""
+
+    def __init__(self, cap=15):
+        self.cap = cap
         self.bufs = {}
-        self.views = {}
-        self.dv = {}
+        self.views = {}     # (name, shape) -> view
+        self.vkeys = {}     # buffer key -> [view keys]
+        self.base = {}      # id(view) -> buffer key
+        self.dv = {}        # (id(arr), key) -> (arr, derived)
+        self.dkeys = {}     # buffer key -> [derived keys]
+
+    def _register(self, obj, bk):
+        if isinstance(obj, (tuple, list)):
+            for o in obj:
+                self._register(o, bk)
+        elif isinstance(obj, dict):
+            for o in obj.values():
+                self._register(o, bk)
+        else:
+            self.base[id(obj)] = bk
+
+    def _invalidate(self, bk):
+        for vk in self.vkeys.pop(bk, ()):
+            v = self.views.pop(vk, None)
+            if v is not None:
+                self.base.pop(id(v), None)
+        for dk in self.dkeys.pop(bk, ()):
+            self.dv.pop(dk, None)
 
     def get(self, name, shape):
+        if shape.__class__ is not tuple:
+            shape = tuple(shape)
+        v = self.views.get((name, shape))
+        if v is not None:
+            return v
         shape = tuple(int(x) for x in shape)
         v = self.views.get((name, shape))
         if v is not None:
             return v
         if len(shape) >= 3:
-            key = (name, shape[1:])
-            b = self.bufs.get(key)
+            bk = (name, shape[1:])
+            b = self.bufs.get(bk)
             if b is None or b.shape[0] < shape[0]:
-                b = _alloc(shape)
-                self.bufs[key] = b
-                # every cached view may point into the replaced buffer: drop them all
-                # (growth only happens while the first MLP walks through its layers)
-                self.views = {}
-                self.dv = {}
+                rows = shape[0]
+                if name in CAP_NAMES:
+                    rows = max(rows, self.cap)
+                if b is not None:
+                    self._invalidate(bk)
+                b = _alloc((rows,) + shape[1:])
+                self.bufs[bk] = b
             v = b[:shape[0]]
         else:
-            key = (name, shape)
-            v = self.bufs.get(key)
+            bk = (name, shape)
+            v = self.bufs.get(bk)
             if v is None:
                 v = _alloc(shape)
-                self.bufs[key] = v
+                self.bufs[bk] = v
         self.views[(name, shape)] = v
+        self.vkeys.setdefault(bk, []).append((name, shape))
+        self.base[id(v)] = bk
         return v
 
     def get5(self, name, shape5):
         """Pooled (b, 7, P, h, q) buffer and its (b, 7P, h, q) view (reshape is billed:
         made once)."""
-        shape5 = tuple(int(x) for x in shape5)
-        v = self.views.get(("5", name, shape5))
+        k5 = ("5", name, shape5)
+        v = self.views.get(k5)
         if v is not None:
             return v
         b5 = self.get(("b5", name), shape5)
         b4 = fnp.reshape(b5, (shape5[0], shape5[1] * shape5[2], shape5[3], shape5[4]))
         v = (b5, b4)
-        self.views[("5", name, shape5)] = v
+        bk = self.base[id(b5)]
+        self.views[k5] = v
+        self.vkeys.setdefault(bk, []).append(k5)
+        self.base[id(b4)] = bk
         return v
 
     def derived(self, arr, key, fn):
@@ -91,6 +136,10 @@ class Pool:
             return e[1]
         v = fn(arr)
         self.dv[k] = (arr, v)
+        bk = self.base.get(id(arr))
+        if bk is not None:
+            self.dkeys.setdefault(bk, []).append(k)
+            self._register(v, bk)
         return v
 
     def stage(self, name, arr):
@@ -171,7 +220,7 @@ class Strassen:
         """M5 (b, 7, P, h, w) products -> out (b, P, 2h, 2w)."""
         pl = self.pool
         b, _, P, h, w = M5.shape
-        C = pl.get((tag, "C", P, h, w), (b, 4, P, h, w))
+        C = pl.get((tag, "QR", P, h, w), (b, 4, P, h, w))   # = the R gather buffer (free now)
         fnp.matmul(self.CA, pl.derived(M5, "3", lambda a: fnp.reshape(a, (b, 7, P * h * w))),
                    out=pl.derived(C, "3", lambda a: fnp.reshape(a, (b, 4, P * h * w))))
         fnp.copyto(pl.derived(out, "b6", _blocks6),
@@ -224,7 +273,7 @@ class Strassen:
         C11 = T4 + T1 + T3 - T6, C22 = T4 + T0 + T2 - T5, (C12, C21) = (T2, T5) + (T6, T3)."""
         pl = self.pool
         b, _, P, h, w = M5.shape
-        C = pl.get((tag, "GC", P, h, w), (b, 4, P, h, w))
+        C = pl.get((tag, "GR", P, h, w), (b, 4, P, h, w))   # = the R gather buffer (free now)
         t = pl.derived(M5, "ga", lambda a: dict(
             t4=a[:, 4:5], t10=a[:, 1::-1], t32=a[:, 3:1:-1], t65=a[:, 6:4:-1],
             t25=a[:, 2::3], t63=a[:, 6:2:-3]))
@@ -300,12 +349,12 @@ class Strassen:
         h, v = m // 2, w // 2
         q = kd // 2
         if compact > 0:
-            L4 = self._combine(X, self.CL, "HL", tag)
-            R4 = self._combine(Y, self.CRH, "HR", tag)
+            L4 = self._combine(X, self.CL, "L", tag)
+            R4 = self._combine(Y, self.CRH, "R", tag)
         else:
-            L4 = self._combos_grouped(X, "L", "HL", tag)
-            R4 = self._combos_grouped(Y, "R", "HR", tag, hubT=True)
-        M5, M4 = pl.get5((tag, "HM" if compact > 0 else "HMG", P, h, v), (1, 7, P, h, v))
+            L4 = self._combos_grouped(X, "L", "L", tag)
+            R4 = self._combos_grouped(Y, "R", "R", tag, hubT=True)
+        M5, M4 = pl.get5((tag, "M" if compact > 0 else "MG", P, h, v), (1, 7, P, h, v))
         self.hub(L4, R4, pl.derived(M4, "0", lambda a: a[0]), lev - 1, tag, compact - 1)
         o4 = pl.derived(out, "1", lambda a: a[None])
         if compact > 0:
@@ -323,6 +372,7 @@ class FnpBackend:
         self.smm = Strassen(self.pool)
         self.levels = dict(LEVELS if levels is None else levels)
         self.compact = dict(COMPACT)
+        self._oc = {}
         self.pcache = {}
 
     # ---- creation / conversion ----
@@ -365,15 +415,25 @@ class FnpBackend:
     def _bshape(self, a, b):
         return self._bs(getattr(a, "shape", ()), getattr(b, "shape", ()))
 
+    def _outbuf(self, out, a, b):
+        if not isinstance(out, (str, tuple)):
+            return out
+        ka = (out, a.shape, getattr(b, "shape", ()))
+        o = self._oc.get(ka)
+        if o is None or self.pool.base.get(id(o)) is None:
+            o = self.pool.get(out, self._bshape(a, b))
+            self._oc[ka] = o
+        return o
+
     def mul(self, a, b, out=None):
         if out is None:
             return a * b
-        return fnp.multiply(a, b, out=self.pool.get(out, self._bshape(a, b)))
+        return fnp.multiply(a, b, out=self._outbuf(out, a, b))
 
     def add(self, a, b, out=None):
         if out is None:
             return a + b
-        return fnp.add(a, b, out=self.pool.get(out, self._bshape(a, b)))
+        return fnp.add(a, b, out=self._outbuf(out, a, b))
 
     def maximum(self, x, c):
         return fnp.maximum(x, c)
@@ -447,6 +507,18 @@ class FnpBackend:
         shape = self._bs(a.shape[:-2], b.shape[:-2]) + (a.shape[-2], b.shape[-1])
         return fnp.matmul(a, b, out=self.pool.get(out, shape))
 
+    def rows(self, arr, lo, hi):
+        """arr[lo:hi], as a cached view when arr is pooled (so Strassen can use it in place)."""
+        if id(arr) in self.pool.base:
+            return self.pool.derived(arr, ("rows", lo, hi), lambda a: a[lo:hi])
+        return arr[lo:hi]
+
+    def pair_slots(self, name, k, n):
+        """(k, 2, n, n) pooled buffer and its two (k, n, n) slot views."""
+        buf = self.pool.get(name, (k, 2, n, n))
+        a, b = self.pool.derived(buf, "pair", lambda x: (x[:, 0], x[:, 1]))
+        return buf, a, b
+
     def thinhub(self, X, Y):
         """sum_k X_k Y_k^T for thin X (k, n, q), Y (k, c, q) -> (n, c), one matmul."""
         k, n, q = X.shape
@@ -494,8 +566,8 @@ class FnpBackend:
         pl = self.pool
         o = pl.get(out, (1, m, w))
         lev = self.smm.level(m, kd, w, self.levels[kind])
-        Xs = pl.stage(out + "_x", X)
-        Ys = pl.stage(out + "_y", Y)
+        Xs = X if id(X) in pl.base else pl.stage(out + "_x", X)
+        Ys = Y if id(Y) in pl.base else pl.stage(out + "_y", Y)
         X4 = pl.derived(Xs, "4", lambda a: fnp.reshape(a, (b * two, 1, m, kd)))
         Y4 = pl.derived(Ys, "4", lambda a: fnp.reshape(a, (b * two, 1, w, kd)))
         self.smm.hub(X4, Y4, o, lev, "s", self.compact[kind])

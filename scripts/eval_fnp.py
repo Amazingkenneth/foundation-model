@@ -30,6 +30,8 @@ def main() -> None:
     ap.add_argument("--no-operator", action="store_true")
     ap.add_argument("--weights", default=None)
     ap.add_argument("--levels", default=None, help="family,hub,form,inner,sym Strassen depths")
+    ap.add_argument("--config", default=None, help="alternative fm_config.json")
+    ap.add_argument("--min-samples", type=int, default=1000000)
     args = ap.parse_args()
     if args.no_operator:
         os.environ["FM_NO_OPERATOR"] = "1"
@@ -46,6 +48,8 @@ def main() -> None:
         backend_fnp.LEVELS.update(family=a[0], hub=a[1], form=a[2], inner=a[3], sym=a[4])
     if args.weights:
         est_mod.WEIGHTS = os.path.abspath(args.weights)
+    if args.config:
+        est_mod.CONFIG = os.path.abspath(args.config)
 
     class Ctx:
         seed = 0
@@ -58,7 +62,7 @@ def main() -> None:
         import fm_core
         est._op = fm_core.Operator(est._B, params, xmean, xstd, active, nets)
     print("operator:", "off" if est._op is None else sorted(est._op.nets), flush=True)
-    data = load_split(args.split)
+    data = load_split(args.split, min_samples=args.min_samples)
     if args.limit:
         data = data[:args.limit]
     res = []

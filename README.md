@@ -64,6 +64,53 @@ kurtosis after `f_self`.
 it on flopscope (`backend_fnp`), training on torch (`fm/backend_torch.py`). `scripts/parity.py`
 checks the two agree.
 
+## Cost engineering (flopscope backend)
+
+* Strassen-Winograd recursion for the n^3 families (transport of the young legs + the
+  newborn A leg + the covariance in one batched product, the hub contraction of the young
+  sources, the shared-basis formings and contractions), written as ordinary flopscope ops.
+  Each level is either *compact* (quadrant gather + one 7x4 coefficient matmul per operand,
+  one 4x7 matmul + scatter for the assembly: 6 ops) or *grouped* (products stored in the
+  slot order M5 M6 M2 M3 M0 M1 M4 so every pair of combinations is one strided op: 15 ops).
+  Depths per family are in `submission/fm_config.json`.
+* The 400 ms residual cap is spent on per-op dispatch and view creation, not arithmetic:
+  every large result is written into a persistent pooled buffer, every view of a pooled
+  buffer is cached, the nonlinear term program is folded into ~10 matrix classes (one
+  batched thin product), and the first `predict()` of a process runs shallower Strassen.
+* Measured with `whest run --runner subprocess` (the grader's transport, 8 GB memory
+  limit, 400 ms residual cap) on this repository's 4-core container, analytic chain:
+
+  | `fm_config.json` levels (family, hub, form, inner) | C/B | residual / MLP | wall / MLP | peak RSS |
+  |---|---|---|---|---|
+  | **2, 2, 1, 1 (default)** | 0.327 | 0.31-0.33 s | 24-31 s | < 4 GB |
+  | 3, 3, 1, 1 | 0.309 | 0.35-0.39 s | 33-41 s | 4.0 GB |
+  | 4, 4, 1, 1 | ~0.295 | ~0.39-0.59 s | 45-80 s | > 7.6 GB (fails the 8 GB limit) |
+
+  The default is the conservative row because one failed MLP (zeroed predictions) costs
+  far more than a few percent of FLOPs. The grader's per-op cost is expected to be lower
+  than this container's (504aldo reports ~0.02 ms/op there vs ~0.05 ms here); **check
+  `residual_wall_time_s` in the first graded report** and move to the 3, 3 row by editing
+  `submission/fm_config.json` (no code change) if there is room.
+
+## Results in this repository
+
+* **Analytic chain** (no operator): final-layer MSE against the local Monte Carlo ground
+  truth, corrected for the MC noise of the targets, **1.54e-8** on 11 validation MLPs
+  (1e6 samples each) -- the same for the torch chain and the flopscope submission
+  (`scripts/parity.py`: per-layer agreement ~1e-6 relative, final-layer MSE gap 1e-11).
+  For reference the PDF quotes 2.23e-8 for the analytic K=3 chain on the public suite.
+* **Learned operator**: the full Algorithm 2 pipeline runs (both stages, checkpointed
+  backprop through layers 9..16, export, flopscope inference with parity to torch at
+  4.8e-11 with all ten networks active). Trained here on **64** networks with 5e5-sample
+  targets (the paper: 600 networks) the corrections do **not** generalize: the target noise
+  (~1.4e-7 per network) is ~10x the analytic error, and the validation MSE rises
+  (1.55e-8 -> 1.63e-8 -> 1.92e-8 over two stage-1 epochs) while the training MSE falls.
+  Model selection therefore keeps epoch 0 (= the analytic chain), and **no
+  `fm_weights.npz` is shipped**: the submission runs the analytic chain. To reproduce the
+  paper's gain, generate the paper's 600 + 50 networks with precise targets on a larger
+  machine (`scripts/gen_data.py`, resumable) and run `scripts/train_all.sh`; dropping the
+  resulting `fm_weights.npz` into `submission/` enables the operator with no code change.
+
 ## Reproduce
 
 ```bash

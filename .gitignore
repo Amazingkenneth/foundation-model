@@ -6,3 +6,4 @@ runs/
 dist/
 *.tar.gz
 .venv/
+*.log

@@ -129,6 +129,12 @@ class TorchBackend:
     def form(self, Q, F, out=None):
         return torch.matmul(Q, F)
 
+    def rows(self, arr, lo, hi):
+        return arr[lo:hi]
+
+    def pair_slots(self, name, k, n):
+        return None, None, None
+
     def thinhub(self, X, Y):
         return torch.einsum("kiq,kcq->ic", X, Y)
 

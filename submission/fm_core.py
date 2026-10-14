@@ -559,7 +559,7 @@ class Chain:
         # D3 = rowsum(P * (3 A*A*w2 + MP + 3 LPadd)) + sum_k R y
         D3s = B.mul(B.mul(A, A, out="t"), W2B * 3.0, out="t")
         D3s = B.add(D3s, MP, out="t")
-        D3s = B.add(D3s, B.mul(LPadd, 3.0, out="d3s"), out="t")
+        D3s = B.add(D3s, B.mul(LPadd, 3.0, out="x3"), out="t")
         D3 = B.sum(B.mul(D3s, P, out="t"), (0, 2))
         C1s = B.stack(st["c1"], 0)
         C2s = B.stack(st["c2"], 0)
@@ -569,18 +569,23 @@ class Chain:
         if not need_d21:
             return D3, None
         # left factors LA (right factor A) and LP (right factor P), interleaved (k, 2, n, n)
-        LA = B.mul(AP, W2B * 2.0, out="la")
-        LA = B.add(LA, B.mul(PP, Eb, out="t"), out="la")
-        LA = B.add(LA, B.mul(B.mul(Xt, P, out="t"), W2B * (1.0 / 3.0), out="t"), out="la")
+        # flopscope: LA / LP are written straight into the two slots of the pooled (k, 2, n, n)
+        # buffer the hub contraction reads; torch: fresh tensors, stacked at the end
+        LAPb, la, lp = B.pair_slots("lap", k, self.n)
+        la = "la" if la is None else la
+        lp = "lp" if lp is None else lp
+        LA = B.mul(AP, W2B * 2.0, out=la)
+        LA = B.add(LA, B.mul(PP, Eb, out="t"), out=la)
+        LA = B.add(LA, B.mul(B.mul(Xt, P, out="t"), W2B * (1.0 / 3.0), out="t"), out=la)
         PYt = B.mul(P, Yt, out="pyt")
-        LA = B.add(LA, PYt, out="la")
-        LP = B.mul(B.mul(A, A, out="lp"), W2B, out="lp")
-        LP = B.add(LP, B.mul(PP, Sb * (1.0 / 3.0), out="t"), out="lp")
-        LP = B.add(LP, B.mul(MP, 2.0 / 3.0, out="t"), out="lp")
-        LP = B.add(LP, LPadd, out="lp")
+        LA = B.add(LA, PYt, out=la)
+        LP = B.mul(B.mul(A, A, out="t"), W2B, out=lp)
+        LP = B.add(LP, B.mul(PP, Sb * (1.0 / 3.0), out="t"), out=lp)
+        LP = B.add(LP, B.mul(MP, 2.0 / 3.0, out="t"), out=lp)
+        LP = B.add(LP, LPadd, out=lp)
         X3 = B.add(B.mul(A, C1s[:, None, :], out="t"), B.mul(P, C2s[:, None, :], out="x3"), out="t")
-        LP = B.add(LP, B.mul(X3, (Yk * (2.0 / 3.0))[:, :, None], out="t"), out="lp")
-        LAP = B.stack([LA, LP], 1, out="lap")                # (k, 2, n, n)
+        LP = B.add(LP, B.mul(X3, (Yk * (2.0 / 3.0))[:, :, None], out="t"), out=lp)
+        LAP = LAPb if LAPb is not None else B.stack([LA, LP], 1)        # (k, 2, n, n)
         # thin right-factor terms of the feedback legs
         GY = B.add(B.mul(B.mul(Xt, P, out="t"), 1.0 / 3.0, out="t"), AP, out="t")
         GYR = B.mm(GY, st["R2T"])
@@ -591,13 +596,13 @@ class Chain:
         D21 = B.thinhub(B.cat([B.mm(PP, Lst) * (1.0 / 3.0), GXR, GYR], 2), Z)
         D21 = D21 + (B.swap(R) @ Yk) * (1.0 / 3.0)
         if k > ka:
-            D21 = D21 + B.hub(LAP[ka:], AP_all[ka:], out="hub")
+            D21 = D21 + B.hub(B.rows(LAP, ka, k), B.rows(AP_all, ka, k), out="hub")
         if ka > 0:
             inner = None
             if ka > kb:
-                inner = B.hub(LAP[kb:ka], st["FAP"], out="inner1", kind="inner")      # (n, r1)
+                inner = B.hub(B.rows(LAP, kb, ka), st["FAP"], out="inner1", kind="inner")   # (n, r1)
             if kb > 0:
-                lift = B.hub(LAP[:kb], st["FAP2"], out="inner2", kind="inner") @ B.swap(st["U"])
+                lift = B.hub(B.rows(LAP, 0, kb), st["FAP2"], out="inner2", kind="inner") @ B.swap(st["U"])
                 inner = lift if inner is None else inner + lift
             D21 = D21 + inner @ B.swap(st["Qc"])
         return D3, B.zero_diag(D21, out="d21")
