@@ -158,6 +158,21 @@ class Consts:
         C1, C2, SELC = wick_tables()
         self.C1, self.C2, self.SELC = B.const(C1), B.const(C2), B.const(SELC)
         self.APOW_E = B.const([[float(i) for i in range(ALPHA_DEG + 1)]])
+        self.P14_E = B.const([[0.0, 1.0, 2.0, 3.0, 4.0]])
+        # rows: monomial X_a * Y_b at index 4 a + b, X = (1, p1, p1^2, p1^3, p1^4, pk2),
+        # Y = (1, pk2, pk3, pk4); columns: K2, K3, K4
+        kc = [[0.0] * 3 for _ in range(24)]
+        kc[4 * 0 + 1][0] = 1.0      # pk2
+        kc[4 * 2 + 0][0] = -1.0     # -p1^2
+        kc[4 * 0 + 2][1] = 1.0      # pk3
+        kc[4 * 3 + 0][1] = 2.0      # 2 p1^3
+        kc[4 * 1 + 1][1] = -3.0     # -3 p1 pk2
+        kc[4 * 0 + 3][2] = 1.0      # pk4
+        kc[4 * 5 + 1][2] = -3.0     # -3 pk2^2
+        kc[4 * 2 + 1][2] = 12.0     # 12 p1^2 pk2
+        kc[4 * 4 + 0][2] = -6.0     # -6 p1^4
+        kc[4 * 1 + 2][2] = -4.0     # -4 p1 pk3
+        self.KCOEF = B.const(kc)
         self.SB_E = B.const([[float(e) for e in range(SIG_EMIN, SIG_EMAX + 1)]])
         self.progs = {}
         for mode in (0, 1):
@@ -428,11 +443,13 @@ class Chain:
         # ---------------- power cumulants -> cumulants -----------------
         p1 = pk1v
         K1v = p1
-        p1sq = p1 * p1
-        K2v = pk2v - p1sq
-        # K3 = pk3 + p1 (2 p1^2 - 3 pk2);  K4 = pk4 - 3 pk2^2 + p1^2 (12 pk2 - 6 p1^2) - 4 p1 pk3
-        K3v = pk3v + p1 * (p1sq * 2.0 - pk2v * 3.0)
-        K4v = pk4v - pk2v * pk2v * 3.0 + p1sq * (pk2v * 12.0 - p1sq * 6.0) - p1 * pk3v * 4.0
+        # K2 = pk2 - p1^2,  K3 = pk3 + 2 p1^3 - 3 p1 pk2,
+        # K4 = pk4 - 3 pk2^2 + 12 p1^2 pk2 - 6 p1^4 - 4 p1 pk3:
+        # one outer product of (1, p1, .., p1^4, pk2) with (1, pk2, pk3, pk4) and one matmul
+        Xm = B.cat([B.power(p1[:, None], self.K.P14_E), pk2v[:, None]], 1)       # (n, 6)
+        Ym = B.swap(B.cat([self.ones_n[None, :], PK1[1:4]], 0))                 # (n, 4)
+        K234 = B.reshape(Xm[:, :, None] * Ym[:, None, :], (n, 24)) @ self.K.KCOEF  # (n, 3)
+        K2v, K3v, K4v = K234[:, 0], K234[:, 1], K234[:, 2]
         q2 = p1 * 2.0
         q2c, q2r = q2[:, None], q2[None, :]
         K11 = pk11
@@ -740,10 +757,11 @@ class Operator:
         # pair channels B_c(i, j)
         lam_s2 = ctx["lam"] * (sr * sr)
         k31n = B.mul(rho, lam_s2[None, :], out="k31n")    # kappa_iiij / (s_i s_j^3) = lam rho / s_j^2
-        common = [rho, rho2, t, tT, E[8], E[9], B.mul(t, tT, out="ttT")]
+        # the seven channels shared by f_pair and f_cov, stacked once: (7, n, n)
+        common = B.stack([rho, rho2, t, tT, E[8], E[9], B.mul(t, tT, out="ttT")], 0, out="pairch")
         ctx["pair_common"] = common
         ctx["rho"] = rho
-        fpair = self.pairfun(out14["pairL"], out14["pairR"], [None, k31n] + common, key="pair")
+        fpair = self.pairfun(out14["pairL"], out14["pairR"], k31n, common, key="pair")
         kap31 = B.zero_diag(B.mul(B.mul(fpair, s[:, None], out="fp"), s3[None, :], out="fp"), out="fp")
         return D3, dG, kap31
 
@@ -753,17 +771,16 @@ class Operator:
         M = B.swapaxes01(M)
         return B.reshape(M, (M.shape[0], M.shape[1] * M.shape[2]))
 
-    def pairfun(self, Lo, Ro, chans, key):
-        """sum_c B_c(i,j) <l_c(x_i), r_c(x_j)> with l, r in R^{9 x 4} per neuron."""
+    def pairfun(self, Lo, Ro, ch1, common, key):
+        """sum_c B_c(i,j) <l_c(x_i), r_c(x_j)> with l, r in R^{9 x 4} per neuron and the
+        channels B = (1, ch1, common[0..6])."""
         B = self.B
         n = Lo.shape[0]
         Lr = B.swapaxes01(B.reshape(Lo, (n, N_PAIRCH, 4)))   # (9, n, 4)
         Rr = B.swapaxes01(B.reshape(Ro, (n, N_PAIRCH, 4)))
         LR = B.mm(Lr, B.swap(Rr), out=key + "_lr")         # (9, n, n)
-        acc = LR[0]
-        for c in range(1, N_PAIRCH):
-            acc = acc + LR[c] * chans[c]
-        return acc
+        acc = B.sum(B.mul(LR[2:], common, out=key + "_lc"), 0)
+        return acc + LR[0] + LR[1] * ch1
 
     def post(self, ctx, q):
         B = self.B
@@ -782,9 +799,8 @@ class Operator:
         e = q["e"] * (1.0 + o[:, 4] * 1e-2)
         K11 = q["K11"]
         if "covL" in self.nets:
-            common = ctx["pair_common"]
-            fcov = self.pairfun(ctx["out14"]["covL"], ctx["out14"]["covR"],
-                                [None, ctx["rho"]] + common, key="cov")
+            fcov = self.pairfun(ctx["out14"]["covL"], ctx["out14"]["covR"], ctx["rho"],
+                                ctx["pair_common"], key="cov")
             fsym = B.add(fcov, B.swap(fcov), out="fcs")
             dS = B.zero_diag(B.mul(B.mul(fsym, (sig * 5e-4)[:, None], out="fcs"), sig[None, :], out="fcs"), out="fcs")
             K11 = K11 + dS

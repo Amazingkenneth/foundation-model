@@ -86,6 +86,12 @@ checks the two agree.
   | 3, 3, 1, 1 | 0.309 | 0.35-0.39 s | 33-41 s | 4.0 GB |
   | 4, 4, 1, 1 | ~0.295 | ~0.39-0.59 s | 45-80 s | > 7.6 GB (fails the 8 GB limit) |
 
+  With a full operator shipped (all ten networks, layers 9..16) the default row costs
+  C/B 0.331 (+0.004) and ~0.07 s more residual here (0.37-0.44 s, i.e. over the cap on
+  *this* machine for the first two MLPs of a process): when you ship weights, look at the
+  graded per-MLP residual first, and if it is tight lower `levels` (e.g. family/hub 1) or
+  shrink the active layer range (`active` in the weights file).
+
   The default is the conservative row because one failed MLP (zeroed predictions) costs
   far more than a few percent of FLOPs. The grader's per-op cost is expected to be lower
   than this container's (504aldo reports ~0.02 ms/op there vs ~0.05 ms here); **check
