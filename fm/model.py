@@ -30,11 +30,16 @@ class OperatorParams(torch.nn.Module):
         H = fm_core.HID
         for nm in self.nets:
             i, o = fm_core.NETS[nm]
-            self._add(nm, i, o, g, zero_out=False)
+            self._add(nm, i, o, g)
         self.register_buffer("xmean", torch.zeros(14))
         self.register_buffer("xstd", torch.ones(14))
 
-    def _add(self, nm, i, o, g, zero_out):
+    # output-layer init: corrections start at exactly zero (F_theta = F_an at init); the
+    # message nets produce features, so they start with a normal init; of each bilinear
+    # pair (l, r) one side starts small and random so that the other gets a gradient
+    OUT_INIT = {"msg1": (64 ** -0.5), "msg2": (64 ** -0.5), "pairL": 0.1, "covL": 0.1}
+
+    def _add(self, nm, i, o, g, zero_out=None):
         H = fm_core.HID
 
         def lin(a, b, scale):
@@ -44,9 +49,8 @@ class OperatorParams(torch.nn.Module):
         self.p[f"{nm}__b1"] = torch.nn.Parameter(torch.zeros(H))
         self.p[f"{nm}__W2"] = lin(H, H, (1.0 / H) ** 0.5)
         self.p[f"{nm}__b2"] = torch.nn.Parameter(torch.zeros(H))
-        # output layers start small: every correction starts as (nearly) the analytic step
-        self.p[f"{nm}__W3"] = torch.nn.Parameter(torch.zeros(H, o) if zero_out
-                                                 else torch.randn(H, o, generator=g) * 1e-3)
+        sc = self.OUT_INIT.get(nm, 0.0)
+        self.p[f"{nm}__W3"] = torch.nn.Parameter(torch.randn(H, o, generator=g) * sc)
         self.p[f"{nm}__b3"] = torch.nn.Parameter(torch.zeros(o))
 
     def add_stage2(self, seed=1):
@@ -54,7 +58,7 @@ class OperatorParams(torch.nn.Module):
         for nm in fm_core.STAGE2:
             if nm not in self.nets:
                 i, o = fm_core.NETS[nm]
-                self._add(nm, i, o, g, zero_out=True)
+                self._add(nm, i, o, g)
                 self.nets.append(nm)
 
     def param_dict(self):

@@ -11,6 +11,8 @@ flow through every layer after it. The epoch with the lowest validation MSE is k
 
     python scripts/train.py --stage 1 --epochs 8 --out runs/s1
     python scripts/train.py --stage 2 --epochs 8 --init runs/s1/best.pt --out runs/s2
+
+On CPU, run with jemalloc (LD_PRELOAD=libjemalloc.so.2) so freed pages are reused.
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ import time
 
 import numpy as np
 import torch
+from torch.utils.checkpoint import checkpoint
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 sys.path.insert(0, ROOT)
@@ -30,6 +33,9 @@ sys.path.insert(0, ROOT)
 from fm.mlps import DATA_DIR, load_split  # noqa: E402
 from fm.model import (OperatorParams, fm_core, make_chain, make_operator,  # noqa: E402
                       torch_weights)
+
+
+LOSS_SCALE = 1e7
 
 
 def cached_state(chain, seed, start, cache_dir):
@@ -60,9 +66,20 @@ class Capture(fm_core.Operator):
 
 
 def run_net(chain, B, op, d, start, cache_dir):
-    st = cached_state(chain, d["seed"], start, cache_dir)
+    """Algorithm 1 from the cached state at layer ``start``. With autograd on, each layer is
+    checkpointed: its forward runs without storing intermediates and is recomputed during
+    the backward pass (same gradients; ~20% faster here because fresh-page allocation of
+    retained intermediates dominates the CPU forward)."""
+    st = dict(cached_state(chain, d["seed"], start, cache_dir))
     ws = torch_weights(d["seed"])
-    rows, _ = chain.run(ws, hooks=op, state=st, start=start)
+    rows = []
+    for li in range(start, chain.L):
+        if torch.is_grad_enabled():
+            row, st = checkpoint(lambda s, li=li: chain.layer(li, ws[li], dict(s), op), st,
+                                 use_reentrant=False)
+        else:
+            row, st = chain.layer(li, ws[li], dict(st), op)
+        rows.append(row)
     return torch.stack(rows, 0)          # (L - start, n)
 
 
@@ -97,7 +114,10 @@ def main() -> None:
     ap.add_argument("--init", default=None)
     ap.add_argument("--out", default=os.path.join(ROOT, "runs", "s1"))
     ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--clip", type=float, default=10.0, help="gradient-norm clip (scaled loss)")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--min-train-samples", type=int, default=500000)
+    ap.add_argument("--min-val-samples", type=int, default=1000000)
     args = ap.parse_args()
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
@@ -107,8 +127,8 @@ def main() -> None:
     L, n = 16, 1024
     start = args.active_from
     active = list(range(start, L - 1))
-    train = load_split("train")
-    val = load_split("val")
+    train = load_split("train", min_samples=args.min_train_samples)
+    val = load_split("val", min_samples=args.min_val_samples)
     if args.train_limit:
         train = train[:args.train_limit]
     if args.val_limit:
@@ -167,11 +187,15 @@ def main() -> None:
             tgt = torch.from_numpy(d["means"][start:]).float()
             loss, err = loss_fn(pred, tgt, L, start)
             opt.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(trainable, 1.0)
+            # the MSEs are ~1e-7: scale the loss so gradients sit well above Adam's epsilon
+            (loss * LOSS_SCALE).backward()
+            torch.nn.utils.clip_grad_norm_(trainable, args.clip)
             opt.step()
             tl.append(loss.item())
             tf.append(err[-1].item() - float(d["noise_last"].mean()))
+            if len(tl) % 8 == 0:
+                print(f"  epoch {ep} step {len(tl)}/{len(train)}: running train final noise-corr "
+                      f"{np.mean(tf):.4e}  ({time.time() - t0:.0f}s)", flush=True)
         v = evaluate(chain, B, params, val, start, cache_dir, active)
         hist.append(dict(epoch=ep, train_loss=float(np.mean(tl)), train_corr=float(np.mean(tf)),
                          val=v[0], val_corr=v[1], base=base_val[0], time=time.time() - t0))

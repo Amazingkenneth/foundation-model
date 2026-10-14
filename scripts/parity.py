@@ -44,7 +44,7 @@ def main() -> None:
     params = OperatorParams(seed=3)
     with torch.no_grad():
         for nm in params.nets:
-            params.p[f"{nm}__W3"].mul_(args.scale)
+            params.p[f"{nm}__W3"].copy_(torch.randn_like(params.p[f"{nm}__W3"]) * 1e-3 * args.scale)
         params.xstd.fill_(1.0)
     ok = True
     for use_op in (False, True):
