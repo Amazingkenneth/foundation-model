@@ -1,0 +1,4 @@
+# training / data generation (never shipped)
+-r requirements-submission.txt
+numpy>=2.0
+torch>=2.4

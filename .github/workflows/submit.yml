@@ -1,0 +1,63 @@
+name: package-and-submit
+
+# On every push that changes the submission (code or weights) or the scripts that build it:
+# validate the estimator contract, run the smoke checks, package the folder, upload the
+# tarball as a build artifact and -- when the AICROWD_API_KEY secret is set and the commit
+# message does not contain [skip submit] -- submit it to AIcrowd.
+# Manual runs (workflow_dispatch) can force or skip the submission.
+
+on:
+  push:
+    branches: [main, master, "claude/**"]
+    paths:
+      - "submission/**"
+      - "scripts/package.sh"
+      - "scripts/submit.sh"
+      - "scripts/smoke.py"
+      - ".github/workflows/submit.yml"
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "Submit to AIcrowd after packaging"
+        type: boolean
+        default: true
+
+concurrency:
+  group: aicrowd-submit
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the Phase 2 toolchain
+        run: pip install -r requirements-submission.txt
+      - name: Validate and package
+        run: |
+          chmod +x scripts/*.sh
+          scripts/package.sh
+          echo "ARTIFACT=$(cat dist/LATEST)" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: submission-${{ github.sha }}
+          path: dist/*.tar.gz
+      - name: Submit to AIcrowd
+        env:
+          AICROWD_API_KEY: ${{ secrets.AICROWD_API_KEY }}
+        if: >-
+          ${{ (github.event_name == 'workflow_dispatch' && inputs.submit) ||
+              (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip submit]')) }}
+        run: |
+          if [ -z "${AICROWD_API_KEY}" ]; then
+            echo "AICROWD_API_KEY secret not set: skipping the submission (artifact uploaded above)."
+            exit 0
+          fi
+          DESCRIPTION="foundation-model ${GITHUB_SHA::7}: $(git log -1 --pretty=%s | cut -c1-80)" \
+            scripts/submit.sh "${ARTIFACT}"
