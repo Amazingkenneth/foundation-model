@@ -152,6 +152,10 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336284 (+ an earlier identical one) | `candidates/v5b_rfhub` (v5b, RLEV 4, min blocks 24/28, joiner hub on Strassen) | 4.2513e-9 | 1.7537e-8 | 0.2424 |
 | 336295 | **`candidates/v5b_rg`** (rfhub + the n x 384 Gram / basis products on Strassen) | **4.1705e-9** | 1.7534e-8 | 0.2378 |
 | 336265 / 336269 / 336281 | level-6 hub / family variants (s6, h6, ga) | failed ("Error while scoring") | | |
+| 336313 | rg with batch-3 Strassen chunks (fewer ops, 1.5x buffers) | 0.0226 (a few networks zeroed: memory) | | 0.2377 |
+
+**For the final (private) selection use 336295 (`v5b_rg`) and 336284 (`v5b_rfhub`)**: both
+graded with no failed network.
 
 What the grader enforces that in-process flopscope does not (reproduced with
 `scripts/grader_emulator.sh`, which runs an estimator against `flopscope-server` /
@@ -163,6 +167,9 @@ What the grader enforces that in-process flopscope does not (reproduced with
   as the ceiling.
 * a per-result array cap (`FLOPSCOPE_MAX_ARRAY_BYTES`): a 134,873,088-byte result passes, a
   137,682,944-byte one fails (the server default, 100 MiB, is lower than the grader's).
+* memory, per network: rg / rfhub peak at 6.0-6.1 GB resident (VmPeak 7.7-7.8 GB) and pass;
+  the batch-3 variant peaks at 7.0 GB (VmPeak 8.8 GB) and lost a few networks. The emulator
+  does not enforce this; check `VmHWM` in-process.
 * client/server argument encoding: tuples arrive as lists (`fnp.sum(x, axis=(0, 2))` fails);
   `submission/` was fixed for this (it had never been graded).
 
