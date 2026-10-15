@@ -1,0 +1,29 @@
+{
+  "_comment": "Deeper candidate: min block 16, family/hub 5, n x 384 families 4 (local: C/B 0.257, residual 1.21 s, wall 103 s vs v5b's 1.21-1.29 s / 128-150 s).",
+  "levels": {
+    "family": 5,
+    "hub": 5,
+    "form": 4,
+    "inner": 4,
+    "sym": 4,
+    "join": 4
+  },
+  "first_levels": {
+    "family": 4,
+    "hub": 4,
+    "form": 4,
+    "inner": 4,
+    "sym": 4,
+    "join": 4
+  },
+  "compact": {
+    "family": 2,
+    "hub": 2,
+    "form": 1,
+    "inner": 1,
+    "sym": 1,
+    "join": 1
+  },
+  "fuse": true,
+  "strassen_min": 16
+}

@@ -4,7 +4,10 @@ name: package-and-submit
 # validate the estimator contract, run the smoke checks, package the folder, upload the
 # tarball as a build artifact and -- when the AICROWD_API_KEY secret is set and the commit
 # message does not contain [skip submit] -- submit it to AIcrowd.
-# Manual runs (workflow_dispatch) can force or skip the submission.
+# Manual runs (workflow_dispatch) can force or skip the submission, package another folder
+# (e.g. candidates/v5b_rfhub) or swap in another fm_config.json (e.g.
+# candidates/configs/deep16.json). The submit step follows grading (--watch), so the job log
+# ends with the graded score, FLOPs and residual time.
 
 on:
   push:
@@ -21,6 +24,14 @@ on:
         description: "Submit to AIcrowd after packaging"
         type: boolean
         default: true
+      folder:
+        description: "Folder to package (submission or a candidates/ folder)"
+        type: string
+        default: "submission"
+      config:
+        description: "Optional fm_config.json to copy into submission/ before packaging"
+        type: string
+        default: ""
 
 concurrency:
   group: aicrowd-submit
@@ -29,7 +40,7 @@ concurrency:
 jobs:
   package:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,8 +51,12 @@ jobs:
       - name: Install the Phase 2 toolchain
         run: pip install -r requirements-submission.txt
       - name: Validate and package
+        env:
+          SUBMISSION_DIR: ${{ inputs.folder || 'submission' }}
+          ALT_CONFIG: ${{ inputs.config || '' }}
         run: |
           chmod +x scripts/*.sh
+          if [ -n "${ALT_CONFIG}" ]; then cp "${ALT_CONFIG}" submission/fm_config.json; fi
           scripts/package.sh
           echo "ARTIFACT=$(cat dist/LATEST)" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
@@ -51,6 +66,8 @@ jobs:
       - name: Submit to AIcrowd
         env:
           AICROWD_API_KEY: ${{ secrets.AICROWD_API_KEY }}
+          IN_FOLDER: ${{ inputs.folder || 'submission' }}
+          IN_CONFIG: ${{ inputs.config || '' }}
         if: >-
           ${{ (github.event_name == 'workflow_dispatch' && inputs.submit) ||
               (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip submit]')) }}
@@ -59,5 +76,6 @@ jobs:
             echo "AICROWD_API_KEY secret not set: skipping the submission (artifact uploaded above)."
             exit 0
           fi
-          DESCRIPTION="foundation-model ${GITHUB_SHA::7}: $(git log -1 --pretty=%s | cut -c1-80)" \
-            scripts/submit.sh "${ARTIFACT}"
+          LABEL="${IN_FOLDER} ${IN_CONFIG}"
+          DESCRIPTION="fm ${GITHUB_SHA::7} [${LABEL}]: $(git log -1 --pretty=%s | cut -c1-60)" \
+            WATCH=1 WATCH_TIMEOUT=8400 scripts/submit.sh "${ARTIFACT}"

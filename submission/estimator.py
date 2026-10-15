@@ -30,7 +30,8 @@ from backend_fnp import F32, FnpBackend  # noqa: E402
 
 SUITE = (1024, 16)
 WEIGHTS = "fm_weights.npz"
-CONFIG = "fm_config.json"   # optional: {"levels": {...}, "first_levels": {...}, "compact": {...}}
+CONFIG = "fm_config.json"
+CHAIN_KNOBS = ("AGE_OLD", "R_OLD", "AGE_OLD2", "R_OLD2", "R_RES", "R_FB", "QPASS", "QPASS2")   # optional: {"levels": {...}, "first_levels": {...}, "compact": {...}}
 
 
 def load_operator_params(path):
@@ -107,6 +108,11 @@ class Estimator(BaseEstimator):
                 self._first.update(cfg.get("first_levels", {}))
                 self._B.compact.update(cfg.get("compact", {}))
                 backend_fnp.FUSE = bool(cfg.get("fuse", backend_fnp.FUSE))
+                backend_fnp.STRASSEN_MIN = int(cfg.get("strassen_min", backend_fnp.STRASSEN_MIN))
+                # source-memory knobs of the chain (age gates, basis ranks)
+                for k, v in cfg.get("chain", {}).items():
+                    if k in CHAIN_KNOBS:
+                        setattr(fm_core, k, int(v))
                 break
         cand = [os.path.join(str(sub), WEIGHTS)] if sub is not None else []
         cand.append(os.path.join(_HERE, WEIGHTS))

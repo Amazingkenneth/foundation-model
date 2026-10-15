@@ -67,6 +67,7 @@ def main() -> None:
         est._first.update(cfg.get("first_levels", {}))
         est._B.compact.update(cfg.get("compact", {}))
         backend_fnp.FUSE = bool(cfg.get("fuse", backend_fnp.FUSE))
+        backend_fnp.STRASSEN_MIN = int(cfg.get("strassen_min", backend_fnp.STRASSEN_MIN))
     for rep in range(args.reps):
         ws = [fnp.asarray(w) for w in make_weights(1000 + rep)]
         with flops.BudgetContext(flop_budget=2 ** 41, quiet=True) as ctx:

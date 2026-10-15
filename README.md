@@ -144,6 +144,25 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
   copies / additions ~0.01. Family by family this matches v5b except the hub, which v5b runs
   one level deeper (5), and its slightly leaner joiner and copies.
 
+## Submission candidates (Oct 15) and how to submit them
+
+`docs/notes_13-15_evaluation.md` evaluates the teammates' Option B brainstorm notes against
+this estimator (most of their savings target a pair MLP and a quartic Q contraction that
+this code never runs) and records the knob sweeps. Graded candidates, best first
+(11 local networks, MSE x C/B):
+
+| candidate | how to submit | MSE | C/B | MSE x C/B | local residual / wall |
+|---|---|---|---|---|---|
+| `candidates/v5b_rfhub` (team v5b, RLEV 4, min blocks 24/28, joiner hub on Strassen) | Actions -> package-and-submit -> Run workflow, folder `candidates/v5b_rfhub` | 1.336e-8 | 0.2424 | **3.24e-9** | 1.31-1.47 s / 135-166 s |
+| team v5b as graded (leaderboard row CLG) | -- | 1.326e-8 | 0.2517 | 3.34e-9 | 1.21-1.29 s / 128-150 s |
+| `submission/` + `candidates/configs/deep16.json` | folder `submission`, config `candidates/configs/deep16.json` | ~1.35e-8 | 0.257 | ~3.46e-9 | 1.21 s / 103 s |
+| `submission/` as shipped | push / Run workflow with defaults | 1.345e-8 | 0.2665 | 3.58e-9 | 0.91-0.95 s / 74-80 s |
+
+The workflow follows grading (`--watch`), so its log ends with the graded score, FLOPs and
+residual: check `residual_wall_time_s` there before moving to deeper settings. Submitting
+needs the repository secret `AICROWD_API_KEY` (this cloud container cannot reach
+aicrowd.com); `SUBMISSION_DIR=... scripts/package.sh` packages any folder locally.
+
 ## Next steps (team meeting)
 
 * **Option B, accelerate the linear part.** Done here: deeper chunked Strassen everywhere,
