@@ -12,6 +12,10 @@ The n^3 families run as batched Strassen-Winograd recursions written as ordinary
 ops: seven half-size products and 22 block combinations per level, each combination one op
 over the whole batch. ``LEVELS`` sets the recursion depth per family. All families share
 one set of scratch buffers (they run one after another), which bounds the memory.
+The grader rejects arrays over 100 MiB, so batches are chunked (``CAP_FLOATS``); a shared
+left operand's combinations are computed once per family and reused by every chunk, and
+the deepest level forms its seven products one at a time (``FUSE``), which halves the
+chunk count at depth >= 4.
 """
 
 from __future__ import annotations
@@ -22,14 +26,22 @@ import flopscope.numpy as fnp
 F32 = fnp.float32
 STRASSEN_MIN = 32
 # recursion depth per family (0 = dense): transport family, young hub contraction,
-# shared-basis formings, shared-basis contractions, covariance sandwich
-LEVELS = dict(family=2, hub=2, form=1, inner=1, sym=0)
+# shared-basis formings, shared-basis contractions, covariance sandwich, the joiner's
+# n x n x r products (submission/fm_config.json overrides these)
+LEVELS = dict(family=5, hub=4, form=3, inner=3, sym=3, join=3)
 # the first predict() of a process also pays buffer allocation and view creation on the
 # residual clock: it runs shallower
-FIRST_LEVELS = dict(family=1, hub=1, form=0, inner=0, sym=0)
+FIRST_LEVELS = dict(family=4, hub=4, form=3, inner=3, sym=3, join=3)
 # how many of the top recursion levels use the compact (coefficient-matmul) combinations:
 # 6 ops per level but ~7x the block-addition FLOPs, so they pay at shallow levels only
-COMPACT = dict(family=2, hub=2, form=1, inner=1, sym=1)
+COMPACT = dict(family=2, hub=2, form=1, inner=1, sym=1, join=1)
+# the grader rejects any single array over 100 MiB: Strassen batches are chunked so the
+# deepest combination stacks (batch x 1.75^level x operand size) stay under this many floats
+CAP_FLOATS = 22 * 2 ** 20      # 88 MiB of float32
+# fused last level: the seven products of the deepest Strassen level are formed one at a
+# time (~20 ops instead of 7-15), so the deepest batched stacks are 7x smaller and each
+# capped batch chunk holds twice the planes: fewer chunks, fewer ops in total at depth >= 4
+FUSE = True
 
 
 def _alloc(shape):
@@ -155,6 +167,28 @@ def _quads(X):
     return (X[..., :h, :q], X[..., :h, q:], X[..., h:, :q], X[..., h:, q:])
 
 
+def _quadd(X):
+    return dict(zip(("11", "12", "21", "22"), _quads(X)))
+
+
+# Strassen products M0..M6 as (quadrant, sign) terms of the left and right operands
+_LSEQ = ((("11", 1), ("22", 1)), (("21", 1), ("22", 1)), (("11", 1),), (("22", 1),),
+         (("11", 1), ("12", 1)), (("21", 1), ("11", -1)), (("12", 1), ("22", -1)))
+_RSEQ = ((("11", 1), ("22", 1)), (("11", 1),), (("12", 1), ("22", -1)), (("21", 1), ("11", -1)),
+         (("22", 1),), (("11", 1), ("12", 1)), (("21", 1), ("22", 1)))
+# hub right operand: blocks of Y^T are the transposed blocks of Y with 12 <-> 21
+_SW = {"11": "11", "12": "21", "21": "12", "22": "22"}
+_RSEQ_H = tuple(tuple((_SW[a], c) for a, c in t) for t in _RSEQ)
+
+
+def _seq(quads, terms, buf):
+    if len(terms) == 1:
+        return quads[terms[0][0]]
+    (a, _), (b, sb) = terms
+    (fnp.add if sb > 0 else fnp.subtract)(quads[a], quads[b], out=buf)
+    return buf
+
+
 def _slots(B5):
     return tuple(B5[:, i] for i in range(7))
 
@@ -191,6 +225,9 @@ class Strassen:
         self.CR = fnp.asarray(_CR, dtype=F32)
         self.CRH = fnp.asarray(_CRH, dtype=F32)
         self.CA = fnp.asarray(_CA, dtype=F32)
+        # left-operand memo: while a batch-chunked family runs, the combinations of its
+        # shared left operand are the same for every chunk (LeftTree); None = off
+        self.lmemo = None
 
     @staticmethod
     def ok(m, kd, w, lev):
@@ -316,19 +353,86 @@ class Strassen:
         fnp.subtract(M[0], M[1], out=C22); fnp.add(C22, M[2], out=C22)
         fnp.add(C22, M[5], out=C22)
 
+    def _mm_fused(self, X, Y, out, tag):
+        """Last level of mm with the seven products formed one at a time:
+        C11 = M0 + M3 - M4 + M6, C12 = M2 + M4, C21 = M1 + M3, C22 = M0 - M1 + M2 + M5."""
+        pl = self.pool
+        bx, P, m, kd = X.shape
+        by, w = Y.shape[0], Y.shape[3]
+        h, q, v = m // 2, kd // 2, w // 2
+        if bx == 1:
+            # a shared left operand: its seven combinations batched once (memoized over chunks)
+            memo = self.lmemo
+            Lv = None if memo is None else memo.get((id(X), "f"))
+            if Lv is None:
+                L4 = self._combine(X, self.CL, "L", tag)
+                Lv = pl.derived(L4, "f7", lambda a: tuple(a[:, i * P:(i + 1) * P] for i in range(7)))
+                if memo is not None:
+                    memo[(id(X), "f")] = Lv
+            Ls = lambda i: Lv[i]
+        else:
+            Lq = pl.derived(X, "qd", _quadd)
+            LB = pl.get((tag, "FL", P, h, q), (bx, P, h, q))
+            Ls = lambda i: _seq(Lq, _LSEQ[i], LB)
+        Rq = pl.derived(Y, "qd", _quadd)
+        RB = pl.get((tag, "FR", P, q, v), (by, P, q, v))
+        T = pl.get((tag, "FT", P, h, v), (by, P, h, v))
+        C = pl.derived(out, "qd", _quadd)
+        mm, add, sub = fnp.matmul, fnp.add, fnp.subtract
+        R = lambda i: _seq(Rq, _RSEQ[i], RB)
+        mm(Ls(0), R(0), out=C["11"]); fnp.copyto(C["22"], C["11"])
+        mm(Ls(1), R(1), out=C["21"]); sub(C["22"], C["21"], out=C["22"])
+        mm(Ls(2), R(2), out=C["12"]); add(C["22"], C["12"], out=C["22"])
+        mm(Ls(3), R(3), out=T); add(C["11"], T, out=C["11"]); add(C["21"], T, out=C["21"])
+        mm(Ls(4), R(4), out=T); sub(C["11"], T, out=C["11"]); add(C["12"], T, out=C["12"])
+        mm(Ls(5), R(5), out=T); add(C["22"], T, out=C["22"])
+        mm(Ls(6), R(6), out=T); add(C["11"], T, out=C["11"])
+        return out
+
+    def _hub_fused(self, X, Y, out, tag):
+        """Last level of hub, products one at a time: M_i = sum_b L_i R_i^T into the (1, 7, ...)
+        product stack, then the compact assembly."""
+        pl = self.pool
+        b, P, m, kd = X.shape
+        w = Y.shape[2]
+        h, q, v = m // 2, kd // 2, w // 2
+        Lq = pl.derived(X, "qd", _quadd)
+        Rq = pl.derived(Y, "qd", _quadd)
+        LB = pl.get((tag, "FL", P, h, q), (b, P, h, q))
+        RB = pl.get((tag, "FRh", P, v, q), (b, P, v, q))
+        T = pl.get((tag, "FT", P, h, v), (b, P, h, v))
+        M5, _ = pl.get5((tag, "M", P, h, v), (1, 7, P, h, v))
+        slots = pl.derived(M5, "fs", lambda a: tuple(a[0, i] for i in range(7)))
+        tr = lambda a: fnp.swapaxes(a, -1, -2)
+        for i in range(7):
+            Li = _seq(Lq, _LSEQ[i], LB)
+            Ri = _seq(Rq, _RSEQ_H[i], RB)
+            fnp.matmul(Li, pl.derived(Ri, "t", tr), out=T)
+            fnp.sum(T, axis=0, out=slots[i])
+        self._assemble(M5, pl.derived(out, "1", lambda a: a[None]), tag)
+        return out
+
     def mm(self, X, Y, out, lev, tag="s", compact=0):
         bx, P, m, kd = X.shape
         by, w = Y.shape[0], Y.shape[3]
         if not self.ok(m, kd, w, lev):
             fnp.matmul(X, Y, out=out)
             return out
+        if lev == 1 and FUSE:
+            return self._mm_fused(X, Y, out, tag)
         h, v = m // 2, w // 2
+        memo = self.lmemo
+        L4 = None if memo is None else memo.get((id(X), compact > 0))
         if compact > 0:
-            L4 = self._combine(X, self.CL, "L", tag)
+            if L4 is None:
+                L4 = self._combine(X, self.CL, "L", tag)
             R4 = self._combine(Y, self.CR, "R", tag)
         else:
-            L4 = self._combos_grouped(X, "L", "L", tag)
+            if L4 is None:
+                L4 = self._combos_grouped(X, "L", "L", tag)
             R4 = self._combos_grouped(Y, "R", "R", tag)
+        if memo is not None:
+            memo[(id(X), compact > 0)] = L4
         M5, M4 = self.pool.get5((tag, "M" if compact > 0 else "MG", P, h, v), (by, 7, P, h, v))
         self.mm(L4, R4, M4, lev - 1, tag, compact - 1)
         if compact > 0:
@@ -346,6 +450,8 @@ class Strassen:
             fnp.matmul(X, pl.derived(Y, "t", lambda a: fnp.swapaxes(a, -1, -2)), out=T)
             fnp.sum(T, axis=0, out=out)
             return out
+        if lev == 1 and FUSE:
+            return self._hub_fused(X, Y, out, tag)
         h, v = m // 2, w // 2
         q = kd // 2
         if compact > 0:
@@ -526,6 +632,22 @@ class FnpBackend:
         Yf = fnp.reshape(fnp.swapaxes(Y, 0, 1), (Y.shape[1], k * q))
         return fnp.matmul(Xf, fnp.swapaxes(Yf, 0, 1))
 
+    @staticmethod
+    def _chunk(per_item, lev, b):
+        """Batch chunk keeping every Strassen array of a (per_item floats) operand under the cap."""
+        eff = lev - 1 if (FUSE and lev >= 1) else lev
+        cb = max(1, int(CAP_FLOATS // (per_item * 1.75 ** eff)))
+        cb = min(cb, b)
+        # balanced chunks: same buffers for every chunk, no ragged tail
+        nc = -(-b // cb)
+        return -(-b // nc)
+
+    def _parts(self, arr, cb, b):
+        if cb >= b:
+            return (arr,)
+        return self.pool.derived(arr, ("chunks", cb, b), lambda a: tuple(
+            a[c0:min(b, c0 + cb)] for c0 in range(0, b, cb)))
+
     def family(self, W, Ys, out):
         """W (n, n) @ Ys (b, n, n) -> (b, n, n)."""
         b, n, w = Ys.shape
@@ -539,7 +661,11 @@ class FnpBackend:
         X4 = pl.derived(Ws, "4", lambda a: a[None, None])
         Y4 = pl.derived(Ys, "4", lambda a: a[:, None])
         O4 = pl.derived(o, "4", lambda a: a[:, None])
-        self.smm.mm(X4, Y4, O4, lev, "s", self.compact["family"])
+        cb = self._chunk(max(W.shape[0] * n, n * w), lev, b)
+        self.smm.lmemo = {}
+        for Yc, Oc in zip(self._parts(Y4, cb, b), self._parts(O4, cb, b)):
+            self.smm.mm(X4, Yc, Oc, lev, "s", self.compact["family"])
+        self.smm.lmemo = None
         return o
 
     def form(self, Q, F, out):
@@ -556,7 +682,51 @@ class FnpBackend:
         X4 = pl.derived(Qs, "4", lambda a: a[None, None])
         F4 = pl.derived(Fs, "4", lambda a: fnp.reshape(a, (b * two, 1, r, w)))
         O4 = pl.derived(o, "4", lambda a: fnp.reshape(a, (b * two, 1, n, w)))
-        self.smm.mm(X4, F4, O4, lev, "s", self.compact["form"])
+        bb = b * two
+        cb = self._chunk(max(n * r, r * w, n * w), lev, bb)
+        self.smm.lmemo = {}
+        for Fc, Oc in zip(self._parts(F4, cb, bb), self._parts(O4, cb, bb)):
+            self.smm.mm(X4, Fc, Oc, lev, "s", self.compact["form"])
+        self.smm.lmemo = None
+        return o
+
+    def lmm(self, X, Ys, out, kind="join"):
+        """X (m, k) @ Ys (b, k, w) -> (b, m, w): one shared left operand, Strassen at
+        levels[kind] (the n x n x r products of the shared-basis bookkeeping)."""
+        b, kd, w = Ys.shape
+        m = X.shape[0]
+        pl = self.pool
+        o = pl.get(out, (b, m, w))
+        lev = self.smm.level(m, kd, w, self.levels.get(kind, 0))
+        if lev == 0:
+            return fnp.matmul(X, Ys, out=o)
+        Xs = pl.stage(out + "_x", X)
+        Yv = pl.stage(out + "_y", Ys)
+        X4 = pl.derived(Xs, "4", lambda a: a[None, None])
+        Y4 = pl.derived(Yv, "4", lambda a: a[:, None])
+        O4 = pl.derived(o, "4", lambda a: a[:, None])
+        cb = self._chunk(max(m * kd, kd * w, m * w), lev, b)
+        self.smm.lmemo = {}
+        for Yc, Oc in zip(self._parts(Y4, cb, b), self._parts(O4, cb, b)):
+            self.smm.mm(X4, Yc, Oc, lev, "s", self.compact.get(kind, 1))
+        self.smm.lmemo = None
+        return o
+
+    def _hubrun(self, X4, Y4, o, lev, kind, out):
+        """o (1, m, w) = sum over the batch of X4 Y4^T, in capped batch chunks."""
+        bb, _, m, kd = X4.shape
+        w = Y4.shape[2]
+        cb = self._chunk(max(m * kd, w * kd, m * w), lev, bb)
+        if lev == 0:
+            cb = min(bb, max(1, CAP_FLOATS // (m * w)))
+            nc = -(-bb // cb)
+            cb = -(-bb // nc)
+        xs, ys = self._parts(X4, cb, bb), self._parts(Y4, cb, bb)
+        acc = o if len(xs) == 1 else self.pool.get(out + "_acc", (1, m, w))
+        for i, (Xc, Yc) in enumerate(zip(xs, ys)):
+            self.smm.hub(Xc, Yc, o if i == 0 else acc, lev, "s", self.compact[kind])
+            if i:
+                fnp.add(o, acc, out=o)
         return o
 
     def hub(self, X, Y, out, kind="hub"):
@@ -570,7 +740,26 @@ class FnpBackend:
         Ys = Y if id(Y) in pl.base else pl.stage(out + "_y", Y)
         X4 = pl.derived(Xs, "4", lambda a: fnp.reshape(a, (b * two, 1, m, kd)))
         Y4 = pl.derived(Ys, "4", lambda a: fnp.reshape(a, (b * two, 1, w, kd)))
-        self.smm.hub(X4, Y4, o, lev, "s", self.compact[kind])
+        self._hubrun(X4, Y4, o, lev, kind, out)
+        return o[0]
+
+    def hub2(self, XA, XP, YA, YP, out, kind="hub"):
+        """sum_s XA_s YA_s^T + XP_s YP_s^T for XA, XP (b, n, k), YA, YP (b, w, k) -> (n, w).
+        The four stacks are staged into two (2b, n, k) / (2b, w, k) pooled buffers."""
+        b, m, kd = XA.shape
+        w = YA.shape[1]
+        pl = self.pool
+        o = pl.get(out, (1, m, w))
+        lev = self.smm.level(m, kd, w, self.levels[kind])
+        Xs = pl.get(out + "_x", (2 * b, m, kd))
+        Ys = pl.get(out + "_y", (2 * b, w, kd))
+        xa, xp = pl.derived(Xs, ("h", b), lambda a: (a[:b], a[b:]))
+        ya, yp = pl.derived(Ys, ("h", b), lambda a: (a[:b], a[b:]))
+        fnp.copyto(xa, XA); fnp.copyto(xp, XP)
+        fnp.copyto(ya, YA); fnp.copyto(yp, YP)
+        X4 = pl.derived(Xs, "4", lambda a: a[:, None])
+        Y4 = pl.derived(Ys, "4", lambda a: a[:, None])
+        self._hubrun(X4, Y4, o, lev, kind, out)
         return o[0]
 
     def symprod(self, X, Y, out):

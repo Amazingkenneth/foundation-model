@@ -121,7 +121,7 @@ def test_term_program_matches_naive(mode):
     if "d21" in tm:
         tm["d21T"] = tm["d21"].T
     pk1 = ch.term1(prog, WT, tv).numpy()
-    pk2 = ch.term2(prog, WT, tv, tm).numpy()
+    pk2 = np.stack([p.numpy() for p in ch.term2(prog, WT, tv, tm)])
     for g in range(3):
         np.fill_diagonal(pk2[g], 0.0)
     r1, r2 = _naive_terms(mode, Wall, vec, mats, n)

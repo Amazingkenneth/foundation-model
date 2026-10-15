@@ -5,7 +5,8 @@
 #   SKIP_SMOKE=1 scripts/package.sh
 #
 # Folder mode: everything in submission/ that is not ignored ships (estimator.py, the
-# fm_* modules, backend_fnp.py, fm_weights.npz). Caps: 50 MiB, 50 files.
+# fm_* modules, backend_fnp.py, the operator weights k34.npz + mp.npz or fm_weights.npz,
+# LICENSE_504aldo). Caps: 50 MiB, 50 files.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

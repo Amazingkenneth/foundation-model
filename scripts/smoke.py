@@ -3,7 +3,7 @@
 1. Allowed code: every module in submission/ imports only the stdlib, flopscope,
    whestbench and sibling modules (no numpy/scipy/torch/ctypes/threads/subprocess).
 2. Non-suite shapes (the grader's smoke test uses some) return finite (depth, width) arrays.
-3. The shipped weights load and contain every network the operator expects.
+3. The shipped weights load (fm_weights.npz, or the team's v5b k34.npz + mp.npz).
 """
 
 from __future__ import annotations
@@ -67,7 +67,10 @@ def check_shapes() -> None:
         assert np.all(np.isfinite(out)), (w, d)
     print("non-suite shapes: ok")
     if est._op is not None:
-        print("operator networks:", sorted(est._op.nets), "active layers:", sorted(est._op.active))
+        if getattr(est._op, "active", None):
+            print("operator networks:", sorted(est._op.nets), "active layers:", sorted(est._op.active))
+        else:
+            print("operator:", type(est._op).__name__)
     else:
         print("operator: none shipped (analytic chain only)")
 

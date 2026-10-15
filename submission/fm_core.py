@@ -207,7 +207,12 @@ class Chain:
                     FAP=None, FAP2=None, U=None, Sg=None, S2=None, Z=None, Lst=None,
                     R1T=None, R2T=None, w2b=[], s=[], e=[], c1=[], c2=[], dA=[], dP=[],
                     g_prev=None, var_prev=None, lam_prev=0.0, w1_prev=None, K3v_prev=None,
-                    newborn=None)
+                    newborn=None,
+                    # carried for the learned operator's features (v5b layout): previous
+                    # layer's pre-activation (alpha, var, corrected D3), its corrected kappa4
+                    # diagonal (m dG), its post-ReLU K(4,), and per-source birth statistics
+                    alpha_prev=None, varpre_prev=None, D3c_prev=None, g4c_prev=B.zeros((n,)),
+                    K4v_prev=None, g3s=[], cvs=[])
 
     def run(self, ws, hooks=None, state=None, start=0, stop=None):
         stop = self.L if stop is None else stop
@@ -235,12 +240,12 @@ class Chain:
                 var = B.maximum(B.sum(w32 * w32, 0), 1e-10)
             else:
                 C_pre = B.symprod(W, w32, out="cpre")      # C = I: C_pre = w32^T w32
-            AP_all = None
+            A_all = P_all = None
             k = 0
         else:
             w1p = st["w1_prev"]
             WD = B.mul(W, w1p[None, :], out="wd")
-            APhat = st["APhat"]                            # (ny, 2, n, n) w1-scaled young legs
+            APh, PPh = st["APhat"] or (None, None)          # (ny, n, n) w1-scaled young A, P legs
             Qc, FAP, FAP2, U, Sg, S2 = st["Qc"], st["FAP"], st["FAP2"], st["U"], st["Sg"], st["S2"]
             ka_t = ka
             if self.confine and not last and k_old > 0:
@@ -248,25 +253,31 @@ class Chain:
             if ka_t > ka:
                 # ---- one source joins the shared basis (range finder on the leg Gram) ----
                 j = ka
-                Aj = APhat[0, 0]
-                Pj = APhat[0, 1]
+                Aj = APh[0]
+                Pj = PPh[0]
                 dAj = st["dA"][j][:, None]
                 dPj = st["dP"][j][:, None]
                 Om = B.copy(w32[:, :R_OLD])
                 Qp = w1p[:, None] * Qc if ka > 0 else None
+                # the joiner's two legs as one batch: every n x n x r product below is one
+                # shared-left Strassen family (B.lmm) or one hub (B.hub2)
+                AjPj = B.stack([Aj, Pj], 0, out="join_ap")              # (2, n, n)
+                dJ = B.stack([st["dA"][j], st["dP"][j]], 0)[:, None, :]  # (2, 1, n)
                 for _ in range(QPASS):
-                    Yq = Aj @ (dAj * (B.swap(Aj) @ Om)) + Pj @ (dPj * (B.swap(Pj) @ Om))
+                    # Yq = Aj dA Aj^T Om + Pj dP Pj^T Om (+ the old basis' share)
+                    T = B.mul(B.lmm(B.swap(Om), AjPj, out="join_t"), dJ, out="join_td")
+                    Yq = B.hub2(AjPj[0:1], AjPj[1:2], T[0:1], T[1:2], out="join_y", kind="join")
                     if ka > 0:
                         Sfull = Sg if kb == 0 else Sg + U @ (S2 @ B.swap(U))
                         Yq = Yq + Qp @ (Sfull @ (B.swap(Qp) @ Om))
                     Qn = B.qr(Yq)
                     Om = Qn
                 QnT = B.swap(Qn)
-                FAPj = B.stack([QnT @ Aj, QnT @ Pj], 0)[None]          # (1, 2, r1, n)
+                FAPj = B.copy(B.lmm(QnT, AjPj, out="join_f"))[None]     # (1, 2, r1, n)
                 if ka > 0:
                     Tq = QnT @ Qp
                     if ka > kb:
-                        FAP = B.cat([Tq @ FAP, FAPj], 0)
+                        FAP = B.cat([B.form(Tq, FAP, out="rot1"), FAPj], 0)
                         Sg = Tq @ (Sg @ B.swap(Tq))
                     else:
                         FAP, Sg = FAPj, None
@@ -294,7 +305,7 @@ class Chain:
                     UnT = B.swap(Un)
                     FAP2j = B.stack([UnT @ FA1, UnT @ FP1], 0)[None]
                     if kb > 0:
-                        FAP2 = B.cat([(UnT @ U) @ FAP2, FAP2j], 0)
+                        FAP2 = B.cat([B.form(UnT @ U, FAP2, out="rot2"), FAP2j], 0)
                     else:
                         FAP2 = FAP2j
                     S2 = UnT @ (G2 @ Un)
@@ -302,32 +313,38 @@ class Chain:
                     FAP = FAP[1:]
                     Sg = Sg - S_s
                     kb = kb_t
-                Qc = W @ Qn
-                APhat = APhat[1:]
+                Qc = B.lmm(W, Qn[None], out="qc%d" % (li % 2))[0]
+                APh, PPh = APh[1:], PPh[1:]
                 ka = ka_t
             elif ka > 0:
-                Qc = WD @ Qc
-            parts = []
+                Qc = B.lmm(WD, Qc[None], out="qc%d" % (li % 2))[0]
+            # A and P legs are kept as two (k, n, n) stacks (every array stays under the
+            # grader's 100 MiB per-array cap; one (k, 2, n, n) stack would not at k = 15)
+            pa, pp = [], []
             if kb > 0:
                 QU = Qc @ U
-                parts.append(B.form(QU, FAP2, out="form2"))     # (kb, 2, n, n)
+                f2 = B.form(QU, FAP2, out="form2")              # (kb, 2, n, n)
+                pa.append(f2[:, 0]); pp.append(f2[:, 1])
             if ka > kb:
-                parts.append(B.form(Qc, FAP, out="form1"))      # (ka-kb, 2, n, n)
+                f1 = B.form(Qc, FAP, out="form1")               # (ka-kb, 2, n, n)
+                pa.append(f1[:, 0]); pp.append(f1[:, 1])
             # ---- transport family: young legs, the newborn A leg and C ride one product ----
             ny = k_old - ka
             fam_in = [nb["a_b"][None], st["C"][None]]
             if ny > 0:
-                fam_in = [B.reshape(APhat, (2 * ny, n, n))] + fam_in
+                fam_in = [APh, PPh] + fam_in
             fam = B.family(W, B.cat(fam_in, 0, out="famin"), out="famout")
             if ny > 0:
-                parts.append(B.reshape(fam[:2 * ny], (ny, 2, n, n)))
+                pa.append(fam[:ny]); pp.append(fam[ny:2 * ny])
             WC = fam[2 * ny + 1]
             if last:
                 var = B.maximum(B.sum(B.mul(WC, W, out="t1"), 1), 1e-10)   # diag(W C W^T)
             else:
                 C_pre = B.symprod(WC, w32, out="cpre")
-            parts.append(B.stack([fam[2 * ny], W], 0)[None])  # newborn: A = W a_b, P = W
-            AP_all = parts[0] if len(parts) == 1 else B.cat(parts, 0, out="legs")
+            pa.append(fam[2 * ny:2 * ny + 1])                   # newborn: A = W a_b, P = W
+            pp.append(W[None])
+            A_all = B.cat(pa, 0, out="legsA")
+            P_all = B.cat(pp, 0, out="legsP")
             k = k_old + 1
             # thin legs: transported + the newborn columns
             # thin legs [Z_res (r) | u | y | F1 (rfb) | F2 (rfb)]: transported + newborn
@@ -347,8 +364,10 @@ class Chain:
         D3 = D21 = dG = None
         lam = st["lam_prev"]
         ctx = None
+        dG_birth = None
+        D3_birth = None
         if k > 0:
-            D3, D21 = self.dslices(st, AP_all, need_d21=not last)
+            D3, D21 = self.dslices(st, A_all, P_all, need_d21=not last)
             WW = B.mul(W, W, out="ww")
             t_g = WW @ st["g_prev"]
             t_v = var - WW @ st["var_prev"]
@@ -357,19 +376,30 @@ class Chain:
             lam = lam * B.clip(rr * (1.0 / REF_R[min(li - 1, len(REF_R) - 1)]), 0.5, 2.0)
             dG = t_g + t_v * lam
             kap31 = None
+            dG_birth = dG
+            D3c = D3
             if hooks is not None:
-                ctx = dict(li=li, L=L, last=last, W=W, WW=WW, mu=mu, var=var, s=s_pre, D3=D3,
-                           D21=D21, C_off=C_off, dG=dG, t_g=t_g, t_v=t_v, lam=lam,
-                           g_prev=st["g_prev"], var_prev=st["var_prev"], K3v_prev=st["K3v_prev"])
+                ctx = dict(li=li, L=L, last=last, W=W, w32=w32, WW=WW, mu=mu, var=var, s=s_pre,
+                           D3=D3, D21=D21, C_off=C_off, dG=dG, t_g=t_g, t_v=t_v, lam=lam,
+                           g_prev=st["g_prev"], var_prev=st["var_prev"], K3v_prev=st["K3v_prev"],
+                           A_all=A_all, P_all=P_all, w1_prev=st["w1_prev"], alpha_prev=st["alpha_prev"],
+                           varpre_prev=st["varpre_prev"], D3c_prev=st["D3c_prev"],
+                           g4c_prev=st["g4c_prev"], K4v_prev=st["K4v_prev"], g3s=st["g3s"],
+                           cvs=st["cvs"])
                 corr = hooks.pre(ctx)
                 if corr is not None:
                     D3c, dG, kap31 = corr
-                else:
-                    D3c = D3
-            else:
-                D3c = D3
+                    # which quantities the new source's birth reads: the paper operator feeds
+                    # the corrected kappa4 diagonal to the K4 -> K3 feed and keeps the raw D3
+                    # in the old-source scaling; the v5b operator does the opposite
+                    if getattr(hooks, "birth_corrected_dG", True):
+                        dG_birth = dG
+                    if getattr(hooks, "d3w_corrected", False):
+                        D3_birth = D3c
+            st["g4c_prev"] = dG * METRIC_C
+            st["D3c_prev_next"] = D3c
         # ---------------- analytic ReLU step F_an -----------------
-        Wall = self.wick(mu, var)
+        Wall, alpha_w, phi_w, Phi_w = self.wick(mu, var)
         WT = B.swap(Wall)
         mode = 0 if k == 0 else 1
         prog = self.K.progs[mode]
@@ -401,7 +431,7 @@ class Chain:
         w2 = Wall[:, I21]
         w1c = w1[:, None]
         if mode == 1:
-            D3_w = D3 * w1 * w1 * w1
+            D3_w = (D3 if D3_birth is None else D3_birth) * w1 * w1 * w1
             D21_w = (w1c * w1c) * D21 * w1[None, :]
         a_b = B.mul(w1c, C_off, out="ab")
         if mode == 1:
@@ -425,8 +455,8 @@ class Chain:
             # kappa4 -> kappa3 feed of the regenerated core
             w1sq = w1 * w1
             y_b = w2 * (0.25 * METRIC_C)
-            dgw = w1sq * dG
-            u_b = y_b * dG
+            dgw = w1sq * dG_birth
+            u_b = y_b * dG_birth
             c1_b = w1 * lam
             D21_new = (D21_new + dgw[:, None] * y_b[None, :] * (1.0 / 3.0)
                        + (y_b * (2.0 / 3.0))[:, None] * (a_b * c1_b[None, :])
@@ -492,9 +522,14 @@ class Chain:
         st["c2"] = st["c2"] + [dgw]
         # young legs pre-scaled by w1 for the next transport family
         if k > ka:
-            st["APhat"] = B.mul(AP_all[ka:], w1c[None, None], out=("aphat", li % 2))
+            st["APhat"] = (B.mul(A_all[ka:], w1c[None], out=("aphatA", li % 2)),
+                           B.mul(P_all[ka:], w1c[None], out=("aphatP", li % 2)))
         else:
             st["APhat"] = None
+        st["g3s"] = st["g3s"] + [alpha_w * phi_w * (-1.0) / var]
+        st["cvs"] = st["cvs"] + [Phi_w * var]
+        st.update(alpha_prev=alpha_w, varpre_prev=var, K4v_prev=K4v,
+                  D3c_prev=st.pop("D3c_prev_next", None) if k > 0 else B.zeros((n,)))
         st.update(mu=mu_out, C=C, g_prev=g_new, var_prev=K2v, K3v_prev=K3v,
                   lam_prev=float(LAM[min(li, len(LAM) - 1)]), w1_prev=w1,
                   newborn=dict(a_b=a_b, Rr=Rr, s=S3c, e=e_b))
@@ -522,7 +557,6 @@ class Chain:
         C, G, r = len(prog["classes"]), prog["G"], prog["rmax"]
         WLp = B.swap(B.reshape(prog["PL"] @ WL, (C, G, r, n)))
         WRp = B.reshape(prog["PR"] @ WR, (C, G, r, n))
-        LR = B.mm(WLp, WRp, out="term_lr")                                   # (C, G, n, n)
         Ms = []
         for cls in prog["classes"]:
             if len(cls) == 0:
@@ -532,7 +566,12 @@ class Chain:
             else:
                 Ms.append(B.mul(mats[cls[0]], mats[cls[1]], out=("term_m", cls)))
         Mst = B.stack(Ms, 0, out="term_ms")
-        return B.sum(B.mul(LR, Mst[:, None], out="term_lr"), 0, out="term_pk2")   # (G, n, n)
+        # one output group at a time: (C, n, n) products stay under the 100 MiB array cap
+        out = []
+        for g in range(G):
+            LR = B.mm(WLp[:, g], WRp[:, g], out="term_lr")                     # (C, n, n)
+            out.append(B.sum(B.mul(LR, Mst, out="term_lr"), 0, out=("term_pk2", g)))
+        return out
 
     def wick(self, mu, var):
         """All ReLU Wick coefficients w(k, p) per neuron, (n, len(WICK_PAIRS))."""
@@ -543,18 +582,17 @@ class Chain:
         Phi = B.cdf(alpha)
         APOW = B.power(alpha[:, None], K.APOW_E)        # alpha^0..5
         SB = B.power(sigma[:, None], K.SB_E)            # sigma^-6..4
-        return ((APOW @ K.C1) * phi[:, None] + (APOW @ K.C2) * Phi[:, None]) * (SB @ K.SELC)
+        Wall = ((APOW @ K.C1) * phi[:, None] + (APOW @ K.C2) * Phi[:, None]) * (SB @ K.SELC)
+        return Wall, alpha, phi, Phi
 
     # -----------------------------------------------------------------------------------
-    def dslices(self, st, AP_all, need_d21):
+    def dslices(self, st, A, P, need_d21):
         """(3,) and (2,1) slices of the transported third cumulant. Per source b with legs
         A, P (and M = P d(s) + 3 A d(e) + Z L^T, X1 = 3A + Xt, Y1 = A d(w2) + Yt):
           D21 = sum_b LA_b A_b^T + LP_b P_b^T + thin terms,  D3 = row sums of Hadamard products.
         Old sources contract through their shared-basis factors."""
         B, r, rfb = self.B, self.r, self.rfb
         k, ka, kb = st["k"], st["ka"], st["kb"]
-        A = AP_all[:, 0]
-        P = AP_all[:, 1]
         W2B = B.stack(st["w2b"], 0)[:, None, :]
         Sb = B.stack(st["s"], 0)[:, None, :]
         Eb = B.stack(st["e"], 0)[:, None, :]
@@ -588,9 +626,7 @@ class Chain:
         # left factors LA (right factor A) and LP (right factor P), interleaved (k, 2, n, n)
         # flopscope: LA / LP are written straight into the two slots of the pooled (k, 2, n, n)
         # buffer the hub contraction reads; torch: fresh tensors, stacked at the end
-        LAPb, la, lp = B.pair_slots("lap", k, self.n)
-        la = "la" if la is None else la
-        lp = "lp" if lp is None else lp
+        la, lp = "la", "lp"
         LA = B.mul(AP, W2B * 2.0, out=la)
         LA = B.add(LA, B.mul(PP, Eb, out="t"), out=la)
         LA = B.add(LA, B.mul(B.mul(Xt, P, out="t"), W2B * (1.0 / 3.0), out="t"), out=la)
@@ -602,7 +638,6 @@ class Chain:
         LP = B.add(LP, LPadd, out=lp)
         X3 = B.add(B.mul(A, C1s[:, None, :], out="t"), B.mul(P, C2s[:, None, :], out="x3"), out="t")
         LP = B.add(LP, B.mul(X3, (Yk * (2.0 / 3.0))[:, :, None], out="t"), out=lp)
-        LAP = LAPb if LAPb is not None else B.stack([LA, LP], 1)        # (k, 2, n, n)
         # thin right-factor terms of the feedback legs
         GY = B.add(B.mul(B.mul(Xt, P, out="t"), 1.0 / 3.0, out="t"), AP, out="t")
         GYR = B.mm(GY, st["R2T"])
@@ -613,15 +648,18 @@ class Chain:
         D21 = B.thinhub(B.cat([B.mm(PP, Lst) * (1.0 / 3.0), GXR, GYR], 2), Z)
         D21 = D21 + (B.swap(R) @ Yk) * (1.0 / 3.0)
         if k > ka:
-            D21 = D21 + B.hub(B.rows(LAP, ka, k), B.rows(AP_all, ka, k), out="hub")
+            D21 = D21 + B.hub2(LA[ka:], LP[ka:], A[ka:], P[ka:], out="hub")
         if ka > 0:
             inner = None
             if ka > kb:
-                inner = B.hub(B.rows(LAP, kb, ka), st["FAP"], out="inner1", kind="inner")   # (n, r1)
+                FAP = st["FAP"]
+                inner = B.hub2(LA[kb:ka], LP[kb:ka], FAP[:, 0], FAP[:, 1], out="inner1", kind="inner")
             if kb > 0:
-                lift = B.hub(B.rows(LAP, 0, kb), st["FAP2"], out="inner2", kind="inner") @ B.swap(st["U"])
+                FAP2 = st["FAP2"]
+                lift = B.hub2(LA[:kb], LP[:kb], FAP2[:, 0], FAP2[:, 1], out="inner2",
+                              kind="inner") @ B.swap(st["U"])
                 inner = lift if inner is None else inner + lift
-            D21 = D21 + inner @ B.swap(st["Qc"])
+            D21 = D21 + B.lmm(inner, B.swap(st["Qc"])[None], out="d21q")[0]
         return D3, B.zero_diag(D21, out="d21")
 
 
@@ -811,3 +849,157 @@ class Operator:
             return pk1v
         o = self.mlp(["last"], ctx["x"], 1)[0]
         return pk1v + o[:, 0] * (1e-3 * ctx["s"])
+
+
+# ---------------------------------------------------------------------------------------
+# The team's v5b operator (learned_relu_step v5b_mp_l8): input corrections only
+# ---------------------------------------------------------------------------------------
+MP_EDGES = 10
+MP_PAIRCH = 9
+
+
+class OperatorV5B:
+    """Input-correction model of the submitted v5b (the PDF's "input-correction model,
+    v5b (layers 9-15)", MSE 1.75e-8 at 25.3% budget), with its trained weights k34.npz
+    (f_self) and mp.npz (f_msg / f_pair / f_in). Layout:
+
+    * f_self (layers >= 2): 12 features -> 64 -> 64 -> 2 (GELU), standardized by (mu, sd):
+      alpha, D3/s^3, g4/s^4 (g4 = m dG), own-kurtosis transport sum_a W_ia^4 K4_a / s^4, the
+      off-diagonal variance share t_v / var, depth li/15, five Stein-type terms built from the
+      newborn A leg v_ai ~ Cov(z'_a, z_i) (S1, M1, T1 with v^3 weights, S3, M3 with v^2), and
+      the transported kappa4 "star" of the older sources. Outputs: g3 += 0.1 o_1, g4 += o_0.
+    * message passing (layers >= mp_from, not the trimmed last layer): x = (raw features,
+      g4', g3', 1) in R^15; net A (15 -> 192 -> 192 -> 88) gives the 16-dim first message
+      and the 9 x 4 left / right pair factors, net B (175 -> 64 -> 64 -> 16) the second
+      message, net O (335 -> 64 -> 64 -> 2) the residual on (g4', g3'); edges = 10 fixed
+      functions of rho and t = D21 / (s_i^2 s_j), each scaled by n / sum |E|; the pair term
+      adds sum_c B_c (L_c R_c^T) s_i s_j^3 to the (3,1) slice (B_0 = 1, B_1 = the chain's own
+      (3,1) slice / (s_i s_j^3), then t t^T, rho, rho^2, t, t^T, rho t, rho t^T).
+    * The new source's birth keeps the uncorrected kappa4 diagonal and scales the corrected
+      D3 (birth_corrected_dG = False, d3w_corrected = True), exactly as v5b."""
+
+    birth_corrected_dG = False
+    d3w_corrected = True
+
+    def __init__(self, B, k34, mp=None, mp_from=8):
+        self.B = B
+        self.k = k34          # dict: mu, sd, W0, b0, W1, b1, W2, b2
+        self.mp = mp          # dict: {A,B,O}_{W,b}{0,1,2} or None
+        self.mp_from = mp_from
+        self.star = int(k34["mu"].shape[0]) == 12
+        self.nets = ("v5b-k34",) + (("v5b-mp",) if mp is not None else ())
+        self.active = set()
+
+    def _mlp(self, x, p, pre):
+        B = self.B
+        h = B.gelu(x @ p[pre + "W0"] + p[pre + "b0"])
+        h = B.gelu(h @ p[pre + "W1"] + p[pre + "b1"])
+        return h @ p[pre + "W2"] + p[pre + "b2"]
+
+    def _mlp_mp(self, x, nm):
+        # bias of the first layer is the last row of W0 (x carries a ones column)
+        B, p = self.B, self.mp
+        h = B.gelu(x @ p[nm + "_W0"])
+        h = B.gelu(h @ p[nm + "_W1"] + p[nm + "_b1"])
+        return h @ p[nm + "_W2"] + p[nm + "_b2"]
+
+    def features(self, ctx):
+        B = self.B
+        li = ctx["li"]
+        var = ctx["var"]
+        s1 = ctx["s"]
+        s3 = var * s1
+        s4 = var * var
+        mu = ctx["mu"]
+        WW = ctx["WW"]
+        w32 = ctx["w32"]
+        ap, vp, D3p = ctx["alpha_prev"], ctx["varpre_prev"], ctx["D3c_prev"]
+        k4p = ctx["g4c_prev"]
+        g4 = ctx["dG"] * METRIC_C
+        own4 = (B.mul(WW, WW, out="w4f") @ ctx["K4v_prev"]) / s4
+        ph = B.pdf(ap)
+        Ph = B.cdf(ap)
+        ivp = 1.0 / vp
+        ivp2 = ivp * ivp
+        A_new = ctx["A_all"][-1]
+        # v_ai ~ Cov(z'_a, z_i): newborn A leg plus the diagonal (w1 var) part
+        v = B.add(B.swap(A_new), (ctx["w1_prev"] * vp)[:, None] * w32, out="v5b_v")
+        wv2 = B.mul(B.mul(w32, v, out="v5b_wv2"), v, out="v5b_wv2")
+        wv3 = B.mul(wv2, v, out="v5b_wv3")
+        q3 = ph / B.sqrt(vp)
+        S1 = ((-ap * ph * ivp) @ wv3) / s4
+        M1 = ((Ph * k4p * (ivp2 * ivp)) @ wv3) / s4
+        T1 = ((q3 * D3p * ivp2 * 3.0) @ wv3) / s4
+        S3 = (q3 @ wv2) / s3
+        M3 = ((Ph * D3p * ivp2) @ wv2) / s3
+        cols = [mu / s1, ctx["D3"] / s3, g4 / s4, own4, ctx["t_v"] / var,
+                s1 * 0.0 + li / 15.0, S1, M1, T1, S3, M3]
+        if self.star:
+            cols.append(self._star(ctx) / s4)
+        return B.stack(cols, 1), s1, s3, s4
+
+    def _star(self, ctx):
+        """sum over sources older than the newest of sum_j P_kij g3_kj (A + P d(cv_k))^3_ij."""
+        B = self.B
+        ko = ctx["A_all"].shape[0] - 1
+        if ko < 1:
+            return ctx["s"] * 0.0
+        A, P = ctx["A_all"][:ko], ctx["P_all"][:ko]
+        cv = B.stack(ctx["cvs"][:ko], 0)
+        g3 = B.stack(ctx["g3s"][:ko], 0)
+        V = B.add(B.mul(P, cv[:, None, :], out="t"), A, out="t")
+        U = B.mul(B.mul(V, V, out="x3"), V, out="x3")
+        U = B.mul(U, P, out="x3")
+        return B.sum(B.mm(U, g3[:, :, None])[:, :, 0], 0)
+
+    def pre(self, ctx):
+        B = self.B
+        li = ctx["li"]
+        F, s1, s3, s4 = self.features(ctx)
+        k = self.k
+        o = self._mlp((F - k["mu"][None, :]) / k["sd"][None, :], k, "")
+        y4 = F[:, 2] + o[:, 0]
+        y3 = F[:, 1] + o[:, 1] * 0.1
+        if self.mp is None or li < self.mp_from or ctx["last"]:
+            return y3 * s3, (y4 * s4) * (1.0 / METRIC_C), None
+        n = F.shape[0]
+        x = B.cat([F, B.stack([y4, y3, s1 * 0.0 + 1.0], 1)], 1)          # (n, 15)
+        is1 = 1.0 / s1
+        is2 = is1 * is1
+        rho = B.mul(B.mul(ctx["C_off"], is1[:, None], out="rho"), is1[None, :], out="rho")
+        t = B.mul(B.mul(ctx["D21"], is2[:, None], out="tt"), is1[None, :], out="tt")
+        tT = B.swap(t)
+        rho2 = B.mul(rho, rho, out="rho2")
+        rt = B.mul(rho, t, out="rhot")
+        rtT = B.mul(rho, tT, out="rhotT")
+        E = B.stack([rho, rho2, t, tT, rt, rtT, B.mul(rho2, rho, out="e2"), B.abs(rho, out="eabs"),
+                     B.mul(t, t, out="e6"), B.mul(tT, tT, out="e7")], 0, out="edges")
+        inv = float(n) / B.sum(B.sum(B.abs(E, out="edges_abs"), 2), 1)              # (10,)
+        a = self._mlp_mp(x, "A")                                                # (n, 88)
+        m1 = self._msg(E, inv, a[:, :16])
+        m2 = self._msg(E, inv, self._mlp_mp(B.cat([x, m1], 1), "B"))
+        oo = self._mlp_mp(B.cat([x, m1, m2], 1), "O")
+        g4n = y4 + oo[:, 0]
+        g3n = y3 + oo[:, 1]
+        # pair term on the (3,1) slice
+        chain31 = B.mul(B.mul(ctx["C_off"], (is1 * ctx["lam"])[:, None], out="k31n"),
+                        (is2 * is1)[None, :], out="k31n")               # (lam C_off) / (s_i s_j^3)
+        Bp = B.stack([chain31, B.mul(t, tT, out="ttT"), rho, rho2, t, tT, rt, rtT], 0, out="pairch")
+        Lf = B.swapaxes01(B.reshape(a[:, 16:52], (n, MP_PAIRCH, 4)))           # (9, n, 4)
+        Rf = B.swapaxes01(B.reshape(a[:, 52:88], (n, MP_PAIRCH, 4)))
+        LR = B.mm(Lf, B.swap(Rf), out="pair_lr")                                # (9, n, n)
+        Dl = B.sum(B.mul(LR[1:], Bp, out="pair_lc"), 0) + LR[0]
+        kap31 = B.zero_diag(B.mul(B.mul(Dl, s1[:, None], out="fp"), s3[None, :], out="fp"), out="fp")
+        return g3n * s3, (g4n * s4) * (1.0 / METRIC_C), kap31
+
+    def _msg(self, E, inv, F):
+        B = self.B
+        M = B.mm(E, F) * inv[:, None, None]                                    # (10, n, 16)
+        M = B.swapaxes01(M)
+        return B.reshape(M, (M.shape[0], M.shape[1] * M.shape[2]))
+
+    def post(self, ctx, q):
+        return None
+
+    def last(self, ctx, pk1v):
+        return pk1v

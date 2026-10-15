@@ -141,6 +141,12 @@ class TorchBackend:
     def hub(self, X, Y, out=None, kind="hub"):
         return torch.einsum("bsij,bscj->ic", X, Y)
 
+    def lmm(self, X, Ys, out=None, kind="join"):
+        return torch.matmul(X, Ys)
+
+    def hub2(self, XA, XP, YA, YP, out=None, kind="hub"):
+        return torch.einsum("bij,bcj->ic", XA, YA) + torch.einsum("bij,bcj->ic", XP, YP)
+
     def symprod(self, X, Y, out=None):
         return X @ Y
 

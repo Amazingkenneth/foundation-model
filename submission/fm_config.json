@@ -1,24 +1,28 @@
 {
-  "_comment": "Strassen-Winograd recursion depth per n^3 family (0 = dense). Deeper = fewer FLOPs, more flopscope ops (residual time, capped at 400 ms per MLP). first_levels applies to the first predict() of a process, which also pays buffer allocation. compact = how many top levels use the coefficient-matmul combinations (6 ops/level, more FLOPs) instead of grouped block additions (15 ops/level). Default is the conservative setting (local residual ~0.31-0.33 s, C/B ~0.327); levels family=3, hub=3 cuts C/B to ~0.309 at ~0.35-0.39 s local residual.",
+  "_comment": "Strassen-Winograd recursion depth per n^3 family (0 = dense): family = transport of the young legs + newborn + covariance, hub = young-source D21 contraction, form / inner = shared-basis formings / contractions, sym = covariance sandwich, join = the joiner's n x n x r products. Deeper = fewer FLOPs, more flopscope ops (residual time, capped at 400 ms per MLP on the grader). Batches are chunked so no array exceeds the grader's 100 MiB cap. fuse = form the deepest level's seven products one at a time (7x smaller deepest stacks, half the chunks). first_levels applies to the first predict() of a process, which also pays buffer allocation. compact = how many top levels use the coefficient-matmul combinations (6 ops/level, more FLOPs) instead of grouped block additions (15 ops/level). Calibration on this repo's container: the team's v5b submission (graded fine) runs at ~1.2 s local residual; this setting runs at 0.94-1.03 s (C/B 0.2665 with the v5b operator).",
   "levels": {
-    "family": 2,
-    "hub": 2,
-    "form": 1,
-    "inner": 1,
-    "sym": 0
+    "family": 5,
+    "hub": 4,
+    "form": 3,
+    "inner": 3,
+    "sym": 3,
+    "join": 3
   },
   "first_levels": {
-    "family": 1,
-    "hub": 1,
-    "form": 0,
-    "inner": 0,
-    "sym": 0
+    "family": 4,
+    "hub": 4,
+    "form": 3,
+    "inner": 3,
+    "sym": 3,
+    "join": 3
   },
   "compact": {
     "family": 2,
     "hub": 2,
     "form": 1,
     "inner": 1,
-    "sym": 1
-  }
+    "sym": 1,
+    "join": 1
+  },
+  "fuse": true
 }

@@ -87,3 +87,39 @@ def make_operator(B, params: OperatorParams, active=DEFAULT_ACTIVE):
 def torch_weights(seed):
     from .mlps import make_weights
     return [torch.from_numpy(w) for w in make_weights(seed)]
+
+
+# ---- the team's v5b operator (fm_core.OperatorV5B): k34.npz (f_self) + mp.npz (messages) ----
+V5B_K34_TRAIN = ("W0", "b0", "W1", "b1", "W2", "b2")
+V5B_MP_KEYS = tuple(f"{a}_{w}{i}" for a in "ABO" for w in "Wb" for i in range(3))
+
+
+class V5BParams(torch.nn.Module):
+    """Trainable v5b weights, initialized from submission/k34.npz + mp.npz; the feature
+    standardization (mu, sd) stays fixed."""
+
+    def __init__(self, k34_path, mp_path=None):
+        super().__init__()
+        z = np.load(k34_path)
+        self.register_buffer("mu", torch.from_numpy(z["mu"].astype(np.float32)))
+        self.register_buffer("sd", torch.from_numpy(z["sd"].astype(np.float32)))
+        self.k34 = torch.nn.ParameterDict(
+            {k: torch.nn.Parameter(torch.from_numpy(z[k].astype(np.float32))) for k in V5B_K34_TRAIN})
+        self.mp = None
+        if mp_path is not None and os.path.exists(mp_path):
+            z = np.load(mp_path)
+            self.mp = torch.nn.ParameterDict(
+                {k: torch.nn.Parameter(torch.from_numpy(z[k].astype(np.float32))) for k in V5B_MP_KEYS})
+
+    def operator(self, B):
+        k34 = dict(self.k34.items(), mu=self.mu, sd=self.sd)
+        return fm_core.OperatorV5B(B, k34, None if self.mp is None else dict(self.mp.items()))
+
+    def export(self, out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+        k = {n: v.detach().numpy().astype(np.float32) for n, v in self.k34.items()}
+        k.update(mu=self.mu.numpy(), sd=self.sd.numpy())
+        np.savez(os.path.join(out_dir, "k34.npz"), **k)
+        if self.mp is not None:
+            np.savez(os.path.join(out_dir, "mp.npz"),
+                     **{n: v.detach().numpy().astype(np.float32) for n, v in self.mp.items()})

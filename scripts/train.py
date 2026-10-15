@@ -12,6 +12,12 @@ flow through every layer after it. The epoch with the lowest validation MSE is k
     python scripts/train.py --stage 1 --epochs 8 --out runs/s1
     python scripts/train.py --stage 2 --epochs 8 --init runs/s1/best.pt --out runs/s2
 
+``--v5b submission`` instead fine-tunes the team's v5b operator (fm_core.OperatorV5B, from
+k34.npz + mp.npz in that folder) end to end from layer 1 and writes k34.npz + mp.npz into
+--out (drop them into submission/ to ship):
+
+    python scripts/train.py --v5b submission --epochs 4 --lr 2e-5 --out runs/v5b
+
 On CPU, run with jemalloc (LD_PRELOAD=libjemalloc.so.2) so freed pages are reused.
 """
 
@@ -31,15 +37,16 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 sys.path.insert(0, ROOT)
 
 from fm.mlps import DATA_DIR, load_split  # noqa: E402
-from fm.model import (OperatorParams, fm_core, make_chain, make_operator,  # noqa: E402
-                      torch_weights)
+from fm.model import (OperatorParams, V5BParams, fm_core, make_chain,  # noqa: E402
+                      make_operator, torch_weights)
 
 
 LOSS_SCALE = 1e7
 
 
 def cached_state(chain, seed, start, cache_dir):
-    p = os.path.join(cache_dir, f"{seed}_{start}.pt")
+    # v2: the chain state carries the v5b operator's feature inputs
+    p = os.path.join(cache_dir, f"{seed}_{start}_v2.pt")
     if os.path.exists(p):
         return torch.load(p, weights_only=False)
     ws = torch_weights(seed)
@@ -90,8 +97,25 @@ def loss_fn(pred, target, L, start):
     return (lam * err).sum(), err.detach()
 
 
+def build_op(B, params, active):
+    if params is None:
+        return None
+    if isinstance(params, V5BParams):
+        return params.operator(B)
+    return make_operator(B, params, active)
+
+
+def save(params, out, active):
+    if isinstance(params, V5BParams):
+        params.export(out)
+        torch.save(dict(v5b=True, state=params.state_dict()), os.path.join(out, "best.pt"))
+    else:
+        torch.save(dict(nets=params.nets, state=params.state_dict()), os.path.join(out, "best.pt"))
+        params.export(os.path.join(out, "fm_weights.npz"), active)
+
+
 def evaluate(chain, B, params, data, start, cache_dir, active):
-    op = None if params is None else make_operator(B, params, active)
+    op = build_op(B, params, active)
     out = []
     with torch.no_grad():
         for d in data:
@@ -118,7 +142,10 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--min-train-samples", type=int, default=500000)
     ap.add_argument("--min-val-samples", type=int, default=1000000)
+    ap.add_argument("--v5b", default=None, help="folder with k34.npz + mp.npz: fine-tune the v5b operator")
     args = ap.parse_args()
+    if args.v5b:
+        args.active_from = 1          # f_self acts from the second layer on
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
     os.makedirs(args.out, exist_ok=True)
@@ -136,7 +163,9 @@ def main() -> None:
     print(f"train {len(train)} val {len(val)}  active layers (0-based) {active} + last", flush=True)
     B, chain = make_chain(n, L)
 
-    if args.init:
+    if args.v5b:
+        params = V5BParams(os.path.join(args.v5b, "k34.npz"), os.path.join(args.v5b, "mp.npz"))
+    elif args.init:
         ck = torch.load(args.init, weights_only=False)
         params = OperatorParams(nets=ck["nets"])
         params.load_state_dict(ck["state"])
@@ -155,10 +184,13 @@ def main() -> None:
             params.xstd.copy_(X.std(0).clamp_min(1e-6))
         print("feature mean", params.xmean.numpy().round(4).tolist(), flush=True)
         print("feature std ", params.xstd.numpy().round(4).tolist(), flush=True)
-    if args.stage == 2:
-        params.add_stage2(seed=args.seed + 1)
-    train_names = fm_core.STAGE1 if args.stage == 1 else tuple(params.nets)
-    trainable = [p for k, p in params.p.items() if k.split("__")[0] in train_names]
+    if args.v5b:
+        trainable = list(params.parameters())
+    else:
+        if args.stage == 2:
+            params.add_stage2(seed=args.seed + 1)
+        train_names = fm_core.STAGE1 if args.stage == 1 else tuple(params.nets)
+        trainable = [p for k, p in params.p.items() if k.split("__")[0] in train_names]
     opt = torch.optim.Adam(trainable, lr=args.lr)
 
     # precompute the cached states (one uncorrected run of layers < start per network)
@@ -173,8 +205,7 @@ def main() -> None:
           f"init {cur_val[0]:.4e} (noise-corr {cur_val[1]:.4e})", flush=True)
     best = cur_val[0]
     hist = [dict(epoch=0, val=cur_val[0], val_corr=cur_val[1], base=base_val[0])]
-    torch.save(dict(nets=params.nets, state=params.state_dict()), os.path.join(args.out, "best.pt"))
-    params.export(os.path.join(args.out, "fm_weights.npz"), active)
+    save(params, args.out, active)
     rng = np.random.default_rng(args.seed)
     for ep in range(1, args.epochs + 1):
         t0 = time.time()
@@ -182,7 +213,7 @@ def main() -> None:
         tl, tf = [], []
         for i in order:
             d = train[i]
-            op = make_operator(B, params, active)
+            op = build_op(B, params, active)
             pred = run_net(chain, B, op, d, start, cache_dir)
             tgt = torch.from_numpy(d["means"][start:]).float()
             loss, err = loss_fn(pred, tgt, L, start)
@@ -203,9 +234,8 @@ def main() -> None:
         if v[0] < best:
             best = v[0]
             tag = "  * best"
-            torch.save(dict(nets=params.nets, state=params.state_dict()), os.path.join(args.out, "best.pt"))
-            params.export(os.path.join(args.out, "fm_weights.npz"), active)
-        torch.save(dict(nets=params.nets, state=params.state_dict()), os.path.join(args.out, "last.pt"))
+            save(params, args.out, active)
+        torch.save(dict(state=params.state_dict()), os.path.join(args.out, "last.pt"))
         print(f"epoch {ep}: train loss {np.mean(tl):.4e} (final noise-corr {np.mean(tf):.4e})  "
               f"val {v[0]:.4e} (noise-corr {v[1]:.4e}, analytic {base_val[1]:.4e})  "
               f"{time.time() - t0:.0f}s{tag}", flush=True)

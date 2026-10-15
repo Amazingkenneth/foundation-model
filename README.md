@@ -13,13 +13,14 @@ neurons, pairs, layers and networks.
 
 | path | what |
 |---|---|
-| `submission/` | **the shipped folder** (pure stdlib + flopscope): `estimator.py` (entry point), `fm_core.py` (chain + operator, backend-agnostic), `backend_fnp.py` (flopscope backend: pooled buffers, Strassen-Winograd families), `fm_tables.py` (Wick/term coefficient tables), `fm_weights.npz` (trained theta) |
+| `submission/` | **the shipped folder** (pure stdlib + flopscope): `estimator.py` (entry point), `fm_core.py` (chain + operators, backend-agnostic), `backend_fnp.py` (flopscope backend: pooled buffers, chunked Strassen-Winograd families), `fm_tables.py` (Wick/term coefficient tables), `fm_config.json` (Strassen depths), `k34.npz` + `mp.npz` (the team's trained v5b operator), `LICENSE_504aldo` (MIT, the chain math) |
 | `fm/` | training side: `backend_torch.py` (same chain on torch, autograd), `model.py` (parameters, init, export), `mlps.py` (suite-shape MLPs, MC data access) |
 | `scripts/gen_data.py` | Monte Carlo ground truth mu_MC^(l) for training/validation MLPs (resumable, top-up) |
 | `scripts/train.py` | Algorithm 2 (stage 1: input corrections; stage 2: + output corrections) |
 | `scripts/eval_fnp.py` | the submission under flopscope on local ground truth: C/B, residual time, MSE |
 | `scripts/parity.py` | torch chain vs flopscope chain (with and without the operator) |
 | `scripts/smoke.py` | allowed-imports check, non-suite shapes, weights load |
+| `scripts/capcheck.py` | largest array allocated by `predict()` (the grader rejects arrays > 100 MiB), C/B, residual |
 | `scripts/package.sh`, `scripts/submit.sh`, `scripts/install-hooks.sh` | packaging / submission automation |
 | `.github/workflows/submit.yml` | CI: validate + package + (optionally) submit on every push that touches `submission/` |
 
@@ -64,58 +65,114 @@ kurtosis after `f_self`.
 it on flopscope (`backend_fnp`), training on torch (`fm/backend_torch.py`). `scripts/parity.py`
 checks the two agree.
 
+## The shipped operator: the team's v5b
+
+`submission/k34.npz` + `submission/mp.npz` are the trained weights of the team's v5b
+submission (`learned_relu_step_v5b_mp_l8_strassen5`), run by `fm_core.OperatorV5B` on this
+repository's chain. `estimator.py` uses `fm_weights.npz` (the paper's ten-network operator)
+if present, else the v5b pair, else the analytic chain. The v5b operator:
+
+* `f_self` (layers >= 2): 12 features (alpha, skewness, kappa4 m dG / s^4, own-kurtosis
+  transport, off-diagonal variance share, depth, five Stein-type terms of the newborn A leg,
+  the transported kappa4 "star" of the older sources) -> 64 -> 64 -> 2; g4 += o_0,
+  g3 += 0.1 o_1.
+* message passing (layers >= 8, not the last): x = (raw features, g4', g3', 1) in R^15; net A
+  (15 -> 192 -> 192 -> 88: the first message and 9 x 4 left / right pair factors), net B
+  (175 -> 64 -> 64 -> 16), net O (335 -> 64 -> 64 -> 2: the residual on g4', g3'); ten edge
+  matrices (rho, rho^2, t, t^T, rho t, rho t^T, rho^3, |rho|, t^2, (t^T)^2) scaled by
+  n / sum |E|; the pair term adds sum_c B_c (L_c R_c^T) s_i s_j^3 to the (3,1) slice over nine
+  channels (1, the chain's own kappa_iiij / (s_i s_j^3), t t^T, rho, rho^2, t, t^T, rho t, rho t^T).
+* births keep the uncorrected kappa4 diagonal and scale the corrected D3, as v5b does.
+
+Checked against the team's own v5b estimator on the 11 local validation networks (1e6-sample
+targets), noise-corrected final-layer MSE:
+
+| | MSE | C/B | MSE x C/B |
+|---|---|---|---|
+| analytic chain (previous default) | 1.54e-8 | 0.327 | 5.0e-9 |
+| this chain + v5b operator, previous Strassen depths | 1.331e-8 | 0.331 | 4.41e-9 |
+| **this chain + v5b operator, shipped depths** | **1.345e-8** | **0.2665** | **3.58e-9** |
+| the team's v5b estimator | 1.326e-8 | 0.2517 | 3.34e-9 |
+
+At the previous depths the port agrees with v5b to ~1e-6 relative per layer; the deeper
+float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1% MSE).
+
 ## Cost engineering (flopscope backend)
 
-* Strassen-Winograd recursion for the n^3 families (transport of the young legs + the
-  newborn A leg + the covariance in one batched product, the hub contraction of the young
-  sources, the shared-basis formings and contractions), written as ordinary flopscope ops.
-  Each level is either *compact* (quadrant gather + one 7x4 coefficient matmul per operand,
-  one 4x7 matmul + scatter for the assembly: 6 ops) or *grouped* (products stored in the
-  slot order M5 M6 M2 M3 M0 M1 M4 so every pair of combinations is one strided op: 15 ops).
-  Depths per family are in `submission/fm_config.json`.
-* The 400 ms residual cap is spent on per-op dispatch and view creation, not arithmetic:
-  every large result is written into a persistent pooled buffer, every view of a pooled
-  buffer is cached, the nonlinear term program is folded into ~10 matrix classes (one
-  batched thin product), and the first `predict()` of a process runs shallower Strassen.
-* Measured with `whest run --runner subprocess` (the grader's transport, 8 GB memory
-  limit, 400 ms residual cap) on this repository's 4-core container, analytic chain:
+* **Strassen-Winograd** recursion for every n^3 product family (the transport of the young
+  legs + the newborn A leg + the covariance in one batched product, the hub contraction of
+  the young sources, the shared-basis formings and contractions, the covariance sandwich,
+  and the joiner's n x n x 384 range-finder / projection / rotation products), written as
+  ordinary flopscope ops. Each level is either *compact* (quadrant gather + one 7x4
+  coefficient matmul per operand, one 4x7 matmul + scatter for the assembly: 6 ops) or
+  *grouped* (products stored in the slot order M5 M6 M2 M3 M0 M1 M4 so every pair of
+  combinations is one strided op: 15 ops).
+* **The 100 MiB per-array cap** (graded runs reject larger arrays): every batched product
+  runs in balanced batch chunks sized so that its deepest combination stack
+  (batch x 1.75^depth x operand) stays under 88 MiB (`CAP_FLOATS`); the A and P legs are kept
+  as two (k, n, n) stacks (one (k, 2, n, n) stack would be 120 MiB at k = 15).
+  `scripts/capcheck.py` reports the largest array: 85.8 MiB for the shipped setting.
+* **Fewer ops per chunk** (from v5b's Strassen): a family's shared left operand (the layer
+  weight, a basis) has its combinations computed once and reused by every chunk, and the
+  deepest level forms its seven products one at a time (`FUSE`), so the deepest stacks are 7x
+  smaller and each chunk holds twice the planes.
+* The residual cap is spent on per-op dispatch and view creation, not arithmetic: every
+  large result is written into a persistent pooled buffer, every view of a pooled buffer is
+  cached, the nonlinear term program is folded into ~10 matrix classes, and the first
+  `predict()` of a process runs one level shallower.
+* Measured in-process on this repository's 4-core container with the v5b operator (calls 2
+  and 3 of a process; flopscope 0.12):
 
-  | `fm_config.json` levels (family, hub, form, inner) | C/B | residual / MLP | wall / MLP | peak RSS |
-  |---|---|---|---|---|
-  | **2, 2, 1, 1 (default)** | 0.327 | 0.31-0.33 s | 24-31 s | < 4 GB |
-  | 3, 3, 1, 1 | 0.309 | 0.35-0.39 s | 33-41 s | 4.0 GB |
-  | 4, 4, 1, 1 | ~0.295 | ~0.39-0.59 s | 45-80 s | > 7.6 GB (fails the 8 GB limit) |
+  | `fm_config.json` levels (family, hub, form, inner, sym, join) | C/B | residual / MLP | wall / MLP |
+  |---|---|---|---|
+  | 2, 2, 1, 1, 0, 0 (previous default) | 0.331 | 0.42-0.46 s | 26-28 s |
+  | 4, 4, 3, 3, 3, 3 | 0.272 | 0.79-0.82 s | 61 s |
+  | **5, 4, 3, 3, 3, 3 (default)** | **0.2665** | **0.91-0.95 s** | **74-80 s** |
+  | 5, 5, 3, 3, 3, 3 | 0.264 | 1.03-1.17 s | 87 s |
+  | the team's v5b estimator (graded fine) | 0.2517 | 1.19-1.22 s | 124-138 s |
 
-  With a full operator shipped (all ten networks, layers 9..16) the default row costs
-  C/B 0.331 (+0.004) and ~0.07 s more residual here (0.37-0.44 s, i.e. over the cap on
-  *this* machine for the first two MLPs of a process): when you ship weights, look at the
-  graded per-MLP residual first, and if it is tight lower `levels` (e.g. family/hub 1) or
-  shrink the active layer range (`active` in the weights file).
+  The grader's per-op cost is far lower than this container's: 504aldo's V29 (same Strassen
+  depth, C/B 0.2526, live on the leaderboard) reports ~0.29 s there, and v5b, its descendant,
+  measures ~1.2 s here, so this container is ~4x slower in residual; the default keeps ~25%
+  margin under v5b's local residual (and 80 s vs 130 s wall, also with one BLAS thread, as
+  on the grader). `whest run --runner subprocess` here therefore flags every MLP (it applies
+  the 400 ms cap to this container's clock); judge by the graded `residual_wall_time_s`.
+  Edit `submission/fm_config.json` (no code change) to move along the table.
+* Where the FLOPs go (default, fractions of the budget): the leaf products of the transport
+  family and the young hub 0.107, the shared-basis formings / contractions ~0.05, the joiner
+  ~0.02, its dense r x r Gram (384 x 1024 x 384) 0.007, the term program and messages ~0.005,
+  copies / additions ~0.01. Family by family this matches v5b except the hub, which v5b runs
+  one level deeper (5), and its slightly leaner joiner and copies.
 
-  The default is the conservative row because one failed MLP (zeroed predictions) costs
-  far more than a few percent of FLOPs. The grader's per-op cost is expected to be lower
-  than this container's (504aldo reports ~0.02 ms/op there vs ~0.05 ms here); **check
-  `residual_wall_time_s` in the first graded report** and move to the 3, 3 row by editing
-  `submission/fm_config.json` (no code change) if there is room.
+## Next steps (team meeting)
 
-## Results in this repository
+* **Option B, accelerate the linear part.** Done here: deeper chunked Strassen everywhere,
+  the joiner and the covariance sandwich on Strassen, LeftTree reuse, fused last level
+  (C/B 0.331 -> 0.2665 at equal accuracy). Open: the top teams spend 10-13% of the budget;
+  the next gains need structure rather than faster dense products, e.g. recycling the
+  products shared by the first-, second- and third-order transports (W C W^T and W A_s share
+  the left factor W; the D3 / D21 slices reuse the hub legs), and lower-rank young legs.
+* **More training data for the ReLU operator.** `scripts/gen_data.py` is resumable and
+  tops up existing files; `scripts/train.py --v5b submission` fine-tunes the v5b operator
+  end to end (torch, checkpointed through layers 1..15) and writes `k34.npz` + `mp.npz`
+  to ship. With the 64 local networks the target noise (~1.4e-7 per network) dominates the
+  analytic error, so retraining only pays with many more networks and samples.
+
+## Results in this repository (paper operator, before the v5b port)
 
 * **Analytic chain** (no operator): final-layer MSE against the local Monte Carlo ground
   truth, corrected for the MC noise of the targets, **1.54e-8** on 11 validation MLPs
   (1e6 samples each) -- the same for the torch chain and the flopscope submission
-  (`scripts/parity.py`: per-layer agreement ~1e-6 relative, final-layer MSE gap 1e-11).
+  (`scripts/parity.py`: per-layer agreement ~1e-6 relative, final-layer MSE gap ~5e-11).
   For reference the PDF quotes 2.23e-8 for the analytic K=3 chain on the public suite.
-* **Learned operator**: the full Algorithm 2 pipeline runs (both stages, checkpointed
-  backprop through layers 9..16, export, flopscope inference with parity to torch at
-  4.8e-11 with all ten networks active). Trained here on **64** networks with 5e5-sample
-  targets (the paper: 600 networks) the corrections do **not** generalize: the target noise
-  (~1.4e-7 per network) is ~10x the analytic error, and the validation MSE rises
-  (1.55e-8 -> 1.63e-8 -> 1.92e-8 over two stage-1 epochs) while the training MSE falls.
-  Model selection therefore keeps epoch 0 (= the analytic chain), and **no
-  `fm_weights.npz` is shipped**: the submission runs the analytic chain. To reproduce the
-  paper's gain, generate the paper's 600 + 50 networks with precise targets on a larger
-  machine (`scripts/gen_data.py`, resumable) and run `scripts/train_all.sh`; dropping the
-  resulting `fm_weights.npz` into `submission/` enables the operator with no code change.
+* **Learned operator** (the paper's ten networks): the full Algorithm 2 pipeline runs (both
+  stages, checkpointed backprop through layers 9..16, export, flopscope inference with
+  parity to torch). Trained here on **64** networks with 5e5-sample targets (the paper: 600
+  networks) the corrections do **not** generalize: the target noise (~1.4e-7 per network)
+  is ~10x the analytic error, and the validation MSE rises (1.55e-8 -> 1.63e-8 -> 1.92e-8
+  over two stage-1 epochs) while the training MSE falls. So no `fm_weights.npz` is shipped;
+  the submission runs the team's v5b operator instead. Dropping a better `fm_weights.npz`
+  into `submission/` takes precedence with no code change.
 
 ## Reproduce
 
@@ -128,8 +185,11 @@ python scripts/gen_data.py --split val   --seeds 5000-5049 --samples 4000000
 python scripts/train.py --stage 1 --epochs 8 --out runs/s1
 python scripts/train.py --stage 2 --epochs 8 --init runs/s1/best.pt --out runs/s2
 cp runs/s2/fm_weights.npz submission/
+#    or fine-tune the shipped v5b operator: writes runs/v5b/k34.npz + mp.npz
+python scripts/train.py --v5b submission --epochs 4 --lr 2e-5 --out runs/v5b
 # 3. check
 python scripts/parity.py
+python scripts/capcheck.py
 python scripts/eval_fnp.py --split val
 # 4. package / submit
 scripts/package.sh

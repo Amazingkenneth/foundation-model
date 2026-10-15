@@ -48,6 +48,21 @@ def load_operator_params(path):
     return params, xmean, xstd, active, sorted(params)
 
 
+V5B_K34 = "k34.npz"
+V5B_MP = "mp.npz"
+
+
+def load_v5b_params(k34_path, mp_path):
+    z = fnp.load(str(k34_path))
+    k34 = {k: fnp.asarray(z[k], dtype=F32) for k in ("mu", "sd", "W0", "b0", "W1", "b1", "W2", "b2")}
+    mp = None
+    if os.path.exists(mp_path):
+        z = fnp.load(str(mp_path))
+        mp = {f"{a}_{w}{i}": fnp.asarray(z[f"{a}_{w}{i}"], dtype=F32)
+              for a in "ABO" for w in "Wb" for i in range(3)}
+    return k34, mp
+
+
 def mean_propagation(mlp):
     """Fallback for non-suite shapes: per-neuron Gaussian mean/variance propagation."""
     n = mlp.width
@@ -91,6 +106,7 @@ class Estimator(BaseEstimator):
                 self._levels.update(cfg.get("levels", {}))
                 self._first.update(cfg.get("first_levels", {}))
                 self._B.compact.update(cfg.get("compact", {}))
+                backend_fnp.FUSE = bool(cfg.get("fuse", backend_fnp.FUSE))
                 break
         cand = [os.path.join(str(sub), WEIGHTS)] if sub is not None else []
         cand.append(os.path.join(_HERE, WEIGHTS))
@@ -100,7 +116,14 @@ class Estimator(BaseEstimator):
             if os.path.exists(p):
                 params, xmean, xstd, active, nets = load_operator_params(p)
                 self._op = fm_core.Operator(self._B, params, xmean, xstd, active, nets)
-                break
+                return
+        # the team's trained v5b input-correction operator (k34.npz + mp.npz)
+        for d in ([str(sub)] if sub is not None else []) + [_HERE]:
+            pk = os.path.join(d, V5B_K34)
+            if os.path.exists(pk):
+                k34, mp = load_v5b_params(pk, os.path.join(d, V5B_MP))
+                self._op = fm_core.OperatorV5B(self._B, k34, mp)
+                return
 
     def predict(self, mlp: MLP, budget: int) -> fnp.ndarray:
         _ = budget

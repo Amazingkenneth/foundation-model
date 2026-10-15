@@ -4,7 +4,7 @@ Runs both backends on the same MLP, without the operator and with a randomly ini
 operator (all ten networks, output layers scaled up so every correction is active), and
 reports the maximum relative deviation of the per-layer means.
 
-    python scripts/parity.py [--seed 1000] [--big]
+    python scripts/parity.py [--seed 1000] [--levels '{"family": 5, "hub": 5}']
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=1000)
     ap.add_argument("--scale", type=float, default=10.0, help="output-layer scale of the random operator")
+    ap.add_argument("--levels", default=None, help='JSON Strassen levels for the flopscope side, e.g. {"family": 5}')
     args = ap.parse_args()
     import torch
     import flopscope as flops
@@ -54,6 +55,9 @@ def main() -> None:
             rows_t, _ = chain.run(tw, hooks=op)
         rt = np.stack([r.numpy() for r in rows_t]).astype(np.float64)
         FB = FnpBackend()
+        if args.levels:
+            import json
+            FB.levels.update(json.loads(args.levels))
         fchain = fm_core.Chain(FB, fm_core.Consts(FB), 1024, 16)
         fop = None
         if use_op:
