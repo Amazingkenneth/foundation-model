@@ -567,6 +567,12 @@ class FnpBackend:
     # ---- reductions / structure ----
     def sum(self, x, axis, out=None):
         if out is None:
+            if isinstance(axis, (tuple, list)):
+                # the graded flopscope client sends tuples as lists, which the server's
+                # sum rejects: reduce one axis at a time, highest first
+                for a in sorted((a % x.ndim for a in axis), reverse=True):
+                    x = fnp.sum(x, axis=a)
+                return x
             return fnp.sum(x, axis=axis)
         ax = (axis,) if isinstance(axis, int) else tuple(axis)
         ax = tuple(a % x.ndim for a in ax)

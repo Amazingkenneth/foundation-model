@@ -144,24 +144,35 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
   copies / additions ~0.01. Family by family this matches v5b except the hub, which v5b runs
   one level deeper (5), and its slightly leaner joiner and copies.
 
-## Submission candidates (Oct 15) and how to submit them
+## Graded submissions (Oct 15) and what the grader enforces
 
-`docs/notes_13-15_evaluation.md` evaluates the teammates' Option B brainstorm notes against
-this estimator (most of their savings target a pair MLP and a quartic Q contraction that
-this code never runs) and records the knob sweeps. Graded candidates, best first
-(11 local networks, MSE x C/B):
+| submission | folder | graded score | raw MSE | C/B |
+|---|---|---|---|---|
+| team v5b (leaderboard row CLG, before) | -- | 4.4e-9 | 1.75e-8 | 0.2518 |
+| 336284 (+ an earlier identical one) | `candidates/v5b_rfhub` (v5b, RLEV 4, min blocks 24/28, joiner hub on Strassen) | 4.2513e-9 | 1.7537e-8 | 0.2424 |
+| 336295 | **`candidates/v5b_rg`** (rfhub + the n x 384 Gram / basis products on Strassen) | **4.1705e-9** | 1.7534e-8 | 0.2378 |
+| 336265 / 336269 / 336281 | level-6 hub / family variants (s6, h6, ga) | failed ("Error while scoring") | | |
 
-| candidate | how to submit | MSE | C/B | MSE x C/B | local residual / wall |
-|---|---|---|---|---|---|
-| `candidates/v5b_rfhub` (team v5b, RLEV 4, min blocks 24/28, joiner hub on Strassen) | Actions -> package-and-submit -> Run workflow, folder `candidates/v5b_rfhub` | 1.336e-8 | 0.2424 | **3.24e-9** | 1.31-1.47 s / 135-166 s |
-| team v5b as graded (leaderboard row CLG) | -- | 1.326e-8 | 0.2517 | 3.34e-9 | 1.21-1.29 s / 128-150 s |
-| `submission/` + `candidates/configs/deep16.json` | folder `submission`, config `candidates/configs/deep16.json` | ~1.35e-8 | 0.257 | ~3.46e-9 | 1.21 s / 103 s |
-| `submission/` as shipped | push / Run workflow with defaults | 1.345e-8 | 0.2665 | 3.58e-9 | 0.91-0.95 s / 74-80 s |
+What the grader enforces that in-process flopscope does not (reproduced with
+`scripts/grader_emulator.sh`, which runs an estimator against `flopscope-server` /
+`flopscope-client` 0.12.0 like the grader):
 
-The workflow follows grading (`--watch`), so its log ends with the graded score, FLOPs and
-residual: check `residual_wall_time_s` there before moving to deeper settings. Submitting
-needs the repository secret `AICROWD_API_KEY` (this cloud container cannot reach
-aicrowd.com); `SUBMISSION_DIR=... scripts/package.sh` packages any folder locally.
+* every op is an IPC round trip, so wall and residual time scale with the op count far more
+  than in-process: the failed level-6 variants ran ~150 s in-process like rfhub, but 215-220
+  s under the emulator; rfhub / rg run 145-178 s there and pass. Treat ~175 s emulator wall
+  as the ceiling.
+* a per-result array cap (`FLOPSCOPE_MAX_ARRAY_BYTES`): a 134,873,088-byte result passes, a
+  137,682,944-byte one fails (the server default, 100 MiB, is lower than the grader's).
+* client/server argument encoding: tuples arrive as lists (`fnp.sum(x, axis=(0, 2))` fails);
+  `submission/` was fixed for this (it had never been graded).
+
+On the client runtime `submission/` (this repository's backend) is far lighter than v5b
+(deep16: 92-97 s, residual 0.75 s), but even at family depth 6 it stays at C/B 0.255, and
+its MSE is ~1.4% above v5b's, so the v5b line is the one to submit. Submit a folder with
+`SUBMISSION_DIR=candidates/v5b_rg scripts/package.sh && whest submit dist/<artifact>`, or
+from CI (Actions -> package-and-submit -> Run workflow, folder `candidates/v5b_rg`; needs
+the `AICROWD_API_KEY` secret). Evaluation of the teammates' notes 13-15:
+`docs/notes_13-15_evaluation.md`.
 
 ## Next steps (team meeting)
 

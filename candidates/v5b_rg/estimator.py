@@ -160,9 +160,16 @@ MP_LI_MIN = 8  # optg: message-passing hooks only at layers li >= MP_LI_MIN
 
 # optc Strassen kernel: square n x n families at SLEV levels in batch chunks of SB (largest
 # array 86 MiB at 4 levels); n x 384 basis families at RLEV levels with leaf blocks >= RMB.
-RFHUB = 0  # range-finder hub on Strassen too
+RFHUB = 1  # range-finder hub on Strassen too
 T2MB = 28  # tier-2 (rank 224) families: 2 Strassen levels, leaf 56
 SLEV, SB, RLEV, RMB = 5, 2, 4, 24
+
+
+def _sd(A, Bm, lev=3, mb=48):
+    """Dense 2-D A @ Bm on the Strassen kernel (the n x 384 Gram / basis products)."""
+    out = fnp.empty((1, A.shape[0], Bm.shape[1]), dtype=fnp.float32)
+    _smm(A[None], Bm[None], lev, out, mb=mb)
+    return out[0]
 
 
 def _mmc(X, R, lev, out, bmax=SB, mb=None):
@@ -742,7 +749,7 @@ class Estimator(BaseEstimator):
                         if ka > 0:
                             # V24: full core of the confined legs = tier-1 core + lifted tier-2 core
                             Sfull = Sg if kb == 0 else Sg + U @ (S2 @ U.T)
-                            Yq = Yq + Qp @ (Sfull @ (Qp.T @ Om))
+                            Yq = Yq + Qp @ (Sfull @ _sd(Qp.T, Om))
                         Qn, _ = fnp.linalg.qr(Yq)           # (n, r) orthonormal
                         Om = Qn
                     if rfs:
@@ -769,7 +776,7 @@ class Estimator(BaseEstimator):
                             U = Tq @ U                      # V24: the sub-basis rides along
                     else:
                         FAo, FPo = FAj, FPj
-                    Sj = (FAj[0] @ (dAj * FAj[0].T)) + (FPj[0] @ (dPj * FPj[0].T))
+                    Sj = _sd(FAj[0], dAj * FAj[0].T) + _sd(FPj[0], dPj * FPj[0].T)
                     Sg = Sj if Sg is None else Sg + Sj
                     # V24: nested move of the oldest tier-1 member into tier 2, in the
                     # orthonormal coordinates Qn of this rebuild (lean: youngest gate first,
@@ -784,7 +791,7 @@ class Estimator(BaseEstimator):
                         FP1 = FPo[0]
                         dAb = fnp.reshape(dA_list[jb], (-1, 1))
                         dPb = fnp.reshape(dP_list[jb], (-1, 1))
-                        S_s = (FA1 @ (dAb * FA1.T)) + (FP1 @ (dPb * FP1.T))   # (r1, r1)
+                        S_s = _sd(FA1, dAb * FA1.T) + _sd(FP1, dPb * FP1.T)   # (r1, r1)
                         G2 = S_s if kb == 0 else S_s + U @ (S2 @ U.T)
                         Om2 = fnp.copy(w32[:r_old, :r2])                        # sketch (r1, r2)
                         for _pass in range(int(self.QPASS2)):
@@ -804,7 +811,7 @@ class Estimator(BaseEstimator):
                         FPo = FPo[1:]
                         Sg = Sg - S_s
                         kb = kb_t
-                    Qc = W @ Qn                             # wick already inside Qn
+                    Qc = _sd(W, Qn, 4, 24)                  # wick already inside Qn
                     ka = ka_t
                 elif ka > 0:
                     Qc = WD @ Qc
@@ -1467,7 +1474,7 @@ class Estimator(BaseEstimator):
                 inner2 = _hub2(LA[:kb], FA2, LP[:kb], FP2, RLEV, 8, T2MB)
                 lift = inner2 @ U2.T
                 inner = lift if inner is None else inner + lift
-            D21 = inner @ Qc.T
+            D21 = _sd(inner, Qc.T, 4, 24)
             if ka < k:
                 D21 = D21 + _hub2(LA[ka:], A_st[ka:], LP[ka:], P_st[ka:], SLEV)
             D21 = D21 + fnp.einsum("ki,kc->ic", R, Yk) * (1.0 / 3.0)
