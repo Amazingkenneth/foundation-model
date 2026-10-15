@@ -74,3 +74,28 @@ for kappa4). None of the notes supplies such a construction, and 504aldo's measu
 ends (dropping old sources, Tucker on all legs, per-source rank ladders) rule out the
 obvious ones. This is the research direction worth the team's remaining time; everything
 cheaper is a few percent.
+
+## Note 16 (consolidated improvements), measured against the graded v5b_rg
+
+* **Item 9, per-network scale correction.** The error does have a large scale mode: rescaling
+  each validation network's final layer by its own least-squares factor c_m (range
+  0.99986-1.00013) cuts the noise-corrected MSE from 1.33e-8 to 8.2e-9 (-38%; label noise
+  explains only ~8% of the spread of c_m). But c_m is not predictable from cheap features:
+  leave-one-network-out ridge on 75 networks (64 train + 11 val, rg predictions) over
+  per-layer squared weight norms, column-sum norms and predicted mean statistics gives at
+  best -0.6% held-out (noise) and +3% to +213% otherwise. The global factor is 1.00002 (no
+  bias). This matches the W-parity argument: the scale error is odd in the weights, so even
+  statistics cannot see it; a working correction needs features of what the chain discarded.
+* **Item 1, pruning dead / saturated neurons.** Saturated-on neurons pass third-order
+  information through (gain ~1), so only dead rows leave the transports; the D21 rows they
+  would save are output rows of the hub. With Strassen at 5 levels the inner dimension must
+  stay a multiple of 32 x min-block, so 1024 -> 896 is the only usable step (from about layer
+  11, where ~12-15% are dead): about 0.002-0.005 B (1-2%), against the note's 25-75 units,
+  which assume cost proportional to the active count. Data-dependent shapes also add pooled
+  buffers, and the grader's per-network memory limit is already binding (rg3 lost networks
+  at 7.0 GB resident). Not attempted.
+* **Item 3, meter engineering.** Done on the v5b line within the grader's envelope (rfhub,
+  rg); deeper levels fail the grader's wall-time limit under the client runtime. The
+  float64 / `**` audit is negligible here (n-vectors only).
+* **Items 2 and 6** (exact rewrite / retiring the old tier) remain the only routes to a
+  large cut; both are multi-day rewrites of the 504aldo chain.
