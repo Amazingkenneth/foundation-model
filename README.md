@@ -168,7 +168,9 @@ Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded contai
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
 `v5b_cn14` (D21 feedback rank 8, 0.206), `v5b_cn15` (both rank 8, 0.202), `v5b_cn18` (both rank 4,
 0.196, VmHWM 3.45 GB), `v5b_cn19` (both rank 2, 0.193), `v5b_cn20` / `v5b_cn21` (feedback rank 4 / 2
-at residual rank 16, 0.201 / 0.199; the feedback rank moves the chain at chaos level). `v5b_cn16` (exact
+at residual rank 16, 0.201 / 0.199; the feedback rank moves the chain at chaos level), `v5b_cn22` /
+`v5b_cn23` (feedback rank 2 with residual rank 8 / 4, 0.196 / 0.194). All pass the emulator (156-177 s
+on the fast container), VmHWM 3.44-3.48 GB, smoke shapes finite. `v5b_cn16` (exact
 tier-2 eigensolve) measured as a wash and is not planned; the D21 age gate (cn17) is closed
 (old-source D21 is load-bearing, docs section 15).
 
