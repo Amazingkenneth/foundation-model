@@ -73,8 +73,12 @@ almost nothing:
 A rounding-level perturbation grows ~2x per layer to ~4e-5 at the output (the error itself
 is rms ~1.2e-4 on an average MLP). Relabelling also changes the range-finder sketches (they
 are slices of the layer weights), which adds sketch dependence on top. Consequences: (i) a
-column relabelling or any float reordering moves per-MLP MSE by up to +-25% on the
-best-predicted MLPs, so local paired tests resolve only a few percent even with clean labels;
+column relabelling or any float reordering moves the label-based per-MLP MSE by up to +-25% on
+the best-predicted MLPs, so local paired tests resolve only a few percent (correction, section
+14: that swing is the cross term with the labels' coherent noise. Against clean labels a
+chaos-level change delta moves an MLP's MSE by |delta|^2 ~ 1.2e-10 plus a cross term
+2 e.delta/n of sd ~1e-10, and the 100-MLP mean by ~0.05%. So leaderboard differences of
+~1% between variants are real);
 (ii) the expected cost of this noise on the mean MSE is its variance, ~1e-10 = 0.6%, so it is
 not a lever (504aldo measured float64 as +0.004%); (iii) "bitwise parity" is the wrong test
 for an exact rewrite of this chain: compare against the chaos level instead.
@@ -259,6 +263,11 @@ its measured leaderboard cost (+0.6% raw = 1.1e-10); for the tier changes the fa
 So the yardstick predicts leaderboard MSE changes to within a factor ~1.5. Rows at 0.01: ~+0.3%
 MSE for -1.5% C (net ~-1.2%); rows at 0.02: +1.7% for -2.5%; columns at 0.02: ~+5% for -1.4%
 (why cn4 lost). The earlier masking test that read rows at 0.01 as +2.6% +- 1.6% was noise.
+
+Graded: 336496 v5b_cn11a (cn9 + rows at 0.01) **3.6860e-9**, raw 1.7367e-8 (cn9 1.7391e-8: the
+row cut costs nothing measurable), C/B 0.2122 (-1.6%): -1.7% vs cn9, -11.6% vs rg. 336497
+v5b_cn11b (cn10 + rows at 0.01) 3.7086e-9, raw 1.7897e-8, C/B 0.2072. The yardstick's +0.3% for
+rows at 0.01 was an overestimate (row compaction moves the chain mostly at the chaos level).
 
 Graded: 336483 v5b_cn9 **3.7487e-9** (raw 1.7391e-8, C/B 0.2156: -1.6% vs cn8, -10.1% vs rg);
 336484 v5b_cn10 3.7699e-9 (raw 1.7916e-8, C/B 0.2104). cn9's changes read as predicted (+0.15%
