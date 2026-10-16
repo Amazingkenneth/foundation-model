@@ -454,3 +454,18 @@ transfer to earlier layers. The second-order Edgeworth term kappa3^2/72 is missi
 Deeper Strassen (young families at 6 levels where widths <= 992 and the 64-blocks allow): emulator ok (no
 array-cap error), C/B 0.2010 -> 0.1993 on the emulator network, 0.1992 -> 0.1968 on MLP 5000 (-0.9..-1.2%).
 The earlier level-6 failures match the per-array cap exactly: (7^5, 2, 32, 32) float32 = 137,682,944 bytes.
+
+The learned operator was trained on 504aldo's chain; ours has drifted (tiers, masks, rank-2 feedback). One-knob
+strength scalings on the same six networks (base cn21):
+
+| variant | move rms | label dMSE |
+|---|---|---|
+| (3,1) law at b2 = -0.5 (negative: undo an overshoot) | 0.93e-5 | **-1.1 +- 0.5%** (-2.1 -1.0 +0.3 +0.4 -1.7 -2.4) |
+| MP pair correction (Dl on wk431) x0.8 | 0.67e-5 | **-0.9 +- 0.2%** |
+| MP node correction x0.8 | 0.97e-5 | +0.4 +- 0.7% |
+| k34 correction x0.8 (first four MLPs) | 2.38e-5 | +5.3 +- 0.7% |
+
+The b2 response is smooth and nearly linear per network (b2 = +1 / +0.5 / -0.5: +3.4 / +1.4 / -1.1%), and the
+pair-strength result points the same way: the learned pair term on the (3,1) slice is too strong in this chain.
+The k34 step is the operator's most valuable part and is not over-strong. Candidates: `v5b_cn40` (cn35 + b2 =
+-0.5) and `v5b_cn41` (cn35 + pair x0.8), both emulator-checked at unchanged C/B.
