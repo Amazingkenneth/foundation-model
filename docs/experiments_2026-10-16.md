@@ -276,3 +276,23 @@ the rank cliff on the leaderboard's harder MLPs. Keep 320.
 
 Inconclusive locally; 504aldo's ladder (16 / 32 / 64 -> 2.35 / 2.39 / 2.41e-8) also falls toward
 lower rank. A leaderboard probe.
+
+## 14. The per-network "scale error" is label noise (closes note 16 item 9)
+
+By ReLU homogeneity the final layer is h_L(x) = |x| g(x/|x|), and the network maps input
+directions to output scales that differ by ~9% rms. So the Monte Carlo labels carry a noise
+mode along mu that is coherent across all 1024 neurons. Measured on independent pilot samples
+(32k inputs per MLP), the label noise of the least-squares scale factor
+c_m = (p . t)/(p . p) has sd 1.2e-4 at 5e5 samples (8.6e-5 at 1e6). The independent-neuron
+model gives 1.9e-5. The observed spread of c_m over 33 networks (cn3 predictions) is
+1.07e-4: all of it is label noise. The "oracle -38%" of a per-network rescale was the fit
+absorbing this mode; it also turns negative after the noise floor is subtracted (-143% on
+cn3), which only correlated noise can do. No chain error is left to correct along mu.
+
+For local A/B tests this sets the floor. The noise term of a paired difference,
+2 (q - p) . (mu - t) / n, has sd ~5e-10 per MLP for a typical chaos-level |q - p|. The
+covariance of h_L has one 8-11% mode and a flat bulk (3.5%, 3.3%, 3.0%, ...), so projecting
+out the top 1-16 noise PCs leaves the per-MLP spread at +-10-20% (R_RES 8 / 4 vs 16 on six
+validation MLPs: k = 0 / 1 / 4 / 16 PCs removed -> -0.2 / +0.1 / +0.5 / +1.4% and
+-3.1 / -1.2 / +1.6 / +2.1%, se ~2-3%). Effects under ~3% need the leaderboard, or the
+deterministic yardstick when the change truncates something a reference can hold exactly.
