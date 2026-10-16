@@ -1,0 +1,77 @@
+# Brainstorm and critical review, Oct 16-17 (before the last submission day)
+
+## 1. Where we stand against the board (public leaderboard, Oct 16 22:08 UTC, 150 teams on pages 1-3)
+
+| team | adjusted | raw MSE | C/B | first entry | note |
+|---|---|---|---|---|---|
+| marius_binner (#1) | 1.30e-9 | 1.10e-8 | 0.122 | Jun 5 | 277 entries |
+| J2W (#2) | 1.40e-9 | 1.36e-8 | 0.107 | Jul 10 | 468 entries |
+| oliver_chen (#3) | 1.50e-9 | 1.20e-8 | 0.129 | **Oct 2** | 106 entries: top 3 in two weeks |
+| mliston / Luna (#3) | 1.50e-9 | 1.34-1.35e-8 | 0.115 | Jun 14 / Sep 23 | |
+| mk1981 (#7) | 1.70e-9 | 1.65e-8 | 0.106 | **Oct 2** | |
+| Masato (#7) | 1.70e-9 | 1.32e-8 | 0.132 | **Oct 4** | 33 entries |
+| e30_a clones (#37, six teams) | 3.1e-9 | 2.03-2.06e-8 | 0.1517 | Oct | LordProcciuto's public MIT engine |
+| **us (#56)** | **3.6e-9** | **1.79e-8** | **0.1996** | Oct 1 | cn21 |
+
+The gap to #1 is 2.75x: 1.63x in cost and 1.63x in raw error. Teams that started in October reached the
+top 10 within days, so a strong approach is learnable quickly from public material plus original work.
+Our raw error is already better than the public engines' (e30_a 2.03e-8, V29 2.13e-8). Our cost is
+the worst of every team within 2x of our score.
+
+## 2. What the public write-ups (Oct 15-16) say about where accuracy lives
+
+* **kai_leal_gonzalez (18246):** the exact (3,1) slice of kappa4, kappa(z_i,z_i,z_i,z_j), lowers V29's final MSE
+  by 18% (all 23 networks). A two-term law K31_ij ~ b1 v_i S_ij + b2 kappa3_i D21_ij / v_i (b2 = 1.17-1.41
+  fitted at layers 4-14, b2 = 1 for a quadratic perturbation of a Gaussian) gave -3.1% in a pre-registered
+  77-network test (8 lines, 4.4e7 FLOPs). Our chain models this slice like V29 (wk431 = (m/2) lambda C_off)
+  plus a learned pair correction from layer 8 on, so the kappa3 * D21 / v term is missing below layer 8 and
+  only partly learnable above. **Being tested (section 4).**
+* **Artyom_Mazur (18249):** the missing accuracy one order up is the young kappa4, "above all the tree that
+  hands kappa3 on through one covariance edge"; a reader of those trees cuts raw error to x0.70. kai's b2 term
+  is the cheapest instance of that tree. Also: per-neuron correctors fail on k >= 3 chains (errors are random
+  projections), and 72% of what carrying kappa3 buys lives in its all-distinct part.
+* **il.miscusi (18248):** removing the global scale mode (homogeneity) makes a *carried* kappa4 core pay (x0.38 vs the
+  same chain without extraction); in memoryless-kappa4 chains (V29, e30_a) extraction hurts. Our chain is
+  memoryless plus learned: extraction is not a drop-in. It is the same mode we found in the label noise
+  (section 14 of the experiments log).
+* **504aldo (18218):** the leaders' bill equals a V29-type chain minus its old tier, and their raw error is
+  below the "K3 + memoryless kappa4" ceiling (~1.94e-8 on the LB scale): they carry kappa4 content beyond the
+  memoryless core and old kappa3 content at almost no cost. Nobody has published how.
+
+## 3. Critical review of our own process
+
+1. **The yardstick misled us twice** (tier rank 288, feedback rank 2): MLPs 5000/5001 are among the easiest
+   local networks (label MSE ~1e-9 vs a leaderboard mean of 1.7e-8), and the damage of a perturbation comes from
+   its alignment with the existing error, which easy networks barely have. Fixed: the six-network hard test
+   (1015, 1002, 5010, 1005, 1008, 1010) reproduces cn21's leaderboard damage. Remaining weakness: se 0.5-2.4%,
+   growing with the size of the move; per-MLP swings up to +-10% for residual-rank changes.
+2. **Cost work has hit diminishing returns.** Since Oct 15 every structural cut (old D21 drop, low-rank D21,
+   low-rank a_b, saturated columns, rank-1 feedback, rows 0.02, columns 0.015) was closed by measurement. The
+   remaining cost levers are thin legs only (~6% of C, mostly harvested). The leaders' advantage is
+   structural (no dense old tier), not a constant factor we can polish away in a day.
+3. **Accuracy has not been worked on since the learned operator was ported.** All our raw-MSE changes since
+   cn3 come from truncation effects (+-3%). The public evidence says the large remaining errors are kappa4
+   content (the (3,1) slice: 18%; the young kappa4 trees: 30%). That is where the next gains are.
+4. **Slot use:** probes with expected gains of 1-2% each are the right size only when the outcome cannot be
+   predicted locally. With the hard test now predictive, fewer leaderboard probes and more local screening.
+5. **Final selection:** cn21 and cn11a are the same chain family; picking two siblings is fine for expected
+   score but gives no diversification. A candidate with a different closure (e.g. the (3,1) law) is a
+   reasonable second pick only if it is better on the public set.
+6. **Learned operator drift:** k34 + MP were trained by 504aldo on his chain's states. Our chain now differs
+   (tiers, masks, feedback rank 2). Any closure change that moves the inputs of the MP (wk431, D21) may be
+   partly undone or amplified by it, so closure additions go after the learned steps.
+
+## 4. Ideas, ranked by expected value per day of work
+
+| # | idea | basis | expected | cost / risk | status |
+|---|---|---|---|---|---|
+| 1 | (3,1) law: wk431 += b2 D3_j D21_ji / var_j after the learned steps | 18246, pre-registered -3.1% on V29 | -1..-3% raw | ~0 C; orientation must match | **hurts here**: b2 = 1 / 0.5 / transposed: +3.4 / +1.4 / +4.0% (se 0.6-1.4%); our learned operator already carries this slice. Pending: below layer 8 only, variance-weighted lambda term, b2 = -0.5 |
+| 2 | residual-rank ladder (cn36-cn39) | hard test: neutral +-2% | -1..-3% score | 5 slots | wave 1 |
+| 3 | b2 per layer ~1.2-1.4 and a refit of the lambda table (b1) | 18246 free fit | -0.5..-1% | needs labels; overfit risk | after 1 |
+| 4 | young-kappa4 tree reader (kappa3 through one covariance edge) as an n^2 per-layer term | 18249: x0.70 in a float64 chain | up to -10..-30% raw | derivation + implementation > 1 day; their representation paid back what it bought | not today |
+| 5 | scale-mode extraction with a carried kappa4 core | 18248 | x0.38 in their chain | needs a carried kappa4 core: +77 units (their cost) | no |
+| 6 | more MC samples for the six hard networks (overnight) | label se is the bottleneck of local screening | 2x sharper tests | ~1 h CPU per 2e6 samples per network | if CPU is free |
+| 7 | old tier without dense legs (the leaders' bill) | 18218 section 6 | -30% C | research; no public method | no |
+| 8 | deeper Strassen (young families at 6 levels where the array cap allows) | ngmitam (18218 #6): V29 at leaf 8 graded fine, -3.5% | **-1.2% C measured** (0.1992 -> 0.1968 on MLP 5000; 64-blocks eat part of it) | exact; the earlier level-6 failures match the per-array cap exactly ((7^5, 2, 32, 32) float32 = 137,682,944 B), not wall time | scratch xs6 ready; emulator check pending |
+| 9 | strength of the learned corrections (k34, MP node, MP pair) scaled by 0.8 | 504aldo trained them on his chain; ours has drifted (tiers, masks, rank-2 feedback); the b2 results suggest overshoot along skew x D21 | +-1-2% raw | 3 knobs, local screening only | hard test queued |
+| 10 | message passing from layer 6 instead of 8 | MP is the strongest accuracy component | +-? | out-of-distribution inputs at layers 6-7 | hard test queued |
