@@ -329,3 +329,22 @@ Yardstick (rms distance of the final means to the all-dense chain, MLPs 5000 / 5
   the means through the covariance update (the (2,1) terms of the term program), and
   covariance errors are not damped. So the old third-order content cannot be retired
   cheaply. Any cut there must keep its D21 accurate.
+
+## 16. Thin legs: one dominant singular pair on a flat bulk
+
+Singular values of the S21 residual Rres (compressed to rank R_RES at birth) and of D21 (fed back
+at rank R_FB), MLP 5000, chain = cn11a:
+
+| layer | Rres sv 1..4, 8, 16, 32 | D21 sv 1..4, 8, 16, 32 | top-1 / top-16 share of the top-64 energy (Rres, D21) |
+|---|---|---|---|
+| 3 | 0.372 0.080 0.039 0.036, 0.032, 0.029, 0.025 | 4.94 0.53 0.50 0.48, 0.45, 0.41, 0.34 | 0.74 / 0.86, 0.75 / 0.85 |
+| 8 | 0.257 0.033 0.029 0.026, 0.023, 0.018, 0.013 | 4.77 0.58 0.50 0.48, 0.41, 0.33, 0.23 | 0.81 / 0.91, 0.82 / 0.92 |
+| 13 | 0.191 0.023 0.021 0.020, 0.017, 0.012, 0.009 | 4.20 0.53 0.50 0.48, 0.36, 0.26, 0.17 | 0.83 / 0.93, 0.85 / 0.95 |
+
+Both are one coherent rank-1 component plus a bulk that decays only slowly (the bulk carries
+15-25% of the top-64 energy and continues past 64). A rank-r range finder takes the dominant pair
+and r - 1 bulk directions, each worth ~0.1-0.4% of the energy. Ranks 4 / 8 / 16 / 32 / 64 therefore
+differ only by tiny slices of the bulk, which matches 504aldo's flat ladders (R_RES 16/32/64 ->
+2.35/2.39/2.41e-8; R_FB 8/16/32 -> 2.17/2.14/2.14e-8: the 8 -> 16 step is within their two-dump
+noise). The thin-leg einsums scale with r and are ~6% of C, so cn12-cn15 and `v5b_cn18`
+(R_RES 4 + R_FB 4) go to the leaderboard.
