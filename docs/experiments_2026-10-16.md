@@ -408,3 +408,23 @@ uncorrelated with the error (dMSE = |delta|^2), the leaderboard move behind +3.4
 2x the easy networks' net move. Consequences: feedback rank 4-8 is likely as good or better than 2
 (less raw damage per C), rank 1 (cn26) likely slightly worse, and every residual-rank cut is suspect.
 Re-measured on the six hardest local networks (1015, 1002, 5010, 1005, 1008, 1010), with labels.
+
+Hard-network label test (MLPs 1015, 1002, 5010, 1005, 1008, 1010: label MSE 2.8-4.3e-8, about the
+leaderboard level; paired against cn11a; the noise term scales with the move, so se ~0.5% for a
+1e-5 move):
+
+| variant | move rms | label dMSE | per MLP | C vs cn11a |
+|---|---|---|---|---|
+| R_FB 8 (cn14) | 1.00e-5 | +1.7 +- 0.5% | +1.0 +2.6 +0.2 +2.2 +1.0 +3.6 | -3.4% |
+| R_FB 4 (cn20) | 1.36e-5 | +1.8 +- 0.8% | | -5.2% |
+| R_FB 2 (cn21; leaderboard +3.4%) | 1.51e-5 | +2.2 +- 0.6% | +1.1 +3.4 -0.2 +3.0 +2.9 +3.7 | -6.0% |
+| R_RES 8 (cn12) | 1.87e-5 | -1.0 +- 1.4% | | -1.2% |
+| R_RES 4 (cn13) | 2.69e-5 | +0.3 +- 2.0% | +2.7 +1.1 +4.7 +2.1 -1.7 -10.0 | -2.1% |
+| R_RES 2 (first two MLPs) | 4.09e-5 | +7.2 +- 0.7% | | -2.6% |
+
+This test reproduces cn21's leaderboard damage in sign and roughly in size, unlike the easy-network
+yardstick. The feedback damage comes in the first cut (16 -> 8) and grows slowly after it, so
+rank 2 is near the best tradeoff. The moves are the same size as on the easy networks; what differs
+is that a feedback cut moves the chain along its own error. The residual rank is neutral down to
+4-8 and harmful at 2 (rank 2 loses the second residual direction, which sits well above the bulk
+at early layers: sv2 = 0.08 vs 0.03-0.04 at layer 3).
