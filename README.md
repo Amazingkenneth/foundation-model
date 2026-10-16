@@ -154,8 +154,8 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336265 / 336269 / 336281 | level-6 hub / family variants (s6, h6, ga) | failed ("Error while scoring") | | |
 | 336359 | `candidates/v5b_rgc192` (rg + tier-2 rank 192 + covariance at 4 levels) | 4.1702e-9 | 1.7873e-8 | 0.2333 |
 | 336313 | rg with batch-3 Strassen chunks (fewer ops, 1.5x buffers) | 0.0226 (a few networks zeroed: memory) | | 0.2377 |
-| 336410 | `candidates/v5b_cn2` (dead-at-birth source columns dropped, young / joiner / tier-1 products on the live block, flat Strassen pools) | pending | | ~0.231 |
-| 336414 | `candidates/v5b_cn3` (cn2 + next-layer transports contract over live rows only) | pending | | ~0.226 |
+| 336410 | `candidates/v5b_cn2` (dead-at-birth source columns dropped, young / joiner / tier-1 products on the live block, flat Strassen pools) | 4.0540e-9 | 1.7637e-8 | 0.2299 |
+| 336414 | **`candidates/v5b_cn3`** (cn2 + next-layer transports contract over live rows only) | **3.9756e-9** | 1.7637e-8 | 0.2254 |
 
 The cn line (Oct 16, `docs/experiments_2026-10-16.md`): neurons with Phi(alpha) < 0.01 at a
 source's birth get no columns in that source (a 15-23% cut of the source width from layer 8 on),
@@ -164,8 +164,9 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336295 (`v5b_rg`) and 336284 (`v5b_rfhub`)**: both
-graded with no failed network.
+**For the final (private) selection use 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)**: both
+graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
+have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
 
 What the grader enforces that in-process flopscope does not (reproduced with
 `scripts/grader_emulator.sh`, which runs an estimator against `flopscope-server` /

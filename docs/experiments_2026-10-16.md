@@ -115,3 +115,14 @@ with mean 0.01-2 carry 96% of it (0.1-0.5: 37%), saturated outputs (mean > 2, 7%
 neurons) 2%, dead ones nothing. The first moment is therefore accurate; the error is the
 variance and the third/fourth cumulants at the kink, i.e. the closure, not the
 bookkeeping of sources.
+
+## 6. Graded (public leaderboard, 100 MLPs, noise-free)
+
+| submission | score | raw MSE | C/B |
+|---|---|---|---|
+| 336295 v5b_rg | 4.1705e-9 | 1.7534e-8 | 0.2378 |
+| 336410 v5b_cn2 | 4.0540e-9 | 1.7637e-8 | 0.2299 |
+| 336414 v5b_cn3 | **3.9756e-9** | 1.7637e-8 | 0.2254 |
+
+Attribution: rows are exactly free (cn2 and cn3 agree to 4 digits in raw MSE); the dead-column
+mask costs +0.6% raw (local: val -2.4%, train +5%, all within noise) for -3.3% C/B.
