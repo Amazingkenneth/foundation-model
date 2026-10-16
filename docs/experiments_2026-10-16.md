@@ -181,3 +181,23 @@ same shift read +2.5% +- 4.4%: noise, the deterministic yardstick resolves it.
 Emulator wall, measured back to back on a loaded container (absolute numbers drift +50-60%
 over the day): cn3 243 / 208 s, cn6 239 / 225 s, cn7 255 / 228 s, i.e. cn7 +5-10% over cn3
 (which graded fine). VmHWM 3.45-3.50 GB.
+
+Frontier around cn7 (same yardstick, C/B relative to cn7; truncation error^2 relative to the
+shipped sketch w0): tier-2 rank 176 / 160 at age 8: -0.6% / -1.2% C, 0.77 / 0.94; age 9 at 160:
+-0.2%, 0.62; tier-1 rank 288 / 352: -2.3% / +2.4%, 1.09 / 0.42; ages 6 / 9 at 256 / 160: -0.3%,
+0.64; keeping the transported basis at every join (no range finder): -3.1%, 1.27; at every other
+join: -1.5%, 0.74. Calibration: rms chaos between equivalent runs is 1.0-1.2e-5, the truncation
+distance 2.2-3.6e-5, i.e. truncation error^2 ~5-9e-10 per MLP, ~3-5% of the leaderboard MSE.
+With that, every neighbour of cn7 scores within +-0.7% (rank 352: +1.3%): cn7 sits at the
+optimum of the tier family. Four MLPs (5000-5003): cn7's truncation error^2 is 0.58-0.77 of
+the shipped one.
+
+## 9. D21 feedback legs: oversampling
+
+The rank-16 D21 feedback (V18) is a 16-column sketch with one power iteration and no
+oversampling. Distance to a rank-64 feedback reference (MLPs 5000 / 5001): shipped 1.59 / 1.48e-5,
+16 oversampled to 32 then truncated by SVD 1.48 / 1.35e-5, rank 32 1.03 / 0.99e-5 (chaos floor
+~1.1e-5): the feedback truncation is a smaller error than the tiers. MSE moves monotonically
+with feedback quality on both MLPs (5001: 6.32 / 5.80 / 5.75 / 5.57e-9 for 16 / 16-oversampled
+/ 32 / 64), but per-MLP MSE is chaos-sensitive. Rank 32 costs +6.6% (score-negative, as
+504aldo found); oversampling costs ~0.2%: cn8.
