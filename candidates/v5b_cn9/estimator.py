@@ -161,9 +161,12 @@ MP_LI_MIN = 8  # optg: message-passing hooks only at layers li >= MP_LI_MIN
 # optc Strassen kernel: square n x n families at SLEV levels in batch chunks of SB (largest
 # array 86 MiB at 4 levels); n x 384 basis families at RLEV levels with leaf blocks >= RMB.
 RFHUB = 1  # range-finder hub on Strassen too
-T2MB = 24  # cn7: tier-2 rank 192, 3 Strassen levels, leaf 24
-SLEV, SB, RLEV, RMB = 5, 2, 4, 20   # cn7: rank-320 families keep 4 levels (leaf 20)
+T2MB = 20  # tier-2 rank 160, 3 Strassen levels
+SLEV, SB, RLEV, RMB = 5, 2, 4, 20   # rank-320 families keep 4 levels
 SBK = SB  # cn5: batch chunk (SB is shadowed by a local of _predict_core)
+# tier-1 (4-level n x r) families: batch <= 6 keeps the depth-2 Strassen scratch (343, B, n/8, w/8)
+# under the grader's ~134.9 MB per-array cap (B = 6: 134,873,088 bytes; B = 8: 179.8 MB fails)
+T1B = 6
 
 
 def _sd(A, Bm, lev=3, mb=48):
@@ -474,7 +477,7 @@ CN = _os.environ.get("CN", "1") == "1"
 CN_MIN = 768   # narrowest column block: 5 Strassen levels with leaves >= 24
 WARM = _os.environ.get("CN_WARM", "1") == "1"
 FB_OS = int(_os.environ.get("CN_FBOS", "16"))
-KEEP = _os.environ.get("CN_KEEP", "none")
+KEEP = _os.environ.get("CN_KEEP", "alt")
 # cn3: rows. After the wick the legs' rows of neurons with Phi < RW_TAU are scaled by w1 < RW_TAU,
 # so the next layer's leg transports, newborn A leg, joiner and basis transport contract over
 # the other neurons only (a multiple of 64 >= CN_MIN). W C keeps the full inner dimension.
@@ -577,6 +580,10 @@ def _term_prog(mode: int):
 
 
 class Estimator(BaseEstimator):
+    # cn9: truncation is only ~3% of the leaderboard MSE (cn3 -> cn7: -39% truncation error^2 for
+    # -1.1% raw), so a cheaper old tier pays: the tier-1 basis is rebuilt by the range finder on
+    # every other join only (kept and re-orthonormalised in between) and tier 2 starts one age
+    # later at rank 160. Distance to the no-truncation chain ~ cn6's, C -1.7% vs cn7.
     # cn7: both age gates one transport later at the ranks of 504aldo's age law (rank that holds
     # accuracy ~3n/8 at age 4, n/4 at age 6, 7n/32 at age 7: 320 at age 5, ~192 at age 8). Each
     # source stays dense one transport longer and the tiers are sized for older, more
@@ -584,8 +591,8 @@ class Estimator(BaseEstimator):
     # 1-2% cheaper than 384/224 at ages 4/7.
     AGE_OLD = int(_os.environ.get("V21_AGE_OLD", "5"))   # V21: sources with age > AGE_OLD are confined
     R_OLD = int(_os.environ.get("V21_R_OLD", "320"))     # V21: shared basis rank (lean ladder F72)
-    AGE_OLD2 = int(_os.environ.get("V24_AGE_OLD2", "8"))  # V24: age gate of the nested tier (0 = off)
-    R_OLD2 = int(_os.environ.get("V24_R_OLD2", "192"))    # V24: rank of the nested sub-basis U (8-dump frontier runs/v24_7_*_d0-7.log: 224 best, 128 cliff)
+    AGE_OLD2 = int(_os.environ.get("V24_AGE_OLD2", "9"))  # V24: age gate of the nested tier (0 = off)
+    R_OLD2 = int(_os.environ.get("V24_R_OLD2", "160"))    # V24: rank of the nested sub-basis U (8-dump frontier runs/v24_7_*_d0-7.log: 224 best, 128 cliff)
     QPASS2 = int(_os.environ.get("V24_QPASS2", "2"))      # V24: passes of the r1-space range finder
     R_FB = 16    # V18: rank of the D21 feedback thin legs (F69 lean ladder: 8/16/32 -> 2.17/2.14/2.14e-8)
     R_RES = 16   # rank of the S21 residual leg (V17 ladder on dumps 0/1: 16/32/64 -> 2.35/2.39/2.41e-8 at 0.492/0.502/0.518xB)
@@ -905,12 +912,12 @@ class Estimator(BaseEstimator):
                     if w1t < n:
                         # cn2: tier-1 columns >= w1t are zero in the factors: form the live block
                         _mmc2(TQ, FAo[:, :, :w1t], legs["A1"][kb:ka, :, :w1t],
-                              FPo[:, :, :w1t], legs["P1"][kb:ka, :, :w1t], RLEV, 8, RMB)
+                              FPo[:, :, :w1t], legs["P1"][kb:ka, :, :w1t], RLEV, T1B, RMB)
                         zb = _zb(ka - kb, n - w1t)
                         fnp.copyto(legs["A1"][kb:ka, :, w1t:], zb)
                         fnp.copyto(legs["P1"][kb:ka, :, w1t:], zb)
                     else:
-                        _mmc2(TQ, FAo, legs["A1"][kb:ka], FPo, legs["P1"][kb:ka], RLEV, 8, RMB)
+                        _mmc2(TQ, FAo, legs["A1"][kb:ka], FPo, legs["P1"][kb:ka], RLEV, T1B, RMB)
                 if kb > 0:
                     # V24: tier-2 legs through the sub-basis
                     QU = Qc @ U
@@ -1660,9 +1667,9 @@ class Estimator(BaseEstimator):
             inner = None
             if ka > kb and w1t is not None and w1t < n:
                 inner = _hub2(LA[kb:ka, :, :w1t], FAo[:, :, :w1t], LP[kb:ka, :, :w1t],
-                              FPo[:, :, :w1t], RLEV, 8, RMB)
+                              FPo[:, :, :w1t], RLEV, T1B, RMB)
             elif ka > kb:
-                inner = _hub2(LA[kb:ka], FAo, LP[kb:ka], FPo, RLEV, 8, RMB)
+                inner = _hub2(LA[kb:ka], FAo, LP[kb:ka], FPo, RLEV, T1B, RMB)
             if kb > 0:
                 inner2 = _hub2(LA[:kb], FA2, LP[:kb], FP2, RLEV, 8, T2MB)
                 lift = inner2 @ U2.T

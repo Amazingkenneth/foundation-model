@@ -159,6 +159,8 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336447 | `candidates/v5b_cn6` (cn3 + warm-started basis range finders, per-chunk young widths, 32-step rows, covariance at 4 levels) | 3.9041e-9 | 1.7575e-8 | 0.2221 |
 | 336448 | `candidates/v5b_cn7` (cn6 + age gates 5 / 8 at the age-law ranks 320 / 192) | 3.8118e-9 | 1.7443e-8 | 0.2185 |
 | 336459 | **`candidates/v5b_cn8`** (cn7 + oversampled D21 feedback range finder, 16+16 -> 16) | **3.8110e-9** | 1.7365e-8 | 0.2195 |
+| 336483 | `candidates/v5b_cn9` (cn8 + tier-1 basis rebuilt on alternate joins, tier 2 from age 9 at rank 160) | pending | | ~0.216 |
+| 336484 | `candidates/v5b_cn10` (cn9 + tier-1 rank 288) | pending | | ~0.211 |
 
 The cn line (Oct 16, `docs/experiments_2026-10-16.md`): neurons with Phi(alpha) < 0.01 at a
 source's birth get no columns in that source (a 15-23% cut of the source width from layer 8 on),

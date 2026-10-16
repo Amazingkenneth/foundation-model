@@ -218,3 +218,24 @@ feedback oversampling bought -0.45% raw for +0.43% C: neutral. Consequence: at a
 share, a cheaper old tier is worth it whenever 1% of cost raises the error^2 ratio by less than
 ~0.36; the measured moves (keep the basis on alternate joins 0.09 per 1%, tier-1 rank 288 0.21,
 tier-2 rank 160 0.27, keep the basis always 0.21) all qualify.
+
+## 11. Cheaper old tier (cn9, cn10)
+
+Score model: score ~ (1 + s (rho - rho_cn7)) x C with rho = truncation error^2 / shipped and the
+truncation share s bracketed 1.4-5.5% by the graded runs. Variants (2 MLPs; rho, C vs cn7,
+score change at s = 1.4 / 2.8 / 5.5%):
+
+| variant | rho | C | score |
+|---|---|---|---|
+| cn7 | 0.61 | 1 | 0 |
+| basis rebuilt on alternate joins (kalt) | 0.74 | 0.985 | -1.3 / -1.2 / -0.8% |
+| kalt + tier 2 from age 9 at 160 (**cn9**) | 0.73 | 0.983 | -1.6 / -1.4 / -1.1% |
+| kalt + tier-1 rank 288 | 1.29 | 0.964 | -2.7 / -1.8 / 0.0% |
+| kalt + 288 + age 9 / 160 (**cn10**, measured as cn10) | ~1.3 | 0.962 | ~ -2.8 / -1.9 / -0.1% |
+| basis never rebuilt (kall) | 1.28 | 0.969 | -2.2 / -1.3 / +0.5% |
+| tier-1 256 / tier-2 128 / kall + 256 + 128 | 1.98 / 1.81 / 4.98 | 0.955 / 0.975 / 0.908 | ... / +12.6% at s = 5.5% |
+
+Grader cap: with tier 2 from age 9, tier 1 holds four sources and its staged batch of 8 makes
+a depth-2 Strassen scratch of (343, 8, 128, 128) = 179.8 MB > 134.9 MB (cn7's batch of 6 was
+exactly 134,873,088 bytes, the largest size known to pass). Tier-1 families now chunk at 6.
+Emulator 218-248 s on the loaded container (cn8 246 s alongside), VmHWM 3.44-3.46 GB.
