@@ -433,3 +433,24 @@ down to 2 (+-1.4-2.4%, per-MLP swings up to +-10%), so the leaderboard decides: 
 cn35 (= cn21 + the exact hub fix) and cn36-cn39 (residual rank 8 / 4 / 2 / 1). Feedback rank 1 is
 worse than 2, and rows at 0.02 / columns at 0.015 cost more than they save; all three are out.
 Wall check, back to back on the same container state: cn21 (graded) 173.9 s, cn39 175.0 s.
+
+## 19. Public closure fixes against our learned operator (hard-network label test, base cn21)
+
+| variant | move rms | label dMSE |
+|---|---|---|
+| (3,1) law b2 = 1 (kai_leal_gonzalez 18246; wk431 += b2 D3_j D21_ji / var_j, K13 orientation) | 1.85e-5 | +3.4 +- 1.1% (5/6 worse) |
+| same, transposed orientation | 2.80e-5 | +4.0 +- 1.4% |
+| b2 = 0.5 | 0.92e-5 | +1.4 +- 0.6% |
+| b2 = 1 plus the variance-weighted lambda term (b1 v_i S_ij) | 1.90e-5 | +3.3 +- 1.0% |
+| b2 = 1 below layer 8 only (where the MP corrector is off) | 1.07e-5 | +1.4 +- 1.2% |
+| message passing from layer 6 instead of 8 (first two MLPs) | 2.34e-5 | +4.7% |
+
+The law that gave V29 -3.1% (pre-registered) hurts this chain at every strength and at every depth. Our learned
+k34 step (every layer >= 2) and MP corrector (>= 8) already carry the slice. That is consistent with our raw
+error being ~18% below V29's, the same size as the exact-slice gain kai measured. The MP corrector does not
+transfer to earlier layers. The second-order Edgeworth term kappa3^2/72 is missing from the second moment
+(it is in the mean), but its effect is ~1e-5 relative even at width 128: not worth a slot.
+
+Deeper Strassen (young families at 6 levels where widths <= 992 and the 64-blocks allow): emulator ok (no
+array-cap error), C/B 0.2010 -> 0.1993 on the emulator network, 0.1992 -> 0.1968 on MLP 5000 (-0.9..-1.2%).
+The earlier level-6 failures match the per-array cap exactly: (7^5, 2, 32, 32) float32 = 137,682,944 bytes.
