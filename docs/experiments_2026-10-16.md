@@ -364,3 +364,18 @@ terms (<= 0.8% of the leaderboard MSE) and R_RES 4 ~6e-10 (<= 3.5%), in a direct
 cannot sign (the reference is itself at rank 16, and 504aldo's ladder suggests the higher ranks are
 not closer to the truth). The leaderboard decides: cn14 (R_FB 8), cn12 / cn13 (R_RES 8 / 4),
 cn15 (8 + 8), cn18 (4 + 4).
+
+Feedback ladder on the same yardstick (R_RES 16; move vs cn11a / distance to the all-dense chain,
+MLPs 5000 / 5001):
+
+| R_FB | move vs cn11a | distance | C/B (5000) |
+|---|---|---|---|
+| 16 (cn11a) | -- | 3.27 / 2.80e-5 | 0.2125 |
+| 8 (cn14) | 1.16 / 1.04e-5 | 3.31 / 2.88e-5 | 0.2052 |
+| 4 (cn20) | 1.55 / 1.35e-5 | 3.52 / 2.96e-5 | 0.2015 |
+| 2 (cn21) | 1.69 / 1.49e-5 | 3.54 / 3.00e-5 | 0.1997 |
+| R_RES 2 + R_FB 2 (cn19) | 4.14 / 4.81e-5 | 4.83 / 5.35e-5 | 0.1931 |
+
+The feedback legs only need the dominant D21 pair: rank 2 moves the chain ~1e-10 in squared terms
+(<= 0.6% of the leaderboard MSE) for -6.0% C. The residual rank is what moves the chain. cn19
+passes the emulator at 160-174 s (the container is fast again after a restart), VmHWM 3.44 GB.
