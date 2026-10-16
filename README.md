@@ -152,6 +152,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336284 (+ an earlier identical one) | `candidates/v5b_rfhub` (v5b, RLEV 4, min blocks 24/28, joiner hub on Strassen) | 4.2513e-9 | 1.7537e-8 | 0.2424 |
 | 336295 | **`candidates/v5b_rg`** (rfhub + the n x 384 Gram / basis products on Strassen) | **4.1705e-9** | 1.7534e-8 | 0.2378 |
 | 336265 / 336269 / 336281 | level-6 hub / family variants (s6, h6, ga) | failed ("Error while scoring") | | |
+| 336359 | `candidates/v5b_rgc192` (rg + tier-2 rank 192 + covariance at 4 levels) | 4.1702e-9 | 1.7873e-8 | 0.2333 |
 | 336313 | rg with batch-3 Strassen chunks (fewer ops, 1.5x buffers) | 0.0226 (a few networks zeroed: memory) | | 0.2377 |
 
 **For the final (private) selection use 336295 (`v5b_rg`) and 336284 (`v5b_rfhub`)**: both
