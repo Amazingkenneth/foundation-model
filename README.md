@@ -159,8 +159,8 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336447 | `candidates/v5b_cn6` (cn3 + warm-started basis range finders, per-chunk young widths, 32-step rows, covariance at 4 levels) | 3.9041e-9 | 1.7575e-8 | 0.2221 |
 | 336448 | `candidates/v5b_cn7` (cn6 + age gates 5 / 8 at the age-law ranks 320 / 192) | 3.8118e-9 | 1.7443e-8 | 0.2185 |
 | 336459 | **`candidates/v5b_cn8`** (cn7 + oversampled D21 feedback range finder, 16+16 -> 16) | **3.8110e-9** | 1.7365e-8 | 0.2195 |
-| 336483 | `candidates/v5b_cn9` (cn8 + tier-1 basis rebuilt on alternate joins, tier 2 from age 9 at rank 160) | pending | | ~0.216 |
-| 336484 | `candidates/v5b_cn10` (cn9 + tier-1 rank 288) | pending | | ~0.211 |
+| 336483 | **`candidates/v5b_cn9`** (cn8 + tier-1 basis rebuilt on alternate joins, tier 2 from age 9 at rank 160) | **3.7487e-9** | 1.7391e-8 | 0.2156 |
+| 336484 | `candidates/v5b_cn10` (cn9 + tier-1 rank 288) | 3.7699e-9 | 1.7916e-8 | 0.2104 |
 | 336496 | `candidates/v5b_cn11a` (cn9 + rows at Phi < 0.01) | pending | | ~0.213 |
 | 336497 | `candidates/v5b_cn11b` (cn10 + rows at Phi < 0.01) | pending | | ~0.208 |
 
@@ -171,7 +171,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336459 (`v5b_cn8`) and 336448 (`v5b_cn7`)** (both -8.6% vs rg;
+**For the final (private) selection use 336483 (`v5b_cn9`, -10.1% vs rg) and 336459 (`v5b_cn8`)** (cn8 / cn7 both -8.6% vs rg;
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).

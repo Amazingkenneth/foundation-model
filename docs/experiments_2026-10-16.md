@@ -259,3 +259,20 @@ its measured leaderboard cost (+0.6% raw = 1.1e-10); for the tier changes the fa
 So the yardstick predicts leaderboard MSE changes to within a factor ~1.5. Rows at 0.01: ~+0.3%
 MSE for -1.5% C (net ~-1.2%); rows at 0.02: +1.7% for -2.5%; columns at 0.02: ~+5% for -1.4%
 (why cn4 lost). The earlier masking test that read rows at 0.01 as +2.6% +- 1.6% was noise.
+
+Graded: 336483 v5b_cn9 **3.7487e-9** (raw 1.7391e-8, C/B 0.2156: -1.6% vs cn8, -10.1% vs rg);
+336484 v5b_cn10 3.7699e-9 (raw 1.7916e-8, C/B 0.2104). cn9's changes read as predicted (+0.15%
+raw for -1.8% C, implied truncation share ~1.2%), but tier-1 rank 288 cost +3.0% raw for -2.4% C
+(implied share ~5%): the two-MLP yardstick underestimates the step below 320, which is close to
+the rank cliff on the leaderboard's harder MLPs. Keep 320.
+
+## 13. S21 residual leg rank (6 validation MLPs, labels; per-MLP MSE swings +-25% from chaos)
+
+| R_RES | C/B (MLP 5000) | mean MSE vs 16 |
+|---|---|---|
+| 16 (shipped) | 0.2075 | -- |
+| 8 | 0.2037 | -0.2% (per MLP -43 .. +11%) |
+| 4 | 0.2018 | -3.0% (per MLP -45 .. +24%) |
+
+Inconclusive locally; 504aldo's ladder (16 / 32 / 64 -> 2.35 / 2.39 / 2.41e-8) also falls toward
+lower rank. A leaderboard probe.
