@@ -201,3 +201,20 @@ oversampling. Distance to a rank-64 feedback reference (MLPs 5000 / 5001): shipp
 with feedback quality on both MLPs (5001: 6.32 / 5.80 / 5.75 / 5.57e-9 for 16 / 16-oversampled
 / 32 / 64), but per-MLP MSE is chaos-sensitive. Rank 32 costs +6.6% (score-negative, as
 504aldo found); oversampling costs ~0.2%: cn8.
+
+## 10. Graded: warm start, age-law tiers, feedback oversampling
+
+| submission | score | raw MSE | C/B |
+|---|---|---|---|
+| 336414 v5b_cn3 | 3.9756e-9 | 1.7637e-8 | 0.2254 |
+| 336447 v5b_cn6 (warm start, exact polish) | 3.9041e-9 | 1.7575e-8 | 0.2221 |
+| 336448 v5b_cn7 (age gates 5 / 8, ranks 320 / 192) | 3.8118e-9 | 1.7443e-8 | 0.2185 |
+| 336459 v5b_cn8 (feedback oversampled) | **3.8110e-9** | 1.7365e-8 | 0.2195 |
+
+Calibration of the yardstick: cn3 -> cn7 cut the truncation error^2 by 39% (ratio to the
+shipped sketch 1.0 -> 0.61) and the raw MSE by 1.1%, so truncation is only ~2.8% of the
+leaderboard MSE (cn3 -> cn6 alone reads 1.4%, cn6 -> cn7 5.5%: noisy two-MLP proxies). The
+feedback oversampling bought -0.45% raw for +0.43% C: neutral. Consequence: at a 2.8%
+share, a cheaper old tier is worth it whenever 1% of cost raises the error^2 ratio by less than
+~0.36; the measured moves (keep the basis on alternate joins 0.09 per 1%, tier-1 rank 288 0.21,
+tier-2 rank 160 0.27, keep the basis always 0.21) all qualify.

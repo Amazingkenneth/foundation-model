@@ -156,9 +156,9 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336313 | rg with batch-3 Strassen chunks (fewer ops, 1.5x buffers) | 0.0226 (a few networks zeroed: memory) | | 0.2377 |
 | 336410 | `candidates/v5b_cn2` (dead-at-birth source columns dropped, young / joiner / tier-1 products on the live block, flat Strassen pools) | 4.0540e-9 | 1.7637e-8 | 0.2299 |
 | 336414 | **`candidates/v5b_cn3`** (cn2 + next-layer transports contract over live rows only) | **3.9756e-9** | 1.7637e-8 | 0.2254 |
-| 336447 | `candidates/v5b_cn6` (cn3 + warm-started basis range finders, per-chunk young widths, 32-step rows, covariance at 4 levels) | pending | | ~0.222 |
-| 336448 | `candidates/v5b_cn7` (cn6 + age gates 5 / 8 at the age-law ranks 320 / 192) | pending | | ~0.219 |
-| 336459 | `candidates/v5b_cn8` (cn7 + oversampled D21 feedback range finder, 16+16 -> 16) | pending | | ~0.220 |
+| 336447 | `candidates/v5b_cn6` (cn3 + warm-started basis range finders, per-chunk young widths, 32-step rows, covariance at 4 levels) | 3.9041e-9 | 1.7575e-8 | 0.2221 |
+| 336448 | `candidates/v5b_cn7` (cn6 + age gates 5 / 8 at the age-law ranks 320 / 192) | 3.8118e-9 | 1.7443e-8 | 0.2185 |
+| 336459 | **`candidates/v5b_cn8`** (cn7 + oversampled D21 feedback range finder, 16+16 -> 16) | **3.8110e-9** | 1.7365e-8 | 0.2195 |
 
 The cn line (Oct 16, `docs/experiments_2026-10-16.md`): neurons with Phi(alpha) < 0.01 at a
 source's birth get no columns in that source (a 15-23% cut of the source width from layer 8 on),
@@ -167,7 +167,8 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)**: both
+**For the final (private) selection use 336459 (`v5b_cn8`) and 336448 (`v5b_cn7`)** (both -8.6% vs rg;
+earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
 
