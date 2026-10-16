@@ -313,7 +313,7 @@ Yardstick (rms distance of the final means to the all-dense chain, MLPs 5000 / 5
 
 | variant | distance | C/B (5000) |
 |---|---|---|
-| cn9 | 3.03 / 2.72e-5 | 0.2109 |
+| cn9 | 3.03 / 2.72e-5 | 0.2154 |
 | cn11a | 3.27 / 2.80e-5 | 0.2125 |
 | cn16 = cn11a + tier-2 sub-basis from an exact eigh of its 320 x 320 core (instead of 2 warm passes) | 3.19 / 2.76e-5 | 0.2129 |
 | cn16 without the tier-2 D21 hub (ages >= 10 still in D3) | 11.1 / 9.3e-5 | 0.2093 |
