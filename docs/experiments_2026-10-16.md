@@ -396,3 +396,15 @@ passes the emulator at 160-174 s (the container is fast again after a restart), 
 * The old-source D21 needs its bulk. Its spectrum is one dominant pair (top-4 = 62-85% of the
   energy), yet truncating it to rank 1 / 4 / 32 moves the chain 2.4 / 2.2 / 1.2e-4. The term
   program reads D21 entry by entry; a rank-k randomized hub is closed.
+
+## 18. Graded: feedback rank 2 (cn21), and why the yardstick undershoots
+
+336544 v5b_cn21 (cn11a + R_FB 2) **3.5816e-9**: C/B 0.1995 (-6.0%), raw 1.7950e-8 (+3.4% vs cn11a's
+1.7367e-8), so -2.8% vs cn11a and -14.1% vs rg. The yardstick (MLPs 5000 / 5001, rms move 1.5-1.7e-5
+against a chaos floor of 1.1e-5) had put the raw cost at <= 0.9%. That is the second underestimate
+after tier rank 288. The reason is the choice of networks: 5000 / 5001 are among the easiest local
+networks (label MSE ~1e-9 vs a leaderboard mean of 1.74e-8). If a perturbation acts like noise
+uncorrelated with the error (dMSE = |delta|^2), the leaderboard move behind +3.4% is rms ~2.4e-5, about
+2x the easy networks' net move. Consequences: feedback rank 4-8 is likely as good or better than 2
+(less raw damage per C), rank 1 (cn26) likely slightly worse, and every residual-rank cut is suspect.
+Re-measured on the six hardest local networks (1015, 1002, 5010, 1005, 1008, 1010), with labels.
