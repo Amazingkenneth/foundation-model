@@ -239,3 +239,23 @@ Grader cap: with tier 2 from age 9, tier 1 holds four sources and its staged bat
 a depth-2 Strassen scratch of (343, 8, 128, 128) = 179.8 MB > 134.9 MB (cn7's batch of 6 was
 exactly 134,873,088 bytes, the largest size known to pass). Tier-1 families now chunk at 6.
 Emulator 218-248 s on the loaded container (cn8 246 s alongside), VmHWM 3.44-3.46 GB.
+
+## 12. Row and column thresholds on the yardstick (references: the same chain without row
+compaction / without the column mask; MLPs 5000 / 5001; chaos floor ~1.0-1.1e-5)
+
+| setting | distance to its exact reference | C/B (vs cn8 0.2193 / 0.2221) |
+|---|---|---|
+| no row compaction (reference) | -- | 0.2274 / 0.2286 |
+| rows Phi < 0.002 (shipped; exactly free on the leaderboard: cn2 = cn3 raw) | 0.93 / 0.75e-5 | 0.2193 / 0.2221 |
+| rows Phi < 0.005 | 0.96 / 0.81e-5 | 0.2178 / 0.2202 |
+| rows Phi < 0.01 | 1.22 / 1.03e-5 | 0.2162 / 0.2184 |
+| rows Phi < 0.02 | 2.04 / 2.07e-5 | 0.2144 / 0.2160 |
+| no column mask (reference) | -- | 0.2287 / 0.2302 |
+| columns Phi < 0.01 (shipped) | 1.69 / 1.38e-5 | 0.2193 / 0.2221 |
+| columns Phi < 0.02 | 3.59 / 2.64e-5 | 0.2165 / 0.2187 |
+
+Calibration: the column mask's excess squared distance (~1.2e-10 above the chaos floor) matches
+its measured leaderboard cost (+0.6% raw = 1.1e-10); for the tier changes the factor was ~0.6.
+So the yardstick predicts leaderboard MSE changes to within a factor ~1.5. Rows at 0.01: ~+0.3%
+MSE for -1.5% C (net ~-1.2%); rows at 0.02: +1.7% for -2.5%; columns at 0.02: ~+5% for -1.4%
+(why cn4 lost). The earlier masking test that read rows at 0.01 as +2.6% +- 1.6% was noise.
