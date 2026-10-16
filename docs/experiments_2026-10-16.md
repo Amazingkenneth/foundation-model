@@ -379,3 +379,20 @@ MLPs 5000 / 5001):
 The feedback legs only need the dominant D21 pair: rank 2 moves the chain ~1e-10 in squared terms
 (<= 0.6% of the leaderboard MSE) for -6.0% C. The residual rank is what moves the chain. cn19
 passes the emulator at 160-174 s (the container is fast again after a restart), VmHWM 3.44 GB.
+
+## 17. Rank-1 feedback, an exact hub fix, and three closed column / D21 ideas (cn21-cn26)
+
+* Feedback rank 1 vs 2 moves the chain 0.6e-5 (below chaos). Rank 0 (no feedback) moves it
+  3.6-4.0e-5. The D21 feedback is a rank-1 mechanism: only the coherent D21 direction feeds
+  the next layer's legs.
+* The young D21 hub narrowed per chunk only when every young source was narrower than n, and
+  sources born at layers 0-3 are full width. Narrowing per chunk regardless is exact (moves
+  6-8e-7) and saves 0.25% C. `v5b_cn26` = cn21 + rank-1 feedback + this fix: C/B 0.198-0.200
+  (-0.7% vs cn21), emulator 161-165 s, VmHWM 3.47 GB.
+* Saturated-on columns (Phi > 0.99; 165-276 per source from layer 8, as many as the dead ones)
+  are not free, although w2 / S3c / e ~ phi(alpha) are as small as for dead columns. The kappa4
+  feed pair (c1 = w1 lambda, c2) and the feedback rows (R1T, R2T, Phi-independent) still read
+  them. Masking Phi > 0.999 / 0.99 moves the chain 1.1 / 1.5e-4 for -2.5 / -4% C. Closed.
+* The old-source D21 needs its bulk. Its spectrum is one dominant pair (top-4 = 62-85% of the
+  energy), yet truncating it to rank 1 / 4 / 32 moves the chain 2.4 / 2.2 / 1.2e-4. The term
+  program reads D21 entry by entry; a rank-k randomized hub is closed.
