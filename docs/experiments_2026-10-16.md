@@ -348,3 +348,19 @@ differ only by tiny slices of the bulk, which matches 504aldo's flat ladders (R_
 2.35/2.39/2.41e-8; R_FB 8/16/32 -> 2.17/2.14/2.14e-8: the 8 -> 16 step is within their two-dump
 noise). The thin-leg einsums scale with r and are ~6% of C, so cn12-cn15 and `v5b_cn18`
 (R_RES 4 + R_FB 4) go to the leaderboard.
+
+How far each rank moves the chain (rms change of the final means vs cn11a, chaos floor 1.0-1.2e-5;
+distance to the all-dense chain in brackets, cn11a 3.27 / 2.80e-5):
+
+| variant | MLP 5000 | MLP 5001 | C/B (5000) |
+|---|---|---|---|
+| R_FB 8 (cn14) | 1.16e-5 (3.31e-5) | 1.04e-5 (2.88e-5) | 0.2052 |
+| R_RES 4 (cn13) | 2.88e-5 (3.96e-5) | 3.35e-5 (4.28e-5) | 0.2068 |
+| R_RES 4 + R_FB 4 (cn18) | 3.18e-5 (4.10e-5) | 3.64e-5 (4.41e-5) | 0.1959 |
+| R_RES 8 vs 16 (older base, six MLPs) | 1.4-2.0e-5 | | |
+
+R_FB 8 is free (chaos level). The residual rank is not: R_RES 8 moves the chain ~1e-10 in squared
+terms (<= 0.8% of the leaderboard MSE) and R_RES 4 ~6e-10 (<= 3.5%), in a direction the yardstick
+cannot sign (the reference is itself at rank 16, and 504aldo's ladder suggests the higher ranks are
+not closer to the truth). The leaderboard decides: cn14 (R_FB 8), cn12 / cn13 (R_RES 8 / 4),
+cn15 (8 + 8), cn18 (4 + 4).
