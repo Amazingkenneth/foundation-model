@@ -99,3 +99,19 @@ the duplicate pools of the old shape-keyed scheme are gone:
 | v5b_cn2 | 0.2303-0.2318 | 164 / 147 s | **3.33 GB** |
 
 rg was at the grader's ~6.1 GB pass line; cn2 has 2.8 GB of headroom.
+
+## 5. Threshold frontier and refinements (11 validation MLPs)
+
+| variant | C/B | MSE vs rg | reading |
+|---|---|---|---|
+| cn3 (columns Phi < 0.01, rows Phi < 0.002) | 0.2258-0.2279 | -2.9% +- 2.1% | submitted (336414) |
+| cn4 (columns Phi < 0.02, rows Phi < 0.01, narrowest block 704) | 0.2201-0.2208 | +2.8% (+5.8% +- 3.3% vs cn3) | score ~3% worse than cn3: neurons with Phi in [0.002, 0.02] still carry ~1% of D21 |
+| cn5 (cn3, each batch-2 chunk of the young stack on its own width) | 0.2250-0.2271 | exact (chaos-level diffs) | -0.35%: kept for a later candidate |
+| cn3 + AGE_OLD 5 | 0.2337 | (rg: -3.2% +- 2.8%) | +3.5% cost, still neutral |
+| cn3 + R_OLD 448 | 0.2386 | -- | +5.7% cost |
+
+Where the final MSE lives (rg, 75 local MLPs, per-neuron noise-corrected): output neurons
+with mean 0.01-2 carry 96% of it (0.1-0.5: 37%), saturated outputs (mean > 2, 7% of the
+neurons) 2%, dead ones nothing. The first moment is therefore accurate; the error is the
+variance and the third/fourth cumulants at the kink, i.e. the closure, not the
+bookkeeping of sources.

@@ -154,6 +154,15 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336265 / 336269 / 336281 | level-6 hub / family variants (s6, h6, ga) | failed ("Error while scoring") | | |
 | 336359 | `candidates/v5b_rgc192` (rg + tier-2 rank 192 + covariance at 4 levels) | 4.1702e-9 | 1.7873e-8 | 0.2333 |
 | 336313 | rg with batch-3 Strassen chunks (fewer ops, 1.5x buffers) | 0.0226 (a few networks zeroed: memory) | | 0.2377 |
+| 336410 | `candidates/v5b_cn2` (dead-at-birth source columns dropped, young / joiner / tier-1 products on the live block, flat Strassen pools) | pending | | ~0.231 |
+| 336414 | `candidates/v5b_cn3` (cn2 + next-layer transports contract over live rows only) | pending | | ~0.226 |
+
+The cn line (Oct 16, `docs/experiments_2026-10-16.md`): neurons with Phi(alpha) < 0.01 at a
+source's birth get no columns in that source (a 15-23% cut of the source width from layer 8 on),
+and the post-wick rows of neurons with Phi < 0.002 leave the next transports' inner dimension.
+Both are exact up to the chain's float32 chaos level (relabelling rg's own network moves the
+output as much). Strassen scratch is now one flat buffer per role, which also halves the
+resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
 **For the final (private) selection use 336295 (`v5b_rg`) and 336284 (`v5b_rfhub`)**: both
 graded with no failed network.
@@ -170,7 +179,9 @@ What the grader enforces that in-process flopscope does not (reproduced with
   137,682,944-byte one fails (the server default, 100 MiB, is lower than the grader's).
 * memory, per network: rg / rfhub peak at 6.0-6.1 GB resident (VmPeak 7.7-7.8 GB) and pass;
   the batch-3 variant peaks at 7.0 GB (VmPeak 8.8 GB) and lost a few networks. The emulator
-  does not enforce this; check `VmHWM` in-process.
+  does not enforce this; check `VmHWM` in-process. Most of rg's peak was duplicate
+  shape-keyed Strassen pools: the flat per-role pools of `candidates/v5b_cn*/strassen2.py`
+  bring it to 3.3-3.5 GB.
 * client/server argument encoding: tuples arrive as lists (`fnp.sum(x, axis=(0, 2))` fails);
   `submission/` was fixed for this (it had never been graded).
 
