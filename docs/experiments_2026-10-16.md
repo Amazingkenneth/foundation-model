@@ -305,3 +305,27 @@ out the top 1-16 noise PCs leaves the per-MLP spread at +-10-20% (R_RES 8 / 4 vs
 validation MLPs: k = 0 / 1 / 4 / 16 PCs removed -> -0.2 / +0.1 / +0.5 / +1.4% and
 -3.1 / -1.2 / +1.6 / +2.1%, se ~2-3%). Effects under ~3% need the leaderboard, or the
 deterministic yardstick when the change truncates something a reference can hold exactly.
+
+## 15. Old-source D21 is load-bearing; exact tier-2 eigensolve is a wash
+
+Yardstick (rms distance of the final means to the all-dense chain, MLPs 5000 / 5001; chaos floor
+~1.0-1.2e-5):
+
+| variant | distance | C/B (5000) |
+|---|---|---|
+| cn9 | 3.03 / 2.72e-5 | 0.2109 |
+| cn11a | 3.27 / 2.80e-5 | 0.2125 |
+| cn16 = cn11a + tier-2 sub-basis from an exact eigh of its 320 x 320 core (instead of 2 warm passes) | 3.19 / 2.76e-5 | 0.2129 |
+| cn16 without the tier-2 D21 hub (ages >= 10 still in D3) | 11.1 / 9.3e-5 | 0.2093 |
+| cn16 without the tier-1 and tier-2 D21 hubs | 39.1 / 38.3e-5 | 0.2076 |
+
+* The warm two-pass subspace iteration is already within ~4% (truncation error^2) of the
+  optimal tier-2 subspace. At a 1-5% truncation share that is <= 0.2% of MSE, against +0.2% C:
+  not submitted.
+* Old sources cannot shed their (2,1) slice. Without the tier-2 hub the truncation error^2
+  grows ~12x, roughly +60% of the leaderboard MSE. Without both old hubs it grows ~150x. The
+  cost-saving gate `v5b_cn17` (CN_D21AGE) is closed. (Small-width smoke runs showed the same:
+  at n = 128 the gate at age 5 moves the final mean by 2.5e-3.) The old tiers' D21 reaches
+  the means through the covariance update (the (2,1) terms of the term program), and
+  covariance errors are not damped. So the old third-order content cannot be retired
+  cheaply. Any cut there must keep its D21 accurate.

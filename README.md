@@ -166,8 +166,9 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
-`v5b_cn14` (D21 feedback rank 8, 0.206), `v5b_cn15` (both rank 8, 0.202), `v5b_cn16` (exact
-tier-2 eigensolve), `v5b_cn17` (D21 age gate, off by default; `CN_D21AGE`).
+`v5b_cn14` (D21 feedback rank 8, 0.206), `v5b_cn15` (both rank 8, 0.202). `v5b_cn16` (exact
+tier-2 eigensolve) measured as a wash and is not planned; the D21 age gate (cn17) is closed
+(old-source D21 is load-bearing, docs section 15).
 
 The cn line (Oct 16, `docs/experiments_2026-10-16.md`): neurons with Phi(alpha) < 0.01 at a
 source's birth get no columns in that source (a 15-23% cut of the source width from layer 8 on),
