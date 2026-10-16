@@ -423,6 +423,7 @@ leaderboard level; paired against cn11a; the noise term scales with the move, so
 | R_RES 2 | 3.80e-5 | -0.4 +- 2.4% (first two MLPs alone: +7.2%) | | -2.6% |
 | R_FB 1 vs R_FB 2 | 0.58e-5 | +0.7 +- 0.2% | | -0.5% |
 | rows Phi < 0.02 vs 0.01 (on cn21) | 1.61e-5 | +1.3 +- 0.6% | | -0.8% |
+| columns Phi < 0.015 vs 0.01 (on cn21) | 1.73e-5 | +1.4 +- 1.1% | | -0.6% |
 
 This test reproduces cn21's leaderboard damage in sign and roughly in size, unlike the easy-network
 yardstick. The feedback damage comes in the first cut (16 -> 8) and grows slowly after it, so
@@ -430,4 +431,5 @@ rank 2 is near the best tradeoff. The moves are the same size as on the easy net
 is that a feedback cut moves the chain along its own error. The residual rank reads neutral from 8
 down to 2 (+-1.4-2.4%, per-MLP swings up to +-10%), so the leaderboard decides: Oct 17 wave 1 is
 cn35 (= cn21 + the exact hub fix) and cn36-cn39 (residual rank 8 / 4 / 2 / 1). Feedback rank 1 is
-worse than 2 and rows at 0.02 cost more than they save; both are out.
+worse than 2, and rows at 0.02 / columns at 0.015 cost more than they save; all three are out.
+Wall check, back to back on the same container state: cn21 (graded) 173.9 s, cn39 175.0 s.
