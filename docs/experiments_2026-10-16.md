@@ -126,3 +126,58 @@ bookkeeping of sources.
 
 Attribution: rows are exactly free (cn2 and cn3 agree to 4 digits in raw MSE); the dead-column
 mask costs +0.6% raw (local: val -2.4%, train +5%, all within noise) for -3.3% C/B.
+
+## 7. The joiner's range finder: warm start (research: randomized range finders, subspace iteration)
+
+The tier-1 basis is rebuilt at every join by a one-pass randomized range finder (Halko,
+Martinsson, Tropp 2011) on the weighted leg Gram G = A dA A^T + P dP P^T + Qp S Qp^T, with
+a fixed sketch (the first 384 columns of the next layer's weight) and no oversampling. Captured
+offline at layers 7/9/12/14 of MLP 5000 (cn3), relative projection error of the joiner's legs
+and of the old content (in span Qp, core S):
+
+| construction (rank 384) | cost | A (l7 / l14) | P (l7 / l14) | old content (l7 / l14) |
+|---|---|---|---|---|
+| top-384 eigenvectors of G (optimal for G) | -- | 0.0196 / 0.0077 | 0.0510 / 0.0335 | 0.0118 / 0.0038 |
+| shipped: orth(G Om), Om = weight slice | 1 | 0.0241 / 0.0096 | 0.0598 / 0.0407 | 0.0178 / 0.0057 |
+| **warm start: orth(G Qp)** | **1** | 0.0218 / 0.0085 | 0.0558 / 0.0375 | **0.0102 / 0.0034** |
+| Nystrom on [Qp, 32 random] -> 384 | ~1.1 + eig | 0.0206 / 0.0080 | 0.0530 / 0.0348 | 0.0110 / 0.0036 |
+| two passes (QPASS 2) | 2 | 0.0204 / 0.0081 | 0.0529 / 0.0351 | 0.0130 / 0.0041 |
+| shipped at rank 352 / 320 | 0.92 / 0.83 | 0.034 / 0.048 (l7) | 0.082 / 0.110 | 0.028 / 0.042 |
+
+Trace energy is useless as a yardstick here (the top 384 eigenvalues hold 99.97% of tr G); the
+2% D21 tolerance lives in the tail. Why the warm start works: every source's legs are suffix
+products of the same transport chain, and products of random matrices concentrate on a common
+leading (Lyapunov) subspace, so the previous basis already contains most of the joiner's
+dominant directions, and it keeps the old content, which the shipped sketch re-projects with a
+fresh random sketch at every join (old-content loss per join -43%). It does not buy a rank cut:
+one rank notch (384 -> 352) costs +40% error, the warm start saves 10-40%.
+
+Downstream, label-free: rms distance of the final means to a no-truncation reference (same
+chain, all sources dense, C/B 0.262-0.266) on MLPs 5000/5001: shipped 3.56e-5 / 2.79e-5, warm
+3.09e-5 / 2.37e-5 (chaos floor ~1e-5). Truncation is ~5% of the MSE (504aldo: +4.6% raw), so
+-15% of truncation error is worth ~1.5% of MSE at zero cost. The nested tier-2 range finder is
+warm-started from its own previous sub-basis as well.
+
+## 8. Age-law tier shift, scored against the no-truncation chain
+
+All warm-started; rms distance of the final means to the all-dense chain (MLPs 5000 / 5001) and C/B:
+
+| variant | distance | C/B |
+|---|---|---|
+| cn6 cold sketch (= cn5 numerics) | 3.56e-5 / 2.79e-5 | 0.2221 / 0.2234 |
+| cn6 (warm) | 3.09e-5 / 2.37e-5 | 0.2221 / 0.2234 |
+| R_OLD 320 | 5.27e-5 / 4.47e-5 | 0.2104 / 0.2135 |
+| R_OLD 320, R_OLD2 192 | 5.62e-5 / 4.85e-5 | 0.2067 / 0.2098 |
+| AGE_OLD 5, R_OLD 320 | 2.80e-5 / 2.28e-5 | 0.2203 / 0.2231 |
+| **AGE_OLD 5, R_OLD 320, AGE_OLD2 8, R_OLD2 192 (cn7)** | **2.72e-5 / 2.23e-5** | **0.2183 / 0.2211** |
+| same two shifts without the warm start | 3.18e-5 / 2.51e-5 | -- |
+
+A lower rank at the same age falls off the cliff; the same lower rank one age later is better
+than the shipped tiers, because legs concentrate with every transport (rank 3n/8 at age 4 ->
+5n/16 at age 5, 7n/32 at age 7 -> ~3n/16 at age 8). The age-law shift and the warm start
+stack (-10% and -13% of the distance alone, -22% together). The label-based local test of the
+same shift read +2.5% +- 4.4%: noise, the deterministic yardstick resolves it.
+
+Emulator wall, measured back to back on a loaded container (absolute numbers drift +50-60%
+over the day): cn3 243 / 208 s, cn6 239 / 225 s, cn7 255 / 228 s, i.e. cn7 +5-10% over cn3
+(which graded fine). VmHWM 3.45-3.50 GB.
