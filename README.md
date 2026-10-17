@@ -168,7 +168,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336607 | **`candidates/v5b_cn36`** (cn35 + S21 residual rank 8) | **3.5275e-9** | 1.8053e-8 | 0.1954 |
 | 336609 | **`candidates/v5b_cn37`** (cn35 + S21 residual rank 4) | **3.5262e-9** | 1.8235e-8 | 0.1934 |
 | 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | 3.6151e-9 | 1.8160e-8 | 0.1991 |
-| 336612 | `candidates/v5b_cn41` (cn35 + learned MP pair correction x0.4) | pending | | ~0.199 |
+| 336612 | `candidates/v5b_cn41` (cn35 + learned MP pair correction x0.4) | 3.6782e-9 | 1.8478e-8 | 0.1991 |
 | 336627 | `candidates/v5b_cn44` (cn36 + young families at 6 Strassen levels) | pending | | ~0.194 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,

@@ -486,6 +486,8 @@ expected wins; the leaderboard's 100 networks decide.
 | 336607 cn36 | + residual rank 8 | 3.5275e-9 | 1.8053e-8 (+0.6%) | 0.1954 |
 | **336609 cn37** | + residual rank 4 | **3.5262e-9** | 1.8235e-8 (+1.6%) | 0.1934 |
 | 336610 cn40 | + (3,1) term at b2 = -0.5 | 3.6151e-9 | 1.8160e-8 (+1.2%) | 0.1991 |
+| 336612 cn41 | + MP pair correction x0.4 | 3.6782e-9 | 1.8478e-8 (+2.9%) | 0.1991 |
 
 The residual-rank optimum is flat between 4 and 8 (raw rises as cost falls). The negative (3,1) term
-hurts on the leaderboard (+1.2% raw), as the held-out check predicted; the hard-six gain was selection.
+and the weaker MP pair correction hurt on the leaderboard (+1.2% / +2.9% raw), as the held-out check predicted:
+the hard-six gains were selection. The learned operator stays at its trained strength.
