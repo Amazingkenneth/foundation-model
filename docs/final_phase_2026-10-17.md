@@ -210,3 +210,9 @@ Billing of single knob steps (Strassen build cn55b + rank-schedule hook, seed 1,
 | AGE_OLD2 8 / 10 | 0.18666 / 0.19070 | -1.16% / +0.97% |
 | CM_TAU 0.005 / 0.02 | 0.19115 / 0.18618 | +1.21% / -1.42% |
 | rank slope +32 | 0.19055 | +0.89% |
+
+**Truncation share (exact labels, mini m0-23, cn50 settings).** Turning off all old-source confinement (V21_NO_CONFINE=1)
+and both dead-neuron masks (CM_TAU = RW_TAU = 0) lowers final MSE by only **-4.47% +- 0.61%** (22/24 better, halves
+-4.28 / -4.65). All of our cost-side truncation together costs ~4.5% of the MSE; the gap to the 1.1-1.35e-8 raw band
+of the leaders (30-40%) is closure error. Cost knobs can only pay where their marginal damage stays well under their
+compute saving; accuracy has to come from the closure.
