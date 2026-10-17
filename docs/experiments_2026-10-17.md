@@ -94,4 +94,8 @@ transposed in its (3,2)-(1,1) entry (third derivative on i needs kappa(i,i,i,j) 
 the slot is symmetric (V29: lambda C_off). Ours is not: the learned MP pair term Dl * outer(s1, s3) is added at layers
 >= 8. Fixing the read moves the prediction 2.6e-5 rms (large), and the per-network effect spreads from -4% to
 +22% over the first 16 networks. The MP pair network may have been trained with the transposed read and adapted
-to it. The 75-network screen decides.
+to it. The 75-network screen decided against it: **+8.1% +- 4.1% after 36 networks (better on 12/36)**, so it was
+stopped there. The MP pair network evidently adapted to the transposed read (it is learned on the chain as shipped), so
+the "correct" read is wrong for this operator. cn46 (built, emulator ok at C/B 0.1953, VmHWM 3.49 GB, smoke finite) is not
+submitted. A warning about the gate: on the old tuning-12 set alone the same change read **-3.9%** (the rest +12.1%). That is the
+cn40/cn41 selection trap again, and only the full set catches it.
