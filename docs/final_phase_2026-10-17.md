@@ -81,3 +81,31 @@ The starter kit's public dataset (`hf://aicrowd/arc-whestbench-public-2026@v2-ph
 baked N = 1e9 ground truth) would add 100 networks with essentially exact labels to the local gate (our labels carry
 MC noise ~1.2-1.9e-7 per network, about 8x the error). huggingface.co is blocked by this environment's network
 policy (proxy 403). It needs `huggingface.co` in the environment's allowed domains.
+
+## 6. What the forum write-ups say about cheaper and better chains, and what we tested (Oct 17 evening)
+
+How the cheaper teams got there, as far as the public record shows:
+
+* **504aldo (18218, our base's author):** the leaders' bill equals V29 minus its old tier; "whatever carries their
+  old-source content costs them ~nothing". The grader runs ~50 networks per process (1 cold + 49 steady), on one
+  physical core. ngmitam (same thread) shipped V29 with Strassen leaves of 8 (7 levels) on 100 networks with 0
+  failures: -2.9% C locally, -0.9% on the grader (amortisation of first-network costs, the same effect that halved
+  our reshape saving on the grader).
+* **Artyom_Mazur (18249, PDF):** grader wall 91 s median / 98.8 s max for his chain against the 120 s cap; the
+  leaders spend 77-95 s. One more Strassen level everywhere doubles his wall, so he deepened only the five sites
+  with the best "C saved per second of wall". His largest late gains were *consistency cuts* (remove a term on both
+  sides or not at all): matched dead-row + dead-column cuts, saturated rows of D removed with the kappa4 level they
+  carried restored by one mat-vec (E2, x0.943 raw), and marg2.
+* **il.miscusi (18248, PDF):** e30_a (V29 descendant at C/B 0.152) uses the **per-neuron metric diag(W W^T)** in
+  place of the constant 2 in the kappa4 diagonal, the (2,2) slice, the (3,1) slot and the kappa4 -> kappa3 feed
+  (x0.981 on the grader with two other changes). In ARC's lean AUGMENT chain without scale-mode extraction the true
+  metric is worth 18% of raw error.
+
+| idea (source) | test | result | verdict |
+|---|---|---|---|
+| D21 hub on live rows only (dead rows out; our own) | zero D21 rows with Phi < 0.002 / 0.012, six hard networks | +7.9% / +49% | out: dead rows carry real content (wick tails with alpha^k, the MP edge channel) |
+| dead rows + columns together | Phi < 0.002 | +55% | out (matches the earlier +28-84%) |
+| dead columns only | Phi < 0.002 | -1.4% +- 2.3% (5/6), move 3.8e-5 | 75-network screen queued; it would cut ~4-5% of C |
+| E2, saturated rows of D21 (Artyom) | Phi > 0.994 / 0.998, naive | +14.6% / +3.9% | out: in our chain those rows reach kappa4 through K22 row sums of Hadamard products (no cheap restoration) and feed the MP edges |
+| per-neuron metric (e30_a) | `XMET` (diag, (2,2), feed), `XMET431` (+ (3,1)) | screening | |
+| (1/4) a3 b3 C0 o K22 diagram (Artyom) | | already in our term table (`('c_off', 'wk4m', 8, 8, 0.25)`) | -- |
