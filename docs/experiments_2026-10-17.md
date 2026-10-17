@@ -149,8 +149,11 @@ seeds), score on the other (`scripts/fast/jfit.py`).
 | K22 pattern (strength 1) | +1.08% +- 1.02% | x = 0.04 | ~0 |
 | k34 kappa3 + kappa4 corrections x1.2 | +2.30% +- 0.94% | gain 0.97 | ~0 |
 | MP node correction x1.2 | +1.07% +- 0.63% | gain 0.97 | ~0 |
+| MP pair correction x0.8 | +0.37% +- 0.36% | gain 1.0 | ~0 |
+| lambda x1.1 | +1.00% +- 0.53% | x0.997 | ~0 |
+| all five jointly | | | overfits: held-out +0.2..+2.7% |
 
-Both learned operators (k34, MP node) sit at their optimum gains for our chain. The overnight hard-six reading "x1.2: -0.9%" was the
+Every learned or fitted scale (k34, MP node, MP pair, lambda) sits at its optimum for our chain; recalibration has nothing to give. The overnight hard-six reading "x1.2: -0.9%" was the
 selection effect again.
 
 Small exact-ish cost trims (real op stream, MLP 5000, cn37 0.1935): one tier-2 range-finder pass 0.1934 (-0.05%),
