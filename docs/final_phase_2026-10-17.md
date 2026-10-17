@@ -109,3 +109,24 @@ How the cheaper teams got there, as far as the public record shows:
 | E2, saturated rows of D21 (Artyom) | Phi > 0.994 / 0.998, naive | +14.6% / +3.9% | out: in our chain those rows reach kappa4 through K22 row sums of Hadamard products (no cheap restoration) and feed the MP edges |
 | per-neuron metric (e30_a) | `XMET` (diag, (2,2), feed), `XMET431` (+ (3,1)) | screening | |
 | (1/4) a3 b3 C0 o K22 diagram (Artyom) | | already in our term table (`('c_off', 'wk4m', 8, 8, 0.25)`) | -- |
+
+### 6.1 Literature and web search (Oct 17 evening)
+
+* **Sponsor paper and code** (arXiv 2605.05179, `alignment-research-center/mlp_cumulant_propagation`): the repo also
+  has a factorized K = 4 chain (`factor_k4.py`); 504aldo measured per-source kappa4 legs at >= 0.95 x B, out of reach.
+  504aldo's reply on 18246 (Oct 17): V29's (and so our) term tables come from the reference at commit 6e80f7f, before
+  the Jul 31 Edgeworth-truncation change (paper eq. 13-14). il.miscusi measured that a lambda-law chain is *better*
+  on the old program (2.200e-8 vs 2.395e-8 with the current tables), so switching tables would hurt us.
+* **Fast matrix multiplication:** rational <4,4,4;48> (Dumas, Pernet, Sedoglavic, arXiv 2506.13242; accurate
+  variant 2603.18699; "into practice" 2609.12027) saves 48/49 per two Strassen levels (-4.0% of leaf products when it
+  replaces four of our five levels). Only the alternative-basis forms keep the additions low, and they need ~48
+  separate small ops per level instead of Strassen's 22 batched ones: with hundreds of products per network that
+  breaks the 400 ms residual cap. Not pursued.
+* **Exact Gaussian moment matching** (Kuang & Lin, arXiv 2601.22307, NeurIPS 2026) and Wright et al. 2024 (AISTATS):
+  exact or series covariance through ReLU. Our truncated Mehler terms already sit far below our error at
+  correlations of a few percent (C0^3 measured null); our error is the non-Gaussian closure, not the covariance.
+* **Statistical-physics corrections** (TAP / Onsager / Plefka, Edgeworth bounds for finite-width networks): all
+  averaged over weights (odd cumulants vanish) or for other models; no quenched single-network method found,
+  matching 504aldo's triage (18218 dead end #24).
+* **Not reachable from this environment:** arxiv.org, alignment.org, lesswrong / greaterwrong and huggingface.co are
+  blocked by the network policy (proxy 403); only search snippets were available for them.
