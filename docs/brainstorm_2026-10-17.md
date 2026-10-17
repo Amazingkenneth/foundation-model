@@ -123,3 +123,17 @@ process rules follow:
 6. **More MC samples for the twelve local test networks** (2-4e6 each). The label-noise term caps local
    screening at ~0.5-2%; four times the samples halves it, which would have caught the selection effect
    above with fewer networks.
+
+## 7. Leaderboard outcome of the night's work (Oct 17, 02:00 UTC)
+
+| submission | score | verdict |
+|---|---|---|
+| cn37 (residual rank 4) | **3.5262e-9** | best; -1.6% vs cn21 |
+| cn36 (residual rank 8) | 3.5275e-9 | same within 0.04% |
+| cn35 (exact hub fix) | 3.5756e-9 | as predicted (-0.17%) |
+| cn40 (negative (3,1) term) | 3.6151e-9 | lost (+1.2% raw): selection effect |
+| cn41 (MP pair x0.4) | 3.6782e-9 | lost (+2.9% raw): selection effect |
+| cn44 (rank 8 + level-6 Strassen) | pending | tests the deeper kernel on the grader |
+
+Net: the board position moved 3.58 -> 3.53e-9 (and ~3.49e-9 if level 6 grades); the two accuracy bets were
+the price of skipping the held-out confirmation before submitting.
