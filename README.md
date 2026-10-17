@@ -170,6 +170,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | 3.6151e-9 | 1.8160e-8 | 0.1991 |
 | 336612 | `candidates/v5b_cn41` (cn35 + learned MP pair correction x0.4) | 3.6782e-9 | 1.8478e-8 | 0.1991 |
 | 336627 | `candidates/v5b_cn44` (cn36 + young families at 6 Strassen levels) | failed ("Error while scoring", 4th level-6 failure: level 6 is out) | | ~0.194 |
+| 336664 | `candidates/v5b_cn49b` (cn37 + marg2 + D21 feedback oversampling 8; 75-network gate -0.8% MSE, -0.2% C) | pending | | ~0.193 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
