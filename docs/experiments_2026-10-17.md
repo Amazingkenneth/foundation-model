@@ -213,3 +213,15 @@ The local -1.46% raw shrank to -0.48% on the public set, the same shrinkage as c
 | tier 2 from age 8 | +3.20% +- 1.03% | -1.13% | out |
 | tier-2 rank 144 | +1.71% +- 0.52% | -0.2% | out |
 | tier-2 rank 192 / tier 2 from age 10 | (queued: the other direction) | ~+1.0% / +0.9% | |
+
+## 12. Calibration: local gate against the leaderboard
+
+| candidate | local raw change (75 networks) | leaderboard raw change | ratio |
+|---|---|---|---|
+| cn49b vs cn37 | -0.79% +- 0.46% | -0.17% | 0.2 |
+| cn50 vs cn49b | -1.46% +- 0.98% | -0.48% | 0.3 |
+
+The leaderboard sees about a third of the local gain. Both picks were the best of a sweep (winner's curse), and the local
+labels (5e5-1e6 samples) differ from the 1e9-sample public truth. Artyom_Mazur reports the same ratio for fitted scalars
+(18249, section 6.5: "a scalar fitted on ten networks arrives at a third of its strength on a hundred"). Rule for
+the last slots: only a local net gain of ~3% or more is worth a submission.
