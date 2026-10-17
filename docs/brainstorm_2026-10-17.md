@@ -133,7 +133,56 @@ process rules follow:
 | cn35 (exact hub fix) | 3.5756e-9 | as predicted (-0.17%) |
 | cn40 (negative (3,1) term) | 3.6151e-9 | lost (+1.2% raw): selection effect |
 | cn41 (MP pair x0.4) | 3.6782e-9 | lost (+2.9% raw): selection effect |
-| cn44 (rank 8 + level-6 Strassen) | pending | tests the deeper kernel on the grader |
+| cn44 (rank 8 + level-6 Strassen) | failed ("Error while scoring") | 4th level-6 failure: level 6 is out |
 
-Net: the board position moved 3.58 -> 3.53e-9 (and ~3.49e-9 if level 6 grades); the two accuracy bets were
-the price of skipping the held-out confirmation before submitting.
+Net: the board position moved 3.58 -> 3.53e-9; the two accuracy bets were the price of skipping the held-out
+confirmation before submitting. Level 6 failed on the grader a fourth time and is closed.
+
+## 8. How the top of the board gets there: a second reading (Oct 17, 03:00 UTC)
+
+Board on Oct 16: the first four score 1.3-1.6e-9 with raw 1.10-1.35e-8 at 11-12.5% of B. We sit at raw 1.82e-8 at
+19.3%. They are x0.6-0.7 on error and x0.6 on cost at once. What the public write-ups pin down:
+
+**Accuracy: the leaders' raw level is the level of a carried kappa4 core with the scale mode removed.**
+- il.miscusi (18248, PDF Table 5), lean float64 vehicle, 100 networks: ARC's reference AUGMENT chain (kappa4 carried as
+  an r=1 matrix core G, current term program) is 0.80 of V29's error. With coherent scale-mode extraction it is
+  **0.58 of V29**, i.e. ~1.24e-8 on the leaderboard scale: exactly the leaders' raw band. The gain shape is
+  "all-layer and multiplicative, flat from layer 3", which is also the shape the e30_a write-up reads off the
+  leaders' public telemetry (0.60-0.72 on all layers).
+- Artyom (18249, PDF section 7): the missing accuracy of a k=3 chain is the *young* kappa4. It is mostly the "3+2" tree
+  that hands the whole kappa3 on through one covariance edge, born in the last two layers. A reader of those trees is
+  x0.70 of his raw (≈1.42e-8). In his representation it costs about what it buys (+5-7% FLOPs, and +23% flopscope
+  calls, which crossed the 400 ms residual cap on 16/100 networks).
+- Both say the same thing from two sides: kappa4 needs memory, and the memory must not carry the scale mode.
+
+**Our chain against that picture (measured today):**
+- The scale mode is most of our D21. MLP 1015, cn37: the share of D21 energy explained by the scale pattern
+  S_ij = var_i mu_j + 2 mu_i C_ij is 0.28 at layer 1, rising to 0.82 at depth, with accumulated eps ~5e-3 (il.miscusi:
+  0.004-0.005). The old tiers' part is 0.35 -> 0.82, the young sources' 0.58-0.73.
+- So the old tiers cannot be replaced by a scalar eps: their non-mode residual is still ~20% of D21's norm, and
+  D21 has to be right to ~2% (504aldo's eps^2 law). Closed.
+- Removing the mode in a memoryless chain hurts, as il.miscusi measured in V29 and e30_a: the exact spherical input
+  (x = E|x| u, the sphere's kappa4 at layer 0; layer-0 means match to 5e-7) is **+35%** in cn37. Our lambda law
+  and learned operator are calibrated to the mode, so mode removal and memoryless kappa4 do not mix. Closed.
+- Per-neuron correctors of the final layer fail on 75 networks too (held-out -9..+16%), as Artyom's random-projection
+  result predicts. Closed.
+
+**Cost: the leaders' bill is below V29's young tier alone.** Levers in public: Strassen to leaf 8 (ngmitam, graded
+-3.5%; our level-6 builds fail on the grader for a reason we have not isolated), matched dead-row and dead-column cuts
+(we have them), and a band basis that rides the transport and is never rebuilt (Artyom: x0.893 score; ours is
+rebuilt on alternate joins). Nobody has published a kappa3 state that is not a list of sources; the leaders
+seem to have one.
+
+**What is portable in a day, and being screened on all 75 labeled networks (fast mode):**
+- C0^3 (the third Mehler term, (1/6) a3 b3 C0^3, one of Artyom's two missing augmented pair diagrams; O(n^2)).
+  Smoke test on two hard networks: -1.2%.
+- marg2 (Artyom's consistency rule: keep the k=2 marginal Edgeworth corrections only in the dead tail, alpha <= -2;
+  zero FLOPs). Smoke test: -1.5%.
+- the scale-mixture K22 pattern (+2 v C0^2 on top of the dyadic (g4_i + g4_j)/6), the pattern Artyom found the
+  step's diagrams need.
+- MP at the final layer (-1.4% on one network, but +5.0% C: unlikely), AGE_OLD 4 (-5.2% C), learned-operator gains.
+
+**Not portable in a day:** the carried kappa4 core with extraction. il.miscusi's production port costs 77 units
+(+25% of their bill: G transport 29, capped (2,1,1) production 32, K211 11) for x0.854, which did not beat
+their own best build on score. In our chain the learned operator already takes part of that gain, so the trade is
+worse. The young-tree reader is the better research bet for after the deadline.
