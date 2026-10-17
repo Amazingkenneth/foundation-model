@@ -170,7 +170,9 @@ The bundle marg2 + residual rank 2 + oversampling 8 is screened directly.
 | oversampling 8 against marg2 alone | -0.26% +- 0.13% (all four halves -0.23..-0.28%) | -0.2% | |
 
 cn49b: cn49 (cn37 + marg2, built with `build_step.py`; emulator ok at C/B 0.1953, VmHWM 3.46 GB, smoke finite) with the feedback
-sketch oversampling at 8. Fast-mode values match the screen to 6e-7. Submitted 05:58 UTC as 336664.
+sketch oversampling at 8. Fast-mode values match the screen to 6e-7. Submitted 05:58 UTC as 336664: **graded 3.5121e-9**
+(raw 1.8204e-8, C/B 0.1929): -0.40% vs cn37 (raw -0.17%, C -0.23%). The new best; the local -0.8% raw is inside the
+leaderboard's ~0.5% noise.
 
 Small-move knobs resolve finely: the gate's se scales with the move (0.13% at a 2.5e-6 move), so a sweep of the
 remaining small knobs is queued on top of cn49b (oversampling 0 / 4, tier-2 range-finder passes 1 / 3, row and column dead

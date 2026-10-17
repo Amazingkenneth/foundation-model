@@ -170,7 +170,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | 3.6151e-9 | 1.8160e-8 | 0.1991 |
 | 336612 | `candidates/v5b_cn41` (cn35 + learned MP pair correction x0.4) | 3.6782e-9 | 1.8478e-8 | 0.1991 |
 | 336627 | `candidates/v5b_cn44` (cn36 + young families at 6 Strassen levels) | failed ("Error while scoring", 4th level-6 failure: level 6 is out) | | ~0.194 |
-| 336664 | `candidates/v5b_cn49b` (cn37 + marg2 + D21 feedback oversampling 8; 75-network gate -0.8% MSE, -0.2% C) | pending | | ~0.193 |
+| 336664 | `candidates/v5b_cn49b` (cn37 + marg2 + D21 feedback oversampling 8; 75-network gate -0.8% MSE, -0.2% C) | **3.5121e-9** | 1.8204e-8 | 0.1929 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -191,7 +191,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336609 (`v5b_cn37`, -15.4% vs rg) and 336607 (`v5b_cn36`, -15.4%)** (earlier: cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
+**For the final (private) selection use 336664 (`v5b_cn49b`, 3.5121e-9, best) and 336609 (`v5b_cn37`, 3.5262e-9)** (earlier: cn37 + cn36, cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
