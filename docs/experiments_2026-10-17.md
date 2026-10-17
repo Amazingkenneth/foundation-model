@@ -159,3 +159,19 @@ selection effect again.
 Small exact-ish cost trims (real op stream, MLP 5000, cn37 0.1935): one tier-2 range-finder pass 0.1934 (-0.05%),
 feedback oversampling 8 0.1931 (-0.2%), residual rank 2 0.1926 (-0.5%), no feedback oversampling 0.1926 (-0.5%).
 The bundle marg2 + residual rank 2 + oversampling 8 is screened directly.
+
+## 10. Submitted: cn49b (336664)
+
+| variant (vs cn37, 75 networks) | dMSE | dC | score (MSE x C) |
+|---|---|---|---|
+| marg2 | -0.53% +- 0.47% | 0 | -0.5% |
+| marg2 + residual rank 2 + oversampling 8 | +0.61% +- 2.65% (move 2.4e-5) | -0.7% | noise; rank 2 moves too much |
+| **marg2 + oversampling 8 (cn49b)** | **-0.79% +- 0.46%** | **-0.2%** | **~-1.0%** |
+| oversampling 8 against marg2 alone | -0.26% +- 0.13% (all four halves -0.23..-0.28%) | -0.2% | |
+
+cn49b: cn49 (cn37 + marg2, built with `build_step.py`; emulator ok at C/B 0.1953, VmHWM 3.46 GB, smoke finite) with the feedback
+sketch oversampling at 8. Fast-mode values match the screen to 6e-7. Submitted 05:58 UTC as 336664.
+
+Small-move knobs resolve finely: the gate's se scales with the move (0.13% at a 2.5e-6 move), so a sweep of the
+remaining small knobs is queued on top of cn49b (oversampling 0 / 4, tier-2 range-finder passes 1 / 3, row and column dead
+thresholds 0.008 / 0.012). A knob is accepted only if all four splits agree in sign.
