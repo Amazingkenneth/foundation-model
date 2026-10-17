@@ -121,3 +121,12 @@ below), and what a blind correctness fix (the (3,1) read, against an operator tr
 not do. On the old tuning-12 networks (the hardest, largest MSE) the |D|^2 term is relatively small, so every
 variant looks better there than on the rest (the (3,1) fix -3.9% vs +12.1%, AGE_OLD 4 -6.2% vs +28%). That is the
 cn40/cn41 selection effect, explained.
+
+## 8. Where the wall goes (cn37, MLP 5000, in-process, one thread: 138.7 s)
+
+Time between consecutive flopscope op records, attributed to the call site (`scripts/fast/prof2.py`): young D21
+hubs 15-23%, young transports 13%, but **~18% of the wall in the nonlinear term program's 4-operand einsums**
+(`"tij,ti,tj,tg->gij"` over up to 18 n x n planes, and the per-matrix groups) that bill ~0.1% of C. numpy runs them
+unoptimised. Rewritten as elementwise accumulation they would free ~25-30 s of emulator wall, which is about what
+level 6 on the young families costs (+37 s, -0.9% C). Not pursued today: the margin under the ~175 s ceiling would
+be thin, and a wall-cap failure costs a slot.
