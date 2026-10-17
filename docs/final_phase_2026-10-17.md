@@ -188,3 +188,25 @@ legs that differ only by birth column coefficients, tree-A = I diag(q2) vs B = I
 column-scalings of each other; our newborn legs are W C_off and W, which are not, and older P legs are distinct suffix
 products. Their K3-history ablation (keep only the newest H generations: 12-17x worse) agrees with our closed
 "drop old sources" yardstick.
+
+## 7. Idea sweep on exact public labels (Oct 17 night)
+
+| idea | test | result | verdict |
+|---|---|---|---|
+| half-precision billing | flopscope 0.12.3, 256^3 matmul | float16 billed 2 n^3, same as float32 (float64 4 n^3) | closed |
+| final-layer ridge mean correction (the shipped-off 13-feature delta, and a 23-feature set) | fit on mini m0-49, test m50-99 and swapped | held out -0.02..-0.09% (se 0.05-0.12%); even in-sample only -0.24% | closed |
+| ceiling of any post-hoc final-layer fix | per-network oracle fits on 100 mini nets | common offset 0.4% of MSE, oracle scale 1.2%, oracle 5-feature per-network fit 1.6% | the final error is neuron-specific closure error, not bias |
+
+Dump hook: `scripts/hf/runfast_hf_dump.py` (saves the last layer's per-neuron state); fit: `scripts/hf/fit_corr.py`.
+So the remaining levers are inside the chain (truncation knobs, closure), not on its output.
+
+Billing of single knob steps (Strassen build cn55b + rank-schedule hook, seed 1, base C/B 0.18886):
+
+| knob | C/B | dC |
+|---|---|---|
+| R_OLD 288 / 352 | 0.18715 / 0.19390 | -0.91% / +2.67% |
+| R_OLD2 128 / 192 | 0.18757 / 0.19088 | -0.68% / +1.07% |
+| AGE_OLD 4 / 6 | 0.17922 / 0.19656 | -5.10% / +4.08% |
+| AGE_OLD2 8 / 10 | 0.18666 / 0.19070 | -1.16% / +0.97% |
+| CM_TAU 0.005 / 0.02 | 0.19115 / 0.18618 | +1.21% / -1.42% |
+| rank slope +32 | 0.19055 | +0.89% |
