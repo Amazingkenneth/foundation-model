@@ -260,9 +260,14 @@ and the young D21 hub's LA/LP stacks in one batch-4 Strassen call (HUB_SB = 4), 
 |---|---|---|---|
 | R_FB 2 -> 1 | +1.47% +- 0.72% (32 networks, all halves +) | -0.46% (0.1935) | out (our cn21-era reading holds) |
 | R_RES 8 | (we are at 4; 8 vs 4 tied on the leaderboard, cn36 vs cn37) | | |
-| covariance level 5 + batch-4 hub where the cap allows (cn51) | exact (rounding) | -0.1% (0.1942) | emulator check |
+| covariance level 5 + batch-4 hub where the cap allows (cn51) | exact (rounding) | -0.1% (0.1942); emulator 0.1953 vs 0.1956 | wall +4% (193.6 / 190.4 s vs 187.9 / 180.2 s): not worth the cap risk |
+| batch-4 hub alone on cn49b (cn49c) | exact | emulator 0.1950 vs 0.1948 (+0.1%: the staging copies cost more than the saved recombination) | out |
 
 The batch-4 hub needs care in our kernel: at 5 levels the depth-3 combo stacks are (7^4, 4, n/16, w/16) float32, and those exceed
 the grader's 134.9 MB per-array cap for w > 864 (157 MB at full width). cn51 therefore uses batch 4 only on narrowed chunks
 (w <= 864: 132.8 MB). The teammate's rg-based file runs the hub at full width, so its batch-4 calls may hit that cap
 on the grader. That is worth checking against their grade.
+
+Nothing in the note transfers profitably to cn49b / cn50: our line already has the cheap thin legs (R_FB 2 is better than 1
+here), and the kernel changes are a wash once the per-array cap and the wall cap are respected. The final pair stays
+cn49b + cn50.
