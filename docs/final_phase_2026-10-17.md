@@ -68,8 +68,9 @@ Expected grades: cn54b ~3.43e-9 (cn49b 3.5121e-9 x 0.976), cn54 ~3.43e-9 (cn50 3
 
 ## 4. Slot plan
 
-* Oct 17: 336664 (cn49b), 336695 (cn50), **336767 (cn53b), 336768 (cn53)** to confirm that the slab pool and the
-  Winograd kernel grade cleanly; cn54b / cn54 follow once they do.
+* The limit is **5 submissions per UTC day** (the sixth on Oct 17 was refused: "Submission limit reached ... resets at
+  00:00 UTC"), so 20 slots remain for Oct 18-21.
+* Oct 17: 336664 (cn49b), 336695 (cn50), **336767 (cn53b), 336768 (cn53), 336770 (cn54b)**; cn54 goes first on Oct 18.
 * Oct 18-21: only exact cuts or 75-network gains of >= ~3%; keep >= 3 slots for the last day.
 * Nomination (by Oct 22 23:59 UTC, on the website): the two best graded among cn54b / cn54 (fall back to
   cn53b / cn53, then cn49b / cn50).
