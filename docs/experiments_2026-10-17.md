@@ -128,5 +128,10 @@ Time between consecutive flopscope op records, attributed to the call site (`scr
 hubs 15-23%, young transports 13%, but **~18% of the wall in the nonlinear term program's 4-operand einsums**
 (`"tij,ti,tj,tg->gij"` over up to 18 n x n planes, and the per-matrix groups) that bill ~0.1% of C. numpy runs them
 unoptimised. Rewritten as elementwise accumulation they would free ~25-30 s of emulator wall, which is about what
-level 6 on the young families costs (+37 s, -0.9% C). Not pursued today: the margin under the ~175 s ceiling would
-be thin, and a wall-cap failure costs a slot.
+level 6 on the young families costs (+37 s, -0.9% C).
+
+Measured (cn47 = cn37 with those einsums as two broadcast scalings plus one matmul over the term axis; values to 5e-7):
+in-process MLP 1015 43 s against ~60 s, but under the grader emulator (server/client IPC), back to back, **253.8 s against
+266.4 s (-4.7%)**, at C/B 0.1957 against 0.1953 (+0.2%: the matmul form bills a little more). Level 6 adds ~19%, so
+cn48 = cn47 + level 6 would sit ~13% above cn37's wall, past the cap. Neither is submitted. The rewrite stays in the
+local screening copy, where it speeds the fast mode by ~25%.
