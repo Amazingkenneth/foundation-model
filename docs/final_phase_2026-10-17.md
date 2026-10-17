@@ -105,7 +105,7 @@ How the cheaper teams got there, as far as the public record shows:
 |---|---|---|---|
 | D21 hub on live rows only (dead rows out; our own) | zero D21 rows with Phi < 0.002 / 0.012, six hard networks | +7.9% / +49% | out: dead rows carry real content (wick tails with alpha^k, the MP edge channel) |
 | dead rows + columns together | Phi < 0.002 | +55% | out (matches the earlier +28-84%) |
-| dead columns only | Phi < 0.002 | -1.4% +- 2.3% (5/6), move 3.8e-5 | 75-network screen queued; it would cut ~4-5% of C |
+| dead columns only | Phi < 0.002 | six hard networks -1.4% +- 2.3%; **75 networks +8.88% +- 2.68% (all splits +)**, move 3.7e-5 | out: the move-squared rule predicted ~+8.5%; the hard-six reading was the selection effect |
 | E2, saturated rows of D21 (Artyom) | Phi > 0.994 / 0.998, naive | +14.6% / +3.9% | out: in our chain those rows reach kappa4 through K22 row sums of Hadamard products (no cheap restoration) and feed the MP edges |
 | per-neuron metric (e30_a) | `XMET` (diag, (2,2), feed), `XMET431` (+ (3,1)), 75 networks | +0.06% +- 1.35% / +0.03% +- 1.35% (halves disagree) | null: our learned operator already absorbs it; cn56 not shipped |
 | (1/4) a3 b3 C0 o K22 diagram (Artyom) | | already in our term table (`('c_off', 'wk4m', 8, 8, 0.25)`) | -- |
