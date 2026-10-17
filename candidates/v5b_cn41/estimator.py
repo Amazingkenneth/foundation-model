@@ -477,7 +477,7 @@ CN = _os.environ.get("CN", "1") == "1"
 CN_MIN = 768   # narrowest column block: 5 Strassen levels with leaves >= 24
 WARM = _os.environ.get("CN_WARM", "1") == "1"
 FB_OS = int(_os.environ.get("CN_FBOS", "16"))
-MP_PAIR = float(_os.environ.get("CN_MPPAIR", "0.8"))   # cn41: strength of the MP pair correction on wk431
+MP_PAIR = float(_os.environ.get("CN_MPPAIR", "0.4"))   # cn41: strength of the MP pair correction on wk431 (hard MLPs: x0.8 / 0.6 / 0.4 / 0 -> -0.9 / -1.7 / -2.2 / -2.6%)
 KEEP = _os.environ.get("CN_KEEP", "alt")
 # cn3: rows. After the wick the legs' rows of neurons with Phi < RW_TAU are scaled by w1 < RW_TAU,
 # so the next layer's leg transports, newborn A leg, joiner and basis transport contract over
@@ -1559,7 +1559,7 @@ class Estimator(BaseEstimator):
         Dl = fnp.einsum("cij,cij->ij", LR, Bp)
         fnp.fill_diagonal(Dl, 0.0)
         # cn41: the learned pair correction overshoots in this chain (trained on 504aldo's chain states, ours
-        # drifted with tiers / masks / rank-2 feedback): x0.8 reads -0.9% +- 0.2% on the six hard local MLPs
+        # drifted with tiers / masks / rank-2 feedback): x0.4 reads -2.2% +- 0.6% on the six hard local MLPs
         return D3, g4, wk431 + Dl * fnp.outer(s1, s3) * MP_PAIR
 
     # ------------------------------------------------------------------
