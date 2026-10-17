@@ -167,3 +167,15 @@ closure loses a little more at every layer as the cumulants grow.
 |---|---|---|
 | Artyom's young kappa4 "3+2" tree read into the kappa4 diagonal (12 sum_j W_aj (d2/d1)_j (W D1 C)_aj X(a,j), X = the young hub paired with the pre-transport legs; factor 12 re-derived) | before k34: -0.27% +- 0.81% (six hard networks, move 1.1e-5); after the MP: +3.5% +- 2.8% | out: k34 re-corrects it; our learned operator already carries the young kappa4 content his chain lacked |
 | per-neuron metric (3,1) slot too (`XMET431`) | +0.03% +- 1.35% (75 networks) | null |
+
+### 6.4 Zero-cost knobs on the public mini split (100 networks, exact labels, cn50 settings)
+
+| knob | dMSE | halves | cost | net |
+|---|---|---|---|---|
+| MP from layer 7 | -0.43% +- 0.20% (59/100) | -0.55 / -0.31 | +0.29% C | -0.14% |
+| BETA 2.0 | +0.02% +- 0.06% | | 0 | null |
+| BETA 1.5 | -0.04% +- 0.03% | | 0 | null |
+
+The exact-label gate resolves small moves to 0.03-0.2% (the 75-network gate: 0.2-1.3%). BETA 1.5's -0.19% on our own
+labels and MP7's -0.99% were mostly noise; both knobs are essentially flat. Mini's base raw MSE is 1.90e-8 (board
+1.81e-8).
