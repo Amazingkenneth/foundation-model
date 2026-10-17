@@ -212,7 +212,10 @@ The local -1.46% raw shrank to -0.48% on the public set, the same shrinkage as c
 | tier-1 basis never rebuilt (CN_KEEP=all) | +5.40% +- 1.28% (move 2.4e-5, move^2 rule ~+4.4%) | -1.65% | out |
 | tier 2 from age 8 | +3.20% +- 1.03% | -1.13% | out |
 | tier-2 rank 144 | +1.71% +- 0.52% | -0.2% | out |
-| tier-2 rank 192 / tier 2 from age 10 | (queued: the other direction) | ~+1.0% / +0.9% | |
+| tier-2 rank 192 | -1.07% +- 0.44% (48/75) | ~+1.0% | net ~0 |
+| tier 2 from age 10 | -0.65% +- 0.41% | ~+0.9% | net ~+0.3% |
+
+Every tier knob sits at its optimum in both directions.
 
 ## 12. Calibration: local gate against the leaderboard
 
@@ -225,3 +228,24 @@ The leaderboard sees about a third of the local gain. Both picks were the best o
 labels (5e5-1e6 samples) differ from the 1e9-sample public truth. Artyom_Mazur reports the same ratio for fitted scalars
 (18249, section 6.5: "a scalar fitted on ten networks arrives at a third of its strength on a hundred"). Rule for
 the last slots: only a local net gain of ~3% or more is worth a submission.
+
+## 13. Where the day ends
+
+Leaderboard: cn49b **3.5121e-9** (best), cn50 3.5175e-9 (lowest raw, 1.8116e-8), cn37 3.5262e-9. Final selection:
+cn49b + cn50 (README). Two of today's slots were left unused, because no candidate clears the ~3% local bar that the
+1/3 shrinkage implies.
+
+Measured today on 75 networks (fast gate), with the conclusion each one supports:
+* every learned or fitted scale is at its optimum: k34 kappa3/kappa4, MP node, MP pair, lambda;
+* every truncation knob is at its optimum in both directions: AGE_OLD, tier-2 age and rank, tier-1 rebuild schedule,
+  residual rank, feedback oversampling, row and column thresholds. The move-squared rule predicts the losing side from
+  label-free moves alone;
+* closure patches from the public write-ups do not transfer to a memoryless-kappa4 chain with a learned operator:
+  C0^3 null, K22 scale-mixture pattern +1%, spherical input +35%, the (3,1) read fix +8%. Only marg2 transfers (small);
+* deeper Strassen is wall-capped (cn44 and the earlier level-6 builds failed at the 120 s per-network cap), and the
+  term-program einsum rewrite frees only 4.7% of emulator wall.
+
+What would move the board, all of it beyond a day's work: a carried kappa4 core with scale-mode extraction
+(il.miscusi 18248: x0.66 in a lean chain, but +25% cost in production), the young-kappa4 "3+2" tree reader (Artyom 18249:
+x0.70 raw, cost about what it buys in his representation), and a kappa3 state that is not a list of sources (what
+the leaders' bill implies; unpublished).
