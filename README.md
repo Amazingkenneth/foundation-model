@@ -217,6 +217,11 @@ What the grader enforces that in-process flopscope does not (reproduced with
   bring it to 3.3-3.5 GB.
 * client/server argument encoding: tuples arrive as lists (`fnp.sum(x, axis=(0, 2))` fails);
   `submission/` was fixed for this (it had never been graded).
+* billing (flopscope 0.12.3, unchanged from 0.12.0 for our chain): `fnp.reshape` / `ravel` are billed
+  at one FLOP per element, while slicing, `x[None]`, `swapaxes`, `broadcast_to` and `fnp.empty` are free;
+  the 4-operand term-program einsums bill 6.8-8.3 n^2 per term against 3 n^2 elementwise. Both are fixed
+  in `candidates/v5b_cn53*` / `v5b_cn54*` (strassen4: max-shape slabs + Winograd form; -2.4% C/B, same
+  predictions). The daily submission limit is 5.
 
 On the client runtime `submission/` (this repository's backend) is far lighter than v5b
 (deep16: 92-97 s, residual 0.75 s), but even at family depth 6 it stays at C/B 0.255, and
