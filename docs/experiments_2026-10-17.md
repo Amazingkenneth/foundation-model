@@ -175,3 +175,12 @@ sketch oversampling at 8. Fast-mode values match the screen to 6e-7. Submitted 0
 Small-move knobs resolve finely: the gate's se scales with the move (0.13% at a 2.5e-6 move), so a sweep of the
 remaining small knobs is queued on top of cn49b (oversampling 0 / 4, tier-2 range-finder passes 1 / 3, row and column dead
 thresholds 0.008 / 0.012). A knob is accepted only if all four splits agree in sign.
+
+| knob (on cn49b's settings) | dMSE vs oversampling 8 | dC |
+|---|---|---|
+| oversampling 0 | +0.31% +- 0.28% | -0.3% |
+| oversampling 4 | +0.22% +- 0.19% | ~-0.15% |
+| oversampling 16 (cn37's) | +0.26% +- 0.13% | +0.2% |
+
+Oversampling 8 is the best of the four (the shape is not monotone, so part of the 16 -> 8 gain may be chance; its
+-0.2% C is certain).
