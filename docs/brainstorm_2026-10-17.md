@@ -73,5 +73,17 @@ the worst of every team within 2x of our score.
 | 6 | more MC samples for the six hard networks (overnight) | label se is the bottleneck of local screening | 2x sharper tests | ~1 h CPU per 2e6 samples per network | if CPU is free |
 | 7 | old tier without dense legs (the leaders' bill) | 18218 section 6 | -30% C | research; no public method | no |
 | 8 | deeper Strassen (young families at 6 levels where the array cap allows) | ngmitam (18218 #6): V29 at leaf 8 graded fine, -3.5% | **-1.2% C measured** (0.1992 -> 0.1968 on MLP 5000; 64-blocks eat part of it) | exact; the earlier level-6 failures match the per-array cap exactly ((7^5, 2, 32, 32) float32 = 137,682,944 B), not wall time | scratch xs6 ready; emulator check pending |
-| 9 | strength of the learned corrections (k34, MP node, MP pair) scaled by 0.8 | 504aldo trained them on his chain; ours has drifted (tiers, masks, rank-2 feedback); the b2 results suggest overshoot along skew x D21 | +-1-2% raw | 3 knobs, local screening only | hard test queued |
-| 10 | message passing from layer 6 instead of 8 | MP is the strongest accuracy component | +-? | out-of-distribution inputs at layers 6-7 | hard test queued |
+| 9 | strength of the learned corrections (k34, MP node, MP pair) | 504aldo trained them on his chain; ours has drifted (tiers, masks, rank-2 feedback) | **found -2.2%** | 3 knobs, local screening only | MP pair x0.8 / 0.6 / 0.4 / 0: -0.9 / -1.7 / -2.2 / -2.6% (all six MLPs improve at 0.4-0.8); MP node x0.8 +0.4%; k34 x0.8 / 1.2: +4.4 / -0.9%; lambda x0.9 / 1.1: +0.5 / -0.1%. **cn41 (pair x0.4) submitted 336612**; held-out check on six more MLPs queued |
+| 9b | negative (3,1) term, b2 = -0.5 (undo the same overshoot) | the b2 > 0 response was linear | -1.1% | substitutes for 9 (pair 0.8 + b2 -0.5 = pair 0.6 alone: -1.7%) | **cn40 submitted 336610** |
+| 10 | message passing from layer 6 instead of 8 | MP is the strongest accuracy component | closed | out-of-distribution inputs at layers 6-7 | +1.8 +- 3.1% |
+
+## 5. What the night changed
+
+* The public closure fix (kai's (3,1) law) does not transfer: our learned operator already carries that slice,
+  and in fact overshoots it. Measuring that overshoot gave a cleaner lever: the MP pair correction is ~2.5x too
+  strong in this chain (x0.4 reads -2.2%, every hard MLP improves). Likely cause: the MP reads D21 features,
+  and our D21 differs from the training chain's (tiers, masks, rank-2 feedback). This is a calibration of a
+  learned component to the chain it now runs in, not a new closure.
+* The wave-1 leaderboard set (cn35 base, residual ranks 8 / 4, cn40, cn41) measures every lever we have on
+  the public 100 networks. Wave 2 combines the winners: residual rank x pair strength x k34 x1.15 (if the
+  combination test holds) x level-6 Strassen (-1% C, exact).
