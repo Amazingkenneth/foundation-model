@@ -100,3 +100,24 @@ stopped there. The MP pair network evidently adapted to the transposed read (it 
 the "correct" read is wrong for this operator. cn46 (built, emulator ok at C/B 0.1953, VmHWM 3.49 GB, smoke finite) is not
 submitted. A warning about the gate: on the old tuning-12 set alone the same change read **-3.9%** (the rest +12.1%). That is the
 cn40/cn41 selection trap again, and only the full set catches it.
+
+## 7. Why cost cuts and blind fixes lose: the move-squared rule
+
+For a variant with prediction move D = q - p and current error e = p - t, the paired change is
+d = |D|^2 + 2 <e, D> (per network, per neuron mean). The first term is a sure loss; the second is a
+correlation that changes sign from network to network. A truncation (cost cut) has no reason to correlate with
+e, so its expected effect is +|D|^2 / MSE:
+
+| variant | move (rms) | |D|^2 / MSE | measured (75-network gate) | dC |
+|---|---|---|---|---|
+| AGE_OLD 4 | 4.9e-5 | ~+18% | +15.3% +- 8.3% (24 networks) | -5.2% |
+| (3,1) read fix | 2.6e-5 | ~+5% | +8.1% +- 4.1% (36 networks) | 0 |
+| C0^3 | 7.3e-6 | ~+0.4% | -0.2% +- 1.9% (28 networks) | ~0 |
+
+With MSE ~1.3e-8 (rms error ~1.1e-4), a cost cut of x% pays only if it moves the prediction by less than about
+sqrt(x/100) x 1.1e-4 rms: 2.5e-5 for a 5% cut. AGE_OLD 4 moves twice that. An accuracy change must anti-correlate
+with the error systematically to beat its own |D|^2. That is what a fitted gain does (the linear-response fit
+below), and what a blind correctness fix (the (3,1) read, against an operator trained on the old read) does
+not do. On the old tuning-12 networks (the hardest, largest MSE) the |D|^2 term is relatively small, so every
+variant looks better there than on the rest (the (3,1) fix -3.9% vs +12.1%, AGE_OLD 4 -6.2% vs +28%). That is the
+cn40/cn41 selection effect, explained.
