@@ -164,6 +164,10 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336496 | **`candidates/v5b_cn11a`** (cn9 + rows at Phi < 0.01) | **3.6860e-9** | 1.7367e-8 | 0.2122 |
 | 336497 | `candidates/v5b_cn11b` (cn10 + rows at Phi < 0.01) | 3.7086e-9 | 1.7897e-8 | 0.2072 |
 | 336544 | **`candidates/v5b_cn21`** (cn11a + D21 feedback rank 2) | **3.5816e-9** | 1.7950e-8 | 0.1995 |
+| 336605 | `candidates/v5b_cn35` (cn21 + exact per-chunk hub narrowing) | pending | | ~0.199 |
+| 336607 | `candidates/v5b_cn36` (cn35 + S21 residual rank 8) | pending | | ~0.197 |
+| 336609 | `candidates/v5b_cn37` (cn35 + S21 residual rank 4) | pending | | ~0.195 |
+| 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | pending | | ~0.199 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
