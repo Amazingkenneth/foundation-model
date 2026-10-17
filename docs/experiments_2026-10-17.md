@@ -201,7 +201,9 @@ Oversampling 8 is the best of the four (the shape is not monotone, so part of th
 | columns Phi < 0.004 | -1.15% +- 0.93% | +1.35% (0.1957) | ~+0.2% |
 
 cn50 checks: emulator ok, VmHWM 3.46 GB, smoke finite, values match the screen to 6e-7; quiet back-to-back emulator
-wall 219.6 / 220.9 s against cn49b's 226.7 / 228.5 s (3% faster: more rows compacted). Submitted 09:15 UTC as 336695.
+wall 219.6 / 220.9 s against cn49b's 226.7 / 228.5 s (3% faster: more rows compacted). Submitted 09:15 UTC as 336695:
+**graded 3.5175e-9** (raw 1.8116e-8, -0.48% vs cn49b; C/B 0.1942, +0.64%): a tie with cn49b inside the leaderboard's noise.
+The local -1.46% raw shrank to -0.48% on the public set, the same shrinkage as cn49b (-0.79% -> -0.17%).
 
 ## 11. Tier knobs on cn50's settings (75 networks, vs cn50; cost on MLP 5000, cn50 0.1944)
 
