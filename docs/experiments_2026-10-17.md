@@ -249,3 +249,20 @@ What would move the board, all of it beyond a day's work: a carried kappa4 core 
 (il.miscusi 18248: x0.66 in a lean chain, but +25% cost in production), the young-kappa4 "3+2" tree reader (Artyom 18249:
 x0.70 raw, cost about what it buys in his representation), and a kappa3 state that is not a list of sources (what
 the leaders' bill implies; unpublished).
+
+## 14. The teammate's note-16 submission (rg-era base) against our line
+
+Their archive (estimator diff against `v5b_rg`): R_FB 1, R_RES 8, the covariance sandwich at 5 Strassen levels (leaf 16),
+and the young D21 hub's LA/LP stacks in one batch-4 Strassen call (HUB_SB = 4), on 504aldo's original tier law (age 4 /
+384, age 7 / 224) without dead-neuron masks. Ported to our line (cn50 settings):
+
+| change | dMSE (75 networks) | dC (MLP 5000, cn50 0.1944) | verdict |
+|---|---|---|---|
+| R_FB 2 -> 1 | +1.47% +- 0.72% (32 networks, all halves +) | -0.46% (0.1935) | out (our cn21-era reading holds) |
+| R_RES 8 | (we are at 4; 8 vs 4 tied on the leaderboard, cn36 vs cn37) | | |
+| covariance level 5 + batch-4 hub where the cap allows (cn51) | exact (rounding) | -0.1% (0.1942) | emulator check |
+
+The batch-4 hub needs care in our kernel: at 5 levels the depth-3 combo stacks are (7^4, 4, n/16, w/16) float32, and those exceed
+the grader's 134.9 MB per-array cap for w > 864 (157 MB at full width). cn51 therefore uses batch 4 only on narrowed chunks
+(w <= 864: 132.8 MB). The teammate's rg-based file runs the hub at full width, so its batch-4 calls may hit that cap
+on the grader. That is worth checking against their grade.
