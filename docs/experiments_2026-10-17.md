@@ -186,3 +186,13 @@ thresholds 0.008 / 0.012). A knob is accepted only if all four splits agree in s
 
 Oversampling 8 is the best of the four (the shape is not monotone, so part of the 16 -> 8 gain may be chance; its
 -0.2% C is certain).
+
+| knob (on cn49b's settings) | dMSE vs cn49b | dC (MLP 5000, cn49b 0.1931) | verdict |
+|---|---|---|---|
+| tier-2 range finder 1 pass | +0.58% +- 0.25% | -0.05% | out |
+| tier-2 range finder 3 passes | -0.08% +- 0.11% | ~+0.05% | null |
+| rows Phi < 0.008 | +0.00% +- 0.33% | ~+0.15% | out |
+| columns Phi < 0.008 | -0.80% +- 0.49% (all halves -) | +0.73% (0.1945) | net ~0 |
+| columns Phi < 0.006 | (queued) | +0.88% (0.1948) | |
+| rows Phi < 0.012 | -0.15% +- 0.36% | (measuring) | |
+| columns Phi < 0.012 | +0.24% +- 0.52% | (measuring) | |
