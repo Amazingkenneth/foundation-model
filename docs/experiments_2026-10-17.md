@@ -84,7 +84,7 @@ clear ~-2% with both seed-parity halves agreeing.
 |---|---|---|---|
 | C0^3 Mehler term ((1/6) a3 b3 C0^3, all three pair channels) | -3.0% | +0.6% | 28 of 75 networks: -0.2% +- 1.9%; stopped (null) |
 | marg2 (k=2 marginal Edgeworth corrections only for alpha <= -2) | -0.7% | -2.4% | **75 networks: -0.53% +- 0.47%** (40/75; held-out halves -0.4% on average): small, free |
-| scale-mixture K22 pattern (+2 v C0^2 on the dyadic law) | -0.6% | -1.7% | queued |
+| scale-mixture K22 pattern (+2 v C0^2 on the dyadic law) | -0.6% | -1.7% | 75 networks: +1.08% +- 1.02% (fitted strength ~0): closed |
 | exact spherical input (layer 0) | +44.5% | +24.6% | closed (memoryless kappa4) |
 | MP at the final layer (full last layer) | | -1.4% | +5.0% C: closed |
 | **(3,1) slice read fixed in the (2,1) channel** | -3.9% | -6.4% | see below |
