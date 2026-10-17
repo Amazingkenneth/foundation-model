@@ -202,3 +202,12 @@ Oversampling 8 is the best of the four (the shape is not monotone, so part of th
 
 cn50 checks: emulator ok, VmHWM 3.46 GB, smoke finite, values match the screen to 6e-7; quiet back-to-back emulator
 wall 219.6 / 220.9 s against cn49b's 226.7 / 228.5 s (3% faster: more rows compacted). Submitted 09:15 UTC as 336695.
+
+## 11. Tier knobs on cn50's settings (75 networks, vs cn50; cost on MLP 5000, cn50 0.1944)
+
+| knob | dMSE | dC | verdict |
+|---|---|---|---|
+| tier-1 basis never rebuilt (CN_KEEP=all) | +5.40% +- 1.28% (move 2.4e-5, move^2 rule ~+4.4%) | -1.65% | out |
+| tier 2 from age 8 | +3.20% +- 1.03% | -1.13% | out |
+| tier-2 rank 144 | +1.71% +- 0.52% | -0.2% | out |
+| tier-2 rank 192 / tier 2 from age 10 | (queued: the other direction) | ~+1.0% / +0.9% | |
