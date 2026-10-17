@@ -148,6 +148,11 @@ seeds), score on the other (`scripts/fast/jfit.py`).
 | marg2 (strength 1) | -0.53% +- 0.47% | x = 0.93 | -0.4% on average |
 | K22 pattern (strength 1) | +1.08% +- 1.02% | x = 0.04 | ~0 |
 | k34 kappa3 + kappa4 corrections x1.2 | +2.30% +- 0.94% | gain 0.97 | ~0 |
+| MP node correction x1.2 | +1.07% +- 0.63% | gain 0.97 | ~0 |
 
-The k34 operator sits at its optimum gain for our chain. The overnight hard-six reading "x1.2: -0.9%" was the
+Both learned operators (k34, MP node) sit at their optimum gains for our chain. The overnight hard-six reading "x1.2: -0.9%" was the
 selection effect again.
+
+Small exact-ish cost trims (real op stream, MLP 5000, cn37 0.1935): one tier-2 range-finder pass 0.1934 (-0.05%),
+feedback oversampling 8 0.1931 (-0.2%), residual rank 2 0.1926 (-0.5%), no feedback oversampling 0.1926 (-0.5%).
+The bundle marg2 + residual rank 2 + oversampling 8 is screened directly.
