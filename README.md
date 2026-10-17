@@ -174,7 +174,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336695 | `candidates/v5b_cn50` (cn49b + columns Phi < 0.006, rows Phi < 0.012; gate -1.5% MSE, +0.7% C vs cn49b) | 3.5175e-9 | 1.8116e-8 | 0.1942 |
 | 336767 | **`candidates/v5b_cn53b`** (cn49b + Strassen-Winograd kernel + slab buffer pool without billed reshapes; exact) | **3.4863e-9** | 1.8205e-8 | 0.1915 |
 | 336768 | **`candidates/v5b_cn53`** (cn50 + the same; exact) | **3.4907e-9** | 1.8116e-8 | 0.1927 |
-| 336770 | `candidates/v5b_cn54b` (cn53b + nonlinear term program accumulated elementwise; exact) | grading | | |
+| 336770 | **`candidates/v5b_cn54b`** (cn53b + nonlinear term program accumulated elementwise; exact) | **3.4544e-9** | 1.8202e-8 | 0.1898 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -195,7 +195,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336767 (`v5b_cn53b`, 3.4863e-9, best) and 336768 (`v5b_cn53`, 3.4907e-9)**: the same predictions as cn49b / cn50 (raw MSE equal to 4 digits) at -0.75% cost; to be replaced by cn54b / cn54 if they grade as expected (earlier: cn49b + cn50, cn49b + cn37, cn37 + cn36, cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
+**For the final (private) selection use 336770 (`v5b_cn54b`, 3.4544e-9, best) and 336767 (`v5b_cn53b`, 3.4863e-9)**, or cn54 (cn50 masks) in place of cn53b once it grades: the same predictions as cn49b / cn50 (raw MSE equal to 4 digits) at -1.6% / -0.75% cost (earlier: cn49b + cn50, cn49b + cn37, cn37 + cn36, cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
