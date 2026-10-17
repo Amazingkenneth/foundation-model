@@ -136,3 +136,18 @@ in-process MLP 1015 43 s against ~60 s, but under the grader emulator (server/cl
 266.4 s (-4.7%)**, at C/B 0.1957 against 0.1953 (+0.2%: the matmul form bills a little more). Level 6 adds ~19%, so
 cn48 = cn47 + level 6 would sit ~13% above cn37's wall, past the cap. Neither is submitted. The rewrite stays in the
 local screening copy, where it speeds the fast mode by ~25%.
+
+## 9. Learned-operator recalibration by linear response (75 networks)
+
+One run per knob (knob moved by delta), J = (p_knob - p_base) / delta per network and neuron. The least-squares
+step x along the J's minimises the pooled label MSE. Held-out: fit on one half (seed parity, thirds, low/high
+seeds), score on the other (`scripts/fast/jfit.py`).
+
+| knob (run) | measured at the run | fitted step | held-out |
+|---|---|---|---|
+| marg2 (strength 1) | -0.53% +- 0.47% | x = 0.93 | -0.4% on average |
+| K22 pattern (strength 1) | +1.08% +- 1.02% | x = 0.04 | ~0 |
+| k34 kappa3 + kappa4 corrections x1.2 | +2.30% +- 0.94% | gain 0.97 | ~0 |
+
+The k34 operator sits at its optimum gain for our chain. The overnight hard-six reading "x1.2: -0.9%" was the
+selection effect again.
