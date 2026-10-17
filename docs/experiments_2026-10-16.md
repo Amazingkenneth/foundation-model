@@ -477,3 +477,15 @@ term off), while on moderately hard networks the learned pair correction is abou
 six detect large systematic effects (they reproduced the feedback-rank damage), but a knob value tuned on
 them is subject to selection. cn40 / cn41 (submitted before this check) are leaderboard bets, not
 expected wins; the leaderboard's 100 networks decide.
+
+## 20. Graded Oct 17 (wave 1)
+
+| submission | change (on cn21) | score | raw | C/B |
+|---|---|---|---|---|
+| 336605 cn35 | exact per-chunk hub narrowing | 3.5756e-9 | 1.7950e-8 (= cn21) | 0.1992 |
+| 336607 cn36 | + residual rank 8 | 3.5275e-9 | 1.8053e-8 (+0.6%) | 0.1954 |
+| **336609 cn37** | + residual rank 4 | **3.5262e-9** | 1.8235e-8 (+1.6%) | 0.1934 |
+| 336610 cn40 | + (3,1) term at b2 = -0.5 | 3.6151e-9 | 1.8160e-8 (+1.2%) | 0.1991 |
+
+The residual-rank optimum is flat between 4 and 8 (raw rises as cost falls). The negative (3,1) term
+hurts on the leaderboard (+1.2% raw), as the held-out check predicted; the hard-six gain was selection.

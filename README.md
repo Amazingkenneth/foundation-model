@@ -166,8 +166,8 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336544 | **`candidates/v5b_cn21`** (cn11a + D21 feedback rank 2) | **3.5816e-9** | 1.7950e-8 | 0.1995 |
 | 336605 | `candidates/v5b_cn35` (cn21 + exact per-chunk hub narrowing) | 3.5756e-9 | 1.7950e-8 | 0.1992 |
 | 336607 | **`candidates/v5b_cn36`** (cn35 + S21 residual rank 8) | **3.5275e-9** | 1.8053e-8 | 0.1954 |
-| 336609 | `candidates/v5b_cn37` (cn35 + S21 residual rank 4) | pending | | ~0.195 |
-| 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | pending | | ~0.199 |
+| 336609 | **`candidates/v5b_cn37`** (cn35 + S21 residual rank 4) | **3.5262e-9** | 1.8235e-8 | 0.1934 |
+| 336610 | `candidates/v5b_cn40` (cn35 + (3,1) kappa4 slice term at b2 = -0.5) | 3.6151e-9 | 1.8160e-8 | 0.1991 |
 | 336612 | `candidates/v5b_cn41` (cn35 + learned MP pair correction x0.4) | pending | | ~0.199 |
 | 336627 | `candidates/v5b_cn44` (cn36 + young families at 6 Strassen levels) | pending | | ~0.194 |
 
@@ -190,7 +190,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336607 (`v5b_cn36`, -15.4% vs rg) and 336605 (`v5b_cn35`, -14.3%)** (earlier: cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
+**For the final (private) selection use 336609 (`v5b_cn37`, -15.4% vs rg) and 336607 (`v5b_cn36`, -15.4%)** (earlier: cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
