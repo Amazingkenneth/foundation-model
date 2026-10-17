@@ -198,3 +198,7 @@ Oversampling 8 is the best of the four (the shape is not monotone, so part of th
 | rows Phi < 0.015 | +0.50% +- 0.65% | -0.41% (0.1923) | ~0 |
 | columns Phi < 0.012 | +0.24% +- 0.52% | -0.26% (0.1926) | ~0 |
 | **columns 0.006 + rows 0.012 (cn50)** | **-1.46% +- 0.98% (all halves -)** | **+0.67% (0.1944)** | **net ~-0.8%** |
+| columns Phi < 0.004 | -1.15% +- 0.93% | +1.35% (0.1957) | ~+0.2% |
+
+cn50 checks: emulator ok, VmHWM 3.46 GB, smoke finite, values match the screen to 6e-7; quiet back-to-back emulator
+wall 219.6 / 220.9 s against cn49b's 226.7 / 228.5 s (3% faster: more rows compacted). Submitted 09:15 UTC as 336695.
