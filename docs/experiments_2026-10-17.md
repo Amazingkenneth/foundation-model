@@ -76,3 +76,22 @@ error changes sign from network to network). The label-noise part of a paired di
 so the gate's standard error is the network spread, ~1.1% at 75 networks. Single changes worth 1% cannot be confirmed
 locally, and the 100-network leaderboard has the same resolution. Changes are submitted only when they, or a bundle of them,
 clear ~-2% with both seed-parity halves agreeing.
+
+## 6. Smoke tests of portable step-level fixes (fast mode, MLPs 1015 + 1002, vs cn37)
+
+| change | 1002 | 1015 | note |
+|---|---|---|---|
+| C0^3 Mehler term ((1/6) a3 b3 C0^3, all three pair channels) | -3.0% | +0.6% | 28 of 75 networks: -0.2% +- 1.9%; stopped (null) |
+| marg2 (k=2 marginal Edgeworth corrections only for alpha <= -2) | -0.7% | -2.4% | 75-network screen queued |
+| scale-mixture K22 pattern (+2 v C0^2 on the dyadic law) | -0.6% | -1.7% | queued |
+| exact spherical input (layer 0) | +44.5% | +24.6% | closed (memoryless kappa4) |
+| MP at the final layer (full last layer) | | -1.4% | +5.0% C: closed |
+| **(3,1) slice read fixed in the (2,1) channel** | -3.9% | -6.4% | see below |
+| D21 hub on live rows/columns only (Phi >= 0.01 / 0.001) | | +84% / +28% | closed: dead neurons' D21 entries are load-bearing (the MP reads them) |
+
+The (3,1) read: kai_leal_gonzalez (18246, section 5) found that the (2,1) update reads the K13-oriented slot
+transposed in its (3,2)-(1,1) entry (third derivative on i needs kappa(i,i,i,j) = wk431^T). It is harmless while
+the slot is symmetric (V29: lambda C_off). Ours is not: the learned MP pair term Dl * outer(s1, s3) is added at layers
+>= 8. Fixing the read moves the prediction 2.6e-5 rms (large), and the per-network effect spreads from -4% to
++22% over the first 16 networks. The MP pair network may have been trained with the transposed read and adapted
+to it. The 75-network screen decides.
