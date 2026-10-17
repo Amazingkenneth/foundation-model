@@ -23,7 +23,8 @@ Per-call-site profile (`scripts/fast/prof.py`): matmul 84.7% of C, einsum 4.7%, 
 (`_hub`, 39%) and young-source transports (`_mmc`, 36%) are ~75% of the bill; the tier-1/2 leg
 formation and rotations (`_mmc2`) 4%, the covariance sandwich 3.6%, the basis products (`_sd`) 3%.
 Every remaining exact lever is in the Strassen kernel: level 6 for the young families (cn44,
--0.9%), and a Winograd form of the combos would save ~1/15 of the 6% addition overhead (~0.4%,
+-0.9%; failed on the grader: its emulator wall, 239 s, is over the ~175 s ceiling that maps to the grader's 120 s
+per-network wall cap), and a Winograd form of the combos would save ~1/15 of the 6% addition overhead (~0.4%,
 not worth a slot).
 
 Cost elasticities of the remaining structural knobs (real op stream, MLP 5000; C/B of cn37 0.1935):

@@ -202,7 +202,10 @@ What the grader enforces that in-process flopscope does not (reproduced with
 * every op is an IPC round trip, so wall and residual time scale with the op count far more
   than in-process: the failed level-6 variants ran ~150 s in-process like rfhub, but 215-220
   s under the emulator; rfhub / rg run 145-178 s there and pass. Treat ~175 s emulator wall
-  as the ceiling.
+  as the ceiling. Confirmed on Oct 17: cn44 (level 6 on the young families, 239 s quiet against cn36's 202 s)
+  failed like the earlier level-6 builds. The grader zeroes any network over 120 s of wall
+  (Artyom_Mazur 18249, A.2), and one zeroed network is the whole entry. Deeper Strassen buys FLOPs
+  with wall time, and our wall is already at the cap.
 * a per-result array cap (`FLOPSCOPE_MAX_ARRAY_BYTES`): a 134,873,088-byte result passes, a
   137,682,944-byte one fails (the server default, 100 MiB, is lower than the grader's).
 * memory, per network: rg / rfhub peak at 6.0-6.1 GB resident (VmPeak 7.7-7.8 GB) and pass;
