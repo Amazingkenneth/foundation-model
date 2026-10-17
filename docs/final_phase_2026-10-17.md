@@ -146,3 +146,24 @@ leaderboard reads 1.81e-8), and the error **accumulates steadily from layer 2 on
 With our 5e5-sample labels the early layers had looked error-free. Every layer's closure matters, which is what a
 per-layer recalibration on exact labels can address (queued: linear-response runs for k34 / MP / lambda gains by layer
 group on the mini split, validated on the full split).
+
+### 6.3 Where the error is created (exact labels, 6 mini networks, cn50 settings, `scripts/hf/attr.py`)
+
+Split of each layer's error e_l = pred - truth into the part propagated from the previous layer through the
+linearised map (diag(Phi_l) W_l^T e_{l-1}) and the part created at the layer:
+
+| layer | 1 | 2 | 3 | 5 | 8 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| MSE (e-9) | 0.68 | 0.94 | 1.60 | 3.54 | 7.08 | 9.59 | 11.0 | 13.0 | 15.1 | 17.3 | **20.1** |
+| propagated | 0.42 | 0.44 | 0.66 | 2.02 | 4.82 | 6.78 | 8.05 | 9.84 | 11.7 | 13.3 | 15.4 |
+| created | 0.25 | 0.52 | 0.88 | 1.52 | 2.24 | 2.80 | 3.04 | 3.12 | 3.50 | 3.89 | **4.40** |
+
+(Layers 0-3 include the label noise, var_l / 1e9 = 0.3-0.7e-9.) The propagation contracts the previous error by
+0.8-0.9 per layer, the created part is uncorrelated with it (cross terms ~0), and the creation grows steadily with
+depth: the final layer creates 22% of the final MSE and the last three about half. No single step is faulty; the
+closure loses a little more at every layer as the cumulants grow.
+
+| further idea tested (fast mode) | result | verdict |
+|---|---|---|
+| Artyom's young kappa4 "3+2" tree read into the kappa4 diagonal (12 sum_j W_aj (d2/d1)_j (W D1 C)_aj X(a,j), X = the young hub paired with the pre-transport legs; factor 12 re-derived) | before k34: -0.27% +- 0.81% (six hard networks, move 1.1e-5); after the MP: +3.5% +- 2.8% | out: k34 re-corrects it; our learned operator already carries the young kappa4 content his chain lacked |
+| per-neuron metric (3,1) slot too (`XMET431`) | +0.03% +- 1.35% (75 networks) | null |
