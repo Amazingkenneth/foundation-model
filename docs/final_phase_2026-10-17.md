@@ -107,7 +107,7 @@ How the cheaper teams got there, as far as the public record shows:
 | dead rows + columns together | Phi < 0.002 | +55% | out (matches the earlier +28-84%) |
 | dead columns only | Phi < 0.002 | -1.4% +- 2.3% (5/6), move 3.8e-5 | 75-network screen queued; it would cut ~4-5% of C |
 | E2, saturated rows of D21 (Artyom) | Phi > 0.994 / 0.998, naive | +14.6% / +3.9% | out: in our chain those rows reach kappa4 through K22 row sums of Hadamard products (no cheap restoration) and feed the MP edges |
-| per-neuron metric (e30_a) | `XMET` (diag, (2,2), feed), `XMET431` (+ (3,1)) | screening | |
+| per-neuron metric (e30_a) | `XMET` (diag, (2,2), feed), `XMET431` (+ (3,1)), 75 networks | +0.06% +- 1.35% / +0.03% +- 1.35% (halves disagree) | null: our learned operator already absorbs it; cn56 not shipped |
 | (1/4) a3 b3 C0 o K22 diagram (Artyom) | | already in our term table (`('c_off', 'wk4m', 8, 8, 0.25)`) | -- |
 
 ### 6.1 Literature and web search (Oct 17 evening)
@@ -130,3 +130,19 @@ How the cheaper teams got there, as far as the public record shows:
   matching 504aldo's triage (18218 dead end #24).
 * **Not reachable from this environment:** arxiv.org, alignment.org, lesswrong / greaterwrong and huggingface.co are
   blocked by the network policy (proxy 403); only search snippets were available for them.
+
+### 6.2 The public dataset is reachable now (huggingface.co enabled)
+
+`aicrowd/arc-whestbench-public-2026@v2-phase2` has a `mini` split (100 MLPs) and a `full` split (1,000 MLPs, disjoint
+seeds), each with **1e9-sample means at every layer**. Only the label columns are read (pyarrow over HTTP range
+requests, ~1 MB per shard; `/tmp/claude-0/hfwork/hf_labels.py`); weights are regenerated from `mlp_seed` with
+whestbench's own bake recipe (`derive_seed_streams(seed)[0]` -> `sample_mlp`), checked against the truth by a
+2e4-sample forward pass (final-layer rms difference 1.8e-3 = the MC noise). Tools: `runfast_hf.py`, `gohf.sh`,
+`sc/eval_hf.py`, `sc/jfit_hf.py`. Our own 5e5-sample labelling was stopped (redundant).
+
+First reading, all layers of mini network 0 (cn50 settings, fast mode): the final-layer raw MSE is 1.806e-8 (the
+leaderboard reads 1.81e-8), and the error **accumulates steadily from layer 2 on** (1.0, 1.8, 2.7, 3.9, 5.0, 6.2,
+7.0, 8.8, 9.9, 11.0, 12.9, 15.2, 15.8, 18.1e-9 at layers 2-15, label noise 0.1-0.7e-9) with a negligible mean bias.
+With our 5e5-sample labels the early layers had looked error-free. Every layer's closure matters, which is what a
+per-layer recalibration on exact labels can address (queued: linear-response runs for k34 / MP / lambda gains by layer
+group on the mini split, validated on the full split).
