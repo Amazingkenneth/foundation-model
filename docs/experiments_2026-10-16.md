@@ -469,3 +469,11 @@ The b2 response is smooth and nearly linear per network (b2 = +1 / +0.5 / -0.5: 
 pair-strength result points the same way: the learned pair term on the (3,1) slice is too strong in this chain.
 The k34 step is the operator's most valuable part and is not over-strong. Candidates: `v5b_cn40` (cn35 + b2 =
 -0.5) and `v5b_cn41` (cn35 + pair x0.8), both emulator-checked at unchanged C/B.
+
+**Held-out check (six further MLPs, 5008 1007 1012 1006 5002 1001, base cn21): MP pair x0.6 reads +1.8 +- 1.2%**
+(+1.1 -1.1 -0.1 +6.0 -0.0 +5.4). The in-sample gain (-1.7%, all six improved) does not generalize: the
+overshoot lives in a few of the hardest networks (1008, 1010: -4.4 / -3.0% at x0.6, -8.2 / -6.5% with the pair
+term off), while on moderately hard networks the learned pair correction is about right. Lesson: the hard
+six detect large systematic effects (they reproduced the feedback-rank damage), but a knob value tuned on
+them is subject to selection. cn40 / cn41 (submitted before this check) are leaderboard bets, not
+expected wins; the leaderboard's 100 networks decide.
