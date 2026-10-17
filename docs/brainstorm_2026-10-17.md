@@ -87,3 +87,39 @@ the worst of every team within 2x of our score.
 * The wave-1 leaderboard set (cn35 base, residual ranks 8 / 4, cn40, cn41) measures every lever we have on
   the public 100 networks. Wave 2 combines the winners: residual rank x pair strength x k34 x1.15 (if the
   combination test holds) x level-6 Strassen (-1% C, exact).
+
+## 6. After the held-out check: what the night really showed, and ideas for later
+
+**The pair-strength gain was a selection effect.** On the six tuning networks the MP pair correction at x0.6 / 0.4 / 0 read
+-1.7 / -2.2 / -2.6% (every network improved). On six held-out networks the same settings read +1.8 / +3.1 / +7.4%.
+The tuning set was chosen as the six hardest networks, and the overshoot lives in two of them (1008, 1010). Two
+process rules follow:
+* tune on one set of networks, confirm on another, and only then spend a slot (we submitted cn40 / cn41 before
+  the confirmation; they are bets);
+* "every tuning network improved" is not evidence of generality when the tuning networks are selected by an
+  extreme statistic (hardness).
+
+**Ideas worth pursuing with more data or time (ranked):**
+
+1. **Recalibrate the learned operator to the chain it now runs in.** The strength scans show the k34 / MP
+   corrections are miscalibrated per network: too strong on some (1008, 1010), too weak or right on others.
+   A fine-tune of k34 + MP on our chain's own rollouts (scripts/train.py --v5b supports it) needs clean labels:
+   the 5e5-sample labels are ~4x noisier than the error. Sources: generate 2-4e6-sample labels for 50-100
+   networks (~1 GPU-day), or the CC BY 4.0 Monte Carlo oracles Artyom_Mazur will publish after the close.
+2. **Per-network adaptive operator strength.** If a cheap statistic of the chain state predicts where the MP
+   pair term overshoots (candidates: the share of D21 energy in its dominant pair, dead fraction at late
+   layers, mean |skew|), a strength that follows it would keep the tuning-set gain (-2..-8% on the networks
+   that overshoot) without the held-out loss. Needs ~50 networks to fit and validate.
+3. **The young kappa4 tree (Artyom_Mazur 18249: x0.70 raw in a float64 chain).** The tree that hands kappa3 on
+   through one covariance edge. Our learned operator carries part of it (the (3,1) law double-counts), so the
+   right test is an ablation inside our chain: compute the tree's contribution to the next layer's (3,1) and
+   (2,2) slices exactly for one layer and measure how much the operator already captures.
+4. **The old tier without dense legs.** The leaders' bill equals ours minus the old tier (504aldo 18218). Our
+   measurements rule out low-rank D21, dropping old D21 and CP-style merges; the remaining door is a different
+   representation of old kappa3 (not legs), which is research, not tuning.
+5. **Deeper Strassen everywhere the array cap allows** (cn44 tests level 6 on the young families on the real
+   grader: -0.9% C, wall +19%). If the grader accepts it, level 6 for the hub's full-width chunks at batch 1
+   and level 5 for the rank-320 families are the next -1%.
+6. **More MC samples for the twelve local test networks** (2-4e6 each). The label-noise term caps local
+   screening at ~0.5-2%; four times the samples halves it, which would have caught the selection effect
+   above with fewer networks.
