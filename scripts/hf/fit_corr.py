@@ -15,6 +15,7 @@ def truth(key):
 FS = {
  "base13": lambda d: [d["mu"], d["var"], d["sigma"], d["alpha"], np.abs(d["alpha"]), d["phi"], d["Phi"], d["pk1v"],
                       d["D3"], d["K4_sigma"], d["sigma"] * d["phi"]],
+ "blend": lambda d: [d["phi"] * (d["D3"] - d["D3raw"]), d["phi"] * d["alpha"] * (d["g4row"] - d["g4raw"]), d["phi"] * d["D3"], d["pk1v"]],
  "rich": lambda d: [d["mu"], d["var"], d["sigma"], d["alpha"], np.abs(d["alpha"]), d["phi"], d["Phi"], d["pk1v"],
                     d["D3"], d["K4_sigma"], d["sigma"] * d["phi"], d["k4_prev"], d["K4_vec"], d["pk2v"], d["pk3v"],
                     d["pk4v"], d["D3"] * d["phi"], d["D3"] * d["alpha"] * d["phi"], d["K4_vec"] * d["phi"],

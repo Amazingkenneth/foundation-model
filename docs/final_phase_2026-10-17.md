@@ -195,6 +195,8 @@ products. Their K3-history ablation (keep only the newest H generations: 12-17x 
 |---|---|---|---|
 | half-precision billing | flopscope 0.12.3, 256^3 matmul | float16 billed 2 n^3, same as float32 (float64 4 n^3) | closed |
 | final-layer ridge mean correction (the shipped-off 13-feature delta, and a 23-feature set) | fit on mini m0-49, test m50-99 and swapped | held out -0.02..-0.09% (se 0.05-0.12%); even in-sample only -0.24% | closed |
+| blend of corrected / raw corrector output (D3 vs D3raw, g4 vs g4raw) | fit f0-99 test f100-199 and swapped | -0.00% / +0.01% (se 0.01%) | closed: corrector strength already optimal |
+| 23-feature ridge on 200 full nets | test mini m0-99 | -0.04% (se 0.03%) | closed |
 | ceiling of any post-hoc final-layer fix | per-network oracle fits on 100 mini nets | common offset 0.4% of MSE, oracle scale 1.2%, oracle 5-feature per-network fit 1.6% | the final error is neuron-specific closure error, not bias |
 
 Dump hook: `scripts/hf/runfast_hf_dump.py` (saves the last layer's per-neuron state); fit: `scripts/hf/fit_corr.py`.
