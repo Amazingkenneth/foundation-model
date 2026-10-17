@@ -179,3 +179,12 @@ closure loses a little more at every layer as the cumulants grow.
 The exact-label gate resolves small moves to 0.03-0.2% (the 75-network gate: 0.2-1.3%). BETA 1.5's -0.19% on our own
 labels and MP7's -0.99% were mostly noise; both knobs are essentially flat. Mini's base raw MSE is 1.90e-8 (board
 1.81e-8).
+
+### 6.5 Forum 18250 (DD_team, "exact compute reductions") checked against our chain
+
+Their two exact cuts do not transfer. B1b (skip the first identity transport, W.T @ I = W.T) is what our newborn P leg
+already does: it is W itself (copied or column-permuted), never a product. B1a (store one transported block for two
+legs that differ only by birth column coefficients, tree-A = I diag(q2) vs B = I) needs two legs that are
+column-scalings of each other; our newborn legs are W C_off and W, which are not, and older P legs are distinct suffix
+products. Their K3-history ablation (keep only the newest H generations: 12-17x worse) agrees with our closed
+"drop old sources" yardstick.
