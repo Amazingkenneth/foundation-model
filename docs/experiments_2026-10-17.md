@@ -31,3 +31,48 @@ Cost elasticities of the remaining structural knobs (real op stream, MLP 5000; C
 | change | C/B | dC |
 |---|---|---|
 | AGE_OLD 4 (one young source fewer, tier 1 one source more) | 0.1834 | -5.2% |
+| AGE_OLD 6 | 0.2011 | +3.9% |
+| tier-1 rank 384 | 0.2035 | +5.2% |
+| tier-2 rank 192 | 0.1955 | +1.0% |
+| tier-2 from age 10 | 0.1953 | +0.9% |
+| full machinery at the final layer (MP there too) | 0.2032 | +5.0% |
+
+## 3. Where the error is created, and what a per-neuron corrector can see (75 networks)
+
+Per-layer label MSE minus the label noise (noise per neuron = post-ReLU variance / samples, from the chain's own
+second moment; it reproduces the dataset's last-layer noise to 0.1%): the excess is unmeasurable (|excess| < 1e-8 against
+noise 3-13e-7) through layer 7 and grows from layer 8 on: 0.5 / 4.6 / 6.8 / 5.5 / 6.0 / 8.0 / 10.7 / 12.8e-9 at layers
+8-15. The error is made in the second half of the network, where the MP corrector runs.
+
+A final-layer correction e_i ~ f(alpha_i, sigma_i, kappa3_i / sigma^3, kappa4_i / sigma^4) fitted on half the networks
+does not transfer (held-out dMSE +1.2 / +0.9 / -7.1 / +0.4% for four splits with the phi-polynomial, +11 / +16 / -22 /
++2.5% with all features). Artyom_Mazur's random-projection result (18249, Proposition 1) predicts exactly this.
+Closed.
+
+## 4. The scale mode in our chain
+
+il.miscusi (18248) shows that a common random scale on a layer's activations leaves every later mean unchanged and
+inflates the carried cumulants along fixed patterns, for kappa3 2 eps Sym(C x m). Diagnostic on MLP 1015 (cn37, fast
+mode): the share of the D21 slice explained by the pattern S_ij = var_i mu_j + 2 mu_i C_ij (pre-activation):
+
+| layer | 1 | 3 | 5 | 7 | 9 | 11 | 13 | 14 |
+|---|---|---|---|---|---|---|---|---|
+| all sources, R^2 | 0.28 | 0.61 | 0.73 | 0.77 | 0.80 | 0.82 | 0.82 | 0.82 |
+| accumulated eps | 1.7e-3 | 2.8e-3 | 3.5e-3 | 4.1e-3 | 4.6e-3 | 5.0e-3 | 5.1e-3 | 5.2e-3 |
+| old tiers only, R^2 | | | | 0.50 | 0.64 | 0.76 | 0.80 | 0.82 |
+| young sources only, R^2 | | | 0.73 | 0.72 | 0.71 | 0.68 | 0.61 | 0.58 |
+
+Most of D21 is the scale mode. But the old tiers cannot be replaced by a scalar eps: their non-mode residual is
+~20% of D21's norm at depth, and D21 must be right to ~2% (504aldo's eps^2 law). Removing the mode from a chain
+whose kappa4 has no memory hurts, as il.miscusi found for V29 and e30_a. The exact spherical input (x = E|x| u: input
+covariance (E|x|^2/n) I, the sphere's kappa4 -(2/(n+2)) Pair3(C x C) at layer 0) matches the Gaussian chain's layer-0
+means to 5e-7, and then makes cn37 **+35%** worse (two networks: +25 / +45%). Our lambda law and learned operator are
+calibrated to the mode. Closed.
+
+## 5. Resolution of the 75-network gate
+
+Any structural change moves each network's MSE by about +-10% (chaos-like: the move's correlation with the existing
+error changes sign from network to network). The label-noise part of a paired difference is ~0.15% over 75 networks,
+so the gate's standard error is the network spread, ~1.1% at 75 networks. Single changes worth 1% cannot be confirmed
+locally, and the 100-network leaderboard has the same resolution. Changes are submitted only when they, or a bundle of them,
+clear ~-2% with both seed-parity halves agreeing.
