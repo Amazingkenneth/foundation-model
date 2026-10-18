@@ -387,4 +387,4 @@ never compared predictions. Every candidate now also gets one real-Strassen run 
 | learned gains x1.2: mna / mnb / mp | +0.18 / +0.28 / +0.23% |
 
 The learned operator and the lambda table sit at their optimum to within ~0.1% everywhere except possibly g4b.
-Down-steps x0.85 / x0.7 are queued.
+g4b x0.85: +1.07% +- 0.19, so g4b also sits at a sharp minimum. **E3 closed: no free gain.**
