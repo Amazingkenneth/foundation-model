@@ -181,7 +181,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336887 | `candidates/v5b_cn58` (cn54b + RW_TAU 0.02; local prediction ~3.437e-9: 300 public nets +0.46% MSE, -0.94% C) | **0.0502** (score = raw MSE: every network zeroed at full budget) | 0.0502 | |
 | 336962 | `candidates/v5b_cn59` (cn54b + RW_TAU 0.02 + residual rank 6; local prediction ~3.43e-9) | **0.0310** (score = raw MSE: ~62% of networks zeroed; cn58 0.0502 = all) | 0.0310 | |
 | 336965 | `candidates/v5b_cn54b` resubmitted unchanged (grader-health control; graded 3.4544e-9 as 336770 on Oct 17) | **0.0351** (~70% of networks zeroed) | 0.0351 | |
-| 336966 | `candidates/v5b_cn61` (cn54b + residual rank 6 + late dense window from layer 14; 300 public nets -1.27% MSE, +0.6..0.9% C) | pending | | |
+| 336966 | **`candidates/v5b_cn61`** (cn54b + residual rank 6 + late dense window from layer 14; local: 300 public nets -1.27% MSE, +0.6..0.9% C) | **3.4404e-9** | 1.8012e-8 | 0.1910 |
 | 336968 | `candidates/v5b_cn61r` (cn61 at 4 Strassen levels on the young families: in-process wall 81.6 s vs 106.9 s, C/B 0.2035 vs 0.1906) | pending | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
@@ -203,7 +203,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection use 336770 (`v5b_cn54b`, 3.4544e-9, best) and 336767 (`v5b_cn53b`, 3.4863e-9)**, or cn54 (cn50 masks) in place of cn53b once it grades: the same predictions as cn49b / cn50 (raw MSE equal to 4 digits) at -1.6% / -0.75% cost (earlier: cn49b + cn50, cn49b + cn37, cn37 + cn36, cn36 + cn35, cn21 + cn11a, cn11a + cn9, cn9 + cn8; cn8 / cn7 both -8.6% vs rg;
+**For the final (private) selection (Oct 18 evening): 336966 (`v5b_cn61`, 3.4404e-9, best clean grade) and 336770 (`v5b_cn54b`, 3.4544e-9)**. If 336968 (`v5b_cn61r`, same chain at 4 Strassen levels, wall -24%) grades clean, it replaces cn54b as the robustness hedge: the grader zeroes networks under load (the cn54b resubmission 336965 lost ~70% on Oct 18).
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).

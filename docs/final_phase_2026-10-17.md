@@ -542,3 +542,8 @@ cause, and a 4-level build is the safe second nomination (about +6% score, ~25% 
 
 Op counts per network (cn54 profile): 35k flopscope ops, of which 18k are add / subtract (Strassen-Winograd
 combinations) and 5k copyto. The young D21 hub issues 7k of them.
+
+**336966 cn61 graded 3.4404e-9** (raw 1.8012e-8, C/B 0.1910), clean: the new best. Against cn54b, raw is -1.04%
+(local -1.27%) and C/B +0.6%, so the score is -0.4%. It graded in the same hour that the unchanged cn54b control
+lost ~70% of its networks, so the failures are intermittent per job (machine / load), not deterministic per build.
+Nominations: cn61 (336966) + cn54b (336770), or cn61r as the hedge if it grades clean.
