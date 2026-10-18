@@ -772,7 +772,8 @@ class Estimator(BaseEstimator):
 
         _cprev = None   # cn62: previous-layer stats of the carried corrector
         _cs = None      # cn62: carried correction
-        _czero = fnp.zeros(n, dtype=f32) if self._corr is not None else None
+        _use_corr = self._corr is not None and n == 1024 and L == 16   # trained shape only (smoke shapes skip it)
+        _czero = fnp.zeros(n, dtype=f32) if _use_corr else None
         for li, w in enumerate(mlp.weights):
             last = li == L - 1
             trim = last and not FULL_LAST  # V19: mean-only final layer
@@ -1256,7 +1257,7 @@ class Estimator(BaseEstimator):
             else:
                 delta = None
 
-            if self._corr is not None:
+            if _use_corr:
                 # cn62: delta_l = f(local stats, previous-layer stats through W and W*W); the correction rides
                 # s_l = Phi_l * (W s_{l-1}) + delta_l (the linearised map of mean errors) and is added at the end.
                 _cr = self._corr
