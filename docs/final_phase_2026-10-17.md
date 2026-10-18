@@ -262,3 +262,67 @@ share.
 rule (a post-ReLU partial-trace contraction that is not in our term program), ARC's current term table (measured
 worse in our lambda chain), and a retrained learned k34/MP operator, whose inputs would change. 18248's own carried
 build lost on score at twice the cost. That cannot be built and validated before Oct 21.
+
+## 8. Oct 18 morning: grades, failures, leaderboard, weaknesses
+
+**Grades.** 336850 cn54 **3.4588e-9** (raw 1.8112e-8, C/B 0.1910). 336851 cn55b and 336852 cn55 **failed** ("Error
+while scoring"). Both failures are the Gram-core builds (`_gram2`: `einsum("ik,jk->ij", G, G)`, a SymmetricTensor
+result). The only non-Gram build of the wave graded. Not reproduced locally:
+- cn55b runs clean on a fresh **0.12.3** client/server emulator: suite shape wall 201.6 s, residual 1.22 s; control
+  cn54b 215.6 s / 1.37 s on the same loaded machine.
+- All non-suite shapes (4x2 ... 256x4) are finite on 0.12.3 client/server and in process.
+- The Gram weights are positive (min 9 / 1), so sqrt cannot make NaN.
+
+The cause is unknown (grader-side handling of the same-operand symmetric einsum is the prime suspect; the chain's
+own F45 note says repeated same-object operands once crashed flopscope). **Decision: no `_gram2` in any further
+build.** Its -0.6% is not worth a third failed slot.
+
+**Version slip found.** `/tmp/claude-0/venv` is flopscope **0.12.1**. The Oct 17 night billing sweep (section 7
+table) ran on it. The grader bills 0.12.3 (`/tmp/claude-0/venv123`). Every dC that drives a build decision is
+re-measured on 0.12.3 before use. The accuracy runs (fast mode) are unaffected.
+
+**Leaderboard (Oct 18 03:00 UTC, top 30).**
+
+| team | score | raw | C/B |
+|---|---|---|---|
+| marius_binner | 1.3e-9 | 1.10e-8 | 0.122 |
+| J2W | 1.4e-9 | 1.36e-8 | 0.107 |
+| oliver_chen / mliston / Luna | 1.5e-9 | 1.20-1.35e-8 | 0.115-0.129 |
+| AndreasHad04 | 1.6e-9 | 1.33e-8 | 0.123 |
+| lode_dockx | 2.0e-9 | **1.97e-8** | **0.104** |
+| Puffi | 2.0e-9 | 1.24e-8 | 0.164 |
+| a_s6 / oqaris | 2.5-2.6e-9 | 2.0e-8 | 0.126-0.131 |
+| **us (cn54b)** | 3.45e-9 | **1.82e-8** | **0.190** |
+
+Our raw error is in the top-30 band, but our cost is the highest of anyone within 2x of our score. Teams at our
+accuracy or worse run at 0.10-0.13. **The weakness is cost, by about 1.6x, not accuracy.**
+
+**Where our 0.19 goes (0.12.3 profile, cn54).**
+- young D21 hub `_hub2` over the dense young sources: **31.5%**;
+- young leg transports: 23%;
+- old tiers (formings, rotations, inner hubs): about 20%;
+- the newborn: 7.5%;
+- C_pre: 3.6%.
+
+The hub is the honest kappa3 (i,i,j) contraction: LA = 2 (A o P) w2 + (P o P) e enters as Hadamard products. So
+it has no carried-Gram form, and low-rank D21, older-young D21 drops and dropping old sources (x4 MSE) were all
+closed by measurement before.
+
+**The cost frontier on exact labels.** Expensive-side steps all buy accuracy at about 0.6% MSE per 1% C:
+
+| step | dMSE | dC |
+|---|---|---|
+| AGE_OLD 6 | -2.54% | +4.08% |
+| R_OLD 352 | -1.69% | +2.67% |
+
+The cheap-side steps cost 1.5-3.0% MSE per 1% C. The exception is **RW_TAU** (dead rows dropped from the next
+layer's transports):
+
+| step | dMSE | dC | net |
+|---|---|---|---|
+| RW_TAU 0.02 | +0.60% +- 0.17 | -0.94% | **-0.34%** |
+
+That clears the -0.3% gate. And the row drop is capped: rows go in steps of 32 with at most n - CN_MIN = 256
+dropped, while deep layers already have about 252 rows with Phi < 0.01 (280 / 312 at 0.02 / 0.04). So the cap
+binds from RW_TAU ~0.02 on. New knob `XRMIN` (a separate row floor, default 768) is in the scratch builds; RW_TAU
+0.03 / 0.04 and floor 640 are queued (billing on 0.12.3 and accuracy).

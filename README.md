@@ -175,9 +175,9 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336767 | **`candidates/v5b_cn53b`** (cn49b + Strassen-Winograd kernel + slab buffer pool without billed reshapes; exact) | **3.4863e-9** | 1.8205e-8 | 0.1915 |
 | 336768 | **`candidates/v5b_cn53`** (cn50 + the same; exact) | **3.4907e-9** | 1.8116e-8 | 0.1927 |
 | 336770 | **`candidates/v5b_cn54b`** (cn53b + nonlinear term program accumulated elementwise; exact) | **3.4544e-9** | 1.8202e-8 | 0.1898 |
-| 336850 | `candidates/v5b_cn54` (cn53 + elementwise term program; exact; cn50 masks) | pending | | |
-| 336851 | `candidates/v5b_cn55b` (cn54b + Gram cores for the joiner/mover weighted cores; exact) | pending | | |
-| 336852 | `candidates/v5b_cn55` (cn54 + Gram cores; exact; cn50 masks) | pending | | |
+| 336850 | `candidates/v5b_cn54` (cn53 + elementwise term program; exact; cn50 masks) | 3.4588e-9 | 1.8112e-8 | 0.1910 |
+| 336851 | `candidates/v5b_cn55b` (cn54b + Gram cores for the joiner/mover weighted cores; exact) | failed ("Error while scoring") | | |
+| 336852 | `candidates/v5b_cn55` (cn54 + Gram cores; exact; cn50 masks) | failed ("Error while scoring") | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
