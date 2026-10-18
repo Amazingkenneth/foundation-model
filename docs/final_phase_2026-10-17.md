@@ -586,3 +586,9 @@ through the gate for Oct 19.
 
 **336975 cn60 graded 3.4395e-9 clean** (raw 1.8177e-8, +0.92% vs cn61; C/B 0.1892, -0.94%). On the grader the
 RW_TAU 0.02 step is neutral (local -0.3%). cn61 stays the main nomination: it ties, and it avoids RW_TAU 0.02.
+
+**336979 cn62 failed "Smoke test failed".** Reproduced on the 0.12.3 client/server emulator: the flopscope client's
+npz reader raises "fortran-order arrays unsupported" (export wrote transposed torch weights). The export now writes
+C-contiguous arrays. cn62 then runs clean on the emulator (C/B 0.1924, residual 1.37 s) and on all smoke shapes in
+client/server mode. Resubmitted 18:56 UTC as **336980**. **Gate amendment:** every build must also pass the 0.12.3
+client/server emulator at the suite shape and at the smoke shapes (`emu123/drive_shapes.py`) before upload.
