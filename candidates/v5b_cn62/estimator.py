@@ -1285,6 +1285,7 @@ class Estimator(BaseEstimator):
                 _dl = (_h @ _cr["W3"] + _cr["b3"])[:, 0] * _cr["ysd"]
                 _cs = _dl if _cs is None else Phi * (W @ _cs) + _dl
                 _cprev = _cur
+                del _lc, _g, _D21, _d21, _loc_f, _car, _X, _h, _dl, _cur   # do not keep last layer's buffers alive
             if last:
                 _out = pk1v if delta is None else pk1v + delta
                 rows.append(_out if _cs is None else _out + _cs)
