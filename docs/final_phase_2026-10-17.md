@@ -547,3 +547,10 @@ combinations) and 5k copyto. The young D21 hub issues 7k of them.
 (local -1.27%) and C/B +0.6%, so the score is -0.4%. It graded in the same hour that the unchanged cn54b control
 lost ~70% of its networks, so the failures are intermittent per job (machine / load), not deterministic per build.
 Nominations: cn61 (336966) + cn54b (336770), or cn61r as the hedge if it grades clean.
+
+**336968 cn61r graded 3.6743e-9, clean** (raw 1.8017e-8 = cn61's, C/B 0.2039 = +6.8% as measured). **Nominations:
+cn61 (best, 3.4404e-9) + cn61r (robust, 3.6743e-9).** If the private re-run meets a loaded grader, the 4-level build
+keeps ~25% wall headroom.
+
+**Corrector progress (held-out mini, trained on full f0-199, 157 networks):** 3x64 MLP -1.28% (80/98), 3x128 MLP
+**-1.72%** (81/98; halves -1.49 / -1.96). The full 1000-network dump finishes ~21:30 UTC.
