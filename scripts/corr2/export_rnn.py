@@ -1,0 +1,17 @@
+"""export_rnn.py <model.pt> <out corr.npz>: fitrnn / fitmlp3 torch model -> corr.npz (C order) for the cn62/cn63
+estimators. Inputs are [24 features, 16 one-hot, S state]; mu / sd are padded with 0 / 1 past the 24 features."""
+import sys, numpy as np, torch
+ck = torch.load(sys.argv[1], weights_only=False); st = ck["state"]
+pre = "f." if any(k.startswith("f.") for k in st) else ""
+lin = sorted({int(k[len(pre):].split(".")[0]) for k in st if k.startswith(pre) and k.endswith("weight")})
+W0 = st[f"{pre}{lin[0]}.weight"].numpy().T; nin = W0.shape[0]
+mu = np.zeros(nin, np.float32); sd = np.ones(nin, np.float32)
+m = np.asarray(ck["mu"], np.float32); s = np.asarray(ck["sd"], np.float32)
+mu[:len(m)] = m; sd[:len(s)] = s
+if len(m) == nin - 0 and "nx" not in ck: pass
+out = {"mu": np.ascontiguousarray(mu), "sd": np.ascontiguousarray(sd), "ysd": np.asarray(ck["ysd"], dtype=np.float32)}
+for i, l in enumerate(lin):
+    out[f"W{i}"] = np.ascontiguousarray(st[f"{pre}{l}.weight"].numpy().T, dtype=np.float32)
+    out[f"b{i}"] = np.ascontiguousarray(st[f"{pre}{l}.bias"].numpy(), dtype=np.float32)
+if ck.get("act", "gelu") == "relu": out["relu"] = np.ones(1, np.float32)
+np.savez(sys.argv[2], **out); print({k: v.shape for k, v in out.items()})

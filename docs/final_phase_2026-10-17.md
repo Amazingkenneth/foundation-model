@@ -602,3 +602,23 @@ cn61r 1.7800e-8). Prediction: raw ~0.98 x 1.8017e-8, score ~3.62e-9.
 (held-out mini -2.02% locally), so the carried corrector transfers. C/B 0.2050 (+0.54%), score -1.0% vs cn61r, and
 raw 1.7745e-8 is our best yet. Nominations: cn61 (336966) + cn62r (336984, robust). Next: the 1000-network
 corrector (locally ~-2.5%) in cn62 / cn62r on Oct 19.
+
+### 8.5 The 974-network corrector (Oct 18 night)
+
+**Final per-layer corrector (3x128 GELU, rho 0.75, 12 epochs) on all 974 prepared full networks (f0-999):** held-out
+mini -2.23% in torch (85/98 better; halves -2.01 / -2.46), against -2.02% for the 297-network model. In chain
+(cn62, fast mode, all 100 mini networks): **-2.25% +- 0.20** (87/100 better; halves -2.03 / -2.48). Parity with the
+torch pipeline 2.2e-6 on m50. Real Strassen kernels on m0: 1.7228e-8 vs fast 1.7245e-8 vs cn61 1.7806e-8 (-3.2%).
+The weights replace `corr.npz` in both `v5b_cn62` and `v5b_cn62r` (same shapes, C order). The 297-network file is
+kept at `/tmp/claude-0/sc/corr/bak297/corr.npz`.
+
+Rounding note: the leaderboard shows two significant digits and ties equal displays. Our 3.4404e-9 shows as 3.4e-9
+(rank 59 tie at 22:00 UTC); the next display step (3.3e-9, rank 57) needs < 3.35e-9, i.e. -2.6% from cn61. The
+974-network cn62 predicts ~3.38-3.40e-9 (the grader's corrector transfer was 0.75x the local gain for the 297 model).
+
+**Layer weights from the measured propagation gain.** g_l = E|J_{L<-l} u|^2 / E|u|^2 for white u through
+s -> Phi * (W^T s), mean over m0-5 (`sc/corr2/gain.py`): 0.031 0.052 0.076 0.107 0.139 0.180 0.223 0.282 0.349 0.412
+0.502 0.580 0.656 0.765 0.883 1. The per-layer ratio is 0.85-0.88 from layer 9 on, so rho 0.75 underweights the middle
+layers by 2-3x. The propagated created errors without cross terms sum to 0.978 of the final MSE (shares rise from 0.1%
+at layer 0 to 22.3% at layer 15): the layers' contributions are nearly uncorrelated, so a per-layer loss weighted by
+g_l is close to the end-to-end objective.
