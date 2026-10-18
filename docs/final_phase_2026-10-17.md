@@ -517,3 +517,28 @@ full-split gate runs first in the queue.
 mini + full f0-999 (`/tmp/claude-0/sc/xs_d2`, `runfast_hf_ldump.py`). The created-error targets and carried
 features come from `sc/corr/prep.py`. First a linear version: per-layer ridge, and a joint ridge on the final error
 through the propagated features (`sc/corr/fitlin.py`), validated on held-out networks.
+
+### 8.4 The grader is the problem today (Oct 18 evening)
+
+**The control 336965 (cn54b resubmitted unchanged; 3.4544e-9 as 336770 on Oct 17) graded 0.0351: about 70% of its
+networks were zeroed.** So the cn58 / cn59 failures are not about RW_TAU 0.02. Today's grader runs our chain past
+its per-network limits.
+
+The scale of it: Susupro's C/B 0.169 chain graded at median wall 85.5 s and max 102.1 s against the 120 s cap
+(18254). Scaled to our C/B 0.19 that is a median of ~96 s and a max of ~115 s, so even on a healthy grader we run
+close to the cap, and a 1.2x slowdown zeroes most networks. 18252 saw the same pattern and fixed it with one
+Strassen level fewer.
+
+Measured in process (0.12.3, seed 1, one thread):
+
+| build | C/B | wall | VmHWM |
+|---|---|---|---|
+| cn61 (young families at 5 levels) | 0.19060 | 106.9 s | 4.25 GB |
+| **cn61r (4 levels)** | 0.20350 (+6.8%) | **81.6 s (-24%)** | 3.63 GB |
+
+cn61r matches cn61 to 3e-6 (MSE 1.7800e-8 vs 1.7806e-8 on m0). It was submitted at 17:15 as **336968**, a
+robustness probe under the current grader load. If it grades clean while cn54b does not, the wall margin is the
+cause, and a 4-level build is the safe second nomination (about +6% score, ~25% wall headroom).
+
+Op counts per network (cn54 profile): 35k flopscope ops, of which 18k are add / subtract (Strassen-Winograd
+combinations) and 5k copyto. The young D21 hub issues 7k of them.

@@ -180,6 +180,9 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336852 | `candidates/v5b_cn55` (cn54 + Gram cores; exact; cn50 masks) | failed ("Error while scoring") | | |
 | 336887 | `candidates/v5b_cn58` (cn54b + RW_TAU 0.02; local prediction ~3.437e-9: 300 public nets +0.46% MSE, -0.94% C) | **0.0502** (score = raw MSE: every network zeroed at full budget) | 0.0502 | |
 | 336962 | `candidates/v5b_cn59` (cn54b + RW_TAU 0.02 + residual rank 6; local prediction ~3.43e-9) | **0.0310** (score = raw MSE: ~62% of networks zeroed; cn58 0.0502 = all) | 0.0310 | |
+| 336965 | `candidates/v5b_cn54b` resubmitted unchanged (grader-health control; graded 3.4544e-9 as 336770 on Oct 17) | **0.0351** (~70% of networks zeroed) | 0.0351 | |
+| 336966 | `candidates/v5b_cn61` (cn54b + residual rank 6 + late dense window from layer 14; 300 public nets -1.27% MSE, +0.6..0.9% C) | pending | | |
+| 336968 | `candidates/v5b_cn61r` (cn61 at 4 Strassen levels on the young families: in-process wall 81.6 s vs 106.9 s, C/B 0.2035 vs 0.1906) | pending | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
