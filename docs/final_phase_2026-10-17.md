@@ -490,3 +490,30 @@ about 15% wall margin on the emulator. That fits the timeline:
 A grader-specific effect of RW_TAU 0.02 cannot be excluded, so the next build avoids it: **cn61 = cn54b + residual
 rank 6 + late dense window from layer 14, RW_TAU 0.01** (predicted net -0.8%: -0.47% and -0.39%). Its mini /
 full-split gate runs first in the queue.
+
+### 8.3 New forum write-ups (Oct 18) and what they change
+
+- **18252 (Nurlanggs, V29 line).** Same failure mode as ours: "the same file graded clean (#336225) and then lost
+  about 10% of the suite to zero-prediction fallbacks (#336349) a day later". Going from 6 to 5 Strassen levels
+  (local wall 96 -> 60 s, +4% q) made it grade clean. Uploads 1.15-1.35x slower than their base sat 80-90 min and
+  returned "Evaluation could not complete". That supports **grader load x thin wall margin** as the cause of our
+  cn58 / cn59 failures. Their oracle budget: exact var + d3 + g4 at layers 8-15 leaves 0.13-0.19 of the MSE. They
+  also find that the all-distinct kappa3 needs rank ~3n/4 and full depth, so the per-source leg representation
+  ends near 3.8e-9 for them.
+- **18254 (Susupro, #336537: 3.145e-9, raw 1.853e-8, C/B 0.169; graded median wall 85.5 s, max 102.1 s).**
+  1. Full K=4 at 1024x16 is 11.8x below augmented K=3 (beyond the budget).
+  2. Inside the budget: D21 column cut at w1 < 0.014 (x0.965). For us, dead-column cuts were measured at +8.9%:
+     our learned operator reads those columns.
+  3. Young-atom pruning by a norm score (x0.91-0.96). For us it is capped by the 768-column Strassen floor.
+  4. **A learned corrector carried through W: raw x0.887 on the grader, lower on all 50 networks.** A shared MLP
+     reads per-neuron stats, stats carried through W and W*W, and a 32-d carried state. It predicts each layer's
+     created error, which is propagated by Phi W^T and added to the output; the chain is unchanged. Trained on 1000
+     public full + 2048 other networks. Their dead end 11 (final-layer readout, x0.979) matches our null ridge.
+- **SLEV 4 (one Strassen level less on the young families) for wall margin:** C/B 0.2035 vs 0.1893 (+7.5%) and an
+  emulator wall of 167.7 s, not clearly below the 5-level builds. For us it is not the cheap margin it was for
+  18252. Closed.
+
+**Now building the carried corrector (task 50).** Per-layer chain statistics at cn61 settings are being dumped for
+mini + full f0-999 (`/tmp/claude-0/sc/xs_d2`, `runfast_hf_ldump.py`). The created-error targets and carried
+features come from `sc/corr/prep.py`. First a linear version: per-layer ridge, and a joint ridge on the final error
+through the propagated features (`sc/corr/fitlin.py`), validated on held-out networks.
