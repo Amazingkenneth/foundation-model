@@ -477,3 +477,16 @@ RW_TAU 0.01 builds (cn54, cn54b) never did. A partial, per-network failure point
 grader's ~50-network process. In process, the Strassen pool's cached views grow with every network (cn59: 649 ->
 900 entries after 2 networks; cn54b 624 -> 828). RW_TAU 0.02 makes more distinct row counts, so more distinct
 shapes. Under test: the server-side memory of these views on the 0.12.3 client/server emulator over 8 networks.
+
+**The pool-growth hypothesis is ruled out.** On the 0.12.3 client/server emulator, cn59 and cn54b run side by side
+for 2 networks: server RSS 3.17 -> 3.22 GB and 3.19 -> 3.25 GB (high-water mark 4.16 / 4.18 GB, flat), wall
+196 / 168 s and 197 / 171 s, residual 1.30 / 1.17 s and 1.36 / 1.20 s. The builds are indistinguishable locally. The
+remaining explanation is a slow or loaded grader today pushing networks past the 120 s cap: our chain has only
+about 15% wall margin on the emulator. That fits the timeline:
+- cn54 graded at 02:05 while the same-minute cn55b / cn55 errored;
+- cn58 lost 100% of its networks at 05:51;
+- cn59 lost ~62% at 14:54.
+
+A grader-specific effect of RW_TAU 0.02 cannot be excluded, so the next build avoids it: **cn61 = cn54b + residual
+rank 6 + late dense window from layer 14, RW_TAU 0.01** (predicted net -0.8%: -0.47% and -0.39%). Its mini /
+full-split gate runs first in the queue.
