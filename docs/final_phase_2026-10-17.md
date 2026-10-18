@@ -448,3 +448,10 @@ The cost ramps with the number of carried sources and flattens at about 1.7% per
 created error keeps growing. The **final layer creates 22% of the final MSE on 4% of the bill**: it is mean-only
 (trimmed), and its error is the closure error of the mean formula (the D3 / kappa4-diagonal inputs and the
 truncated Edgeworth series). Layers 0-4 cost 2.5% of B together.
+
+**cn59 gate.**
+- Full f0-199: -0.36% +- 0.16 MSE (115/200; halves -0.17 / -0.54).
+- 0.12.3 bill: 0.18802 (-0.44%); emulator C/B 0.1893 vs cn54b 0.1901.
+- Net about -0.8%, so the prediction is 3.4544e-9 x 0.992 ~ 3.43e-9.
+- Submitted 14:54 UTC as **336962**, in today's last slot, in place of the cn58 retry: it tests the same grader
+  question with a better expected score.
