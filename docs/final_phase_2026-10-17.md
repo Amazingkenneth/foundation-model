@@ -414,3 +414,10 @@ tier-1 join at layer L so that source stays dense to the end; the tier-2 gate sh
 
 Costs add: window from 13 + RW_TAU 0.02 bills -0.40% = +0.57 - 0.94. The cn59 candidate is RW_TAU 0.02 + CN_RRES 8,
 mini and full split queued.
+
+**cn59 candidate = cn54b + RW_TAU 0.02 + CN_RRES 8** (two defaults; no Gram cores).
+- Mini: -0.70% +- 0.29 MSE (64/100; halves -0.86 / -0.55).
+- 0.12.3 bill: 0.18896 vs 0.18886 (+0.05%), so the net is about -0.65%.
+- Real-Strassen label check on m0 / m1: MSE 1.8217e-8 / 1.8306e-8 vs fast mode 1.8202e-8 / 1.8252e-8 (max
+  prediction difference 8e-6), finite.
+- Full split f0-199 queued. Rank 12 bills +2.00%.
