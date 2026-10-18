@@ -615,7 +615,7 @@ class Estimator(BaseEstimator):
     R_OLD2 = int(_os.environ.get("V24_R_OLD2", "160"))    # V24: rank of the nested sub-basis U (8-dump frontier runs/v24_7_*_d0-7.log: 224 best, 128 cliff)
     QPASS2 = int(_os.environ.get("V24_QPASS2", "2"))      # V24: passes of the r1-space range finder
     R_FB = int(_os.environ.get('CN_RFB', '2'))    # cn35-39: feedback rank 2 (graded as cn21) + the cn26 hub fix; cn26: feedback rank 1 (rank 0 moves the chain 4e-5, rank 1 vs 2 < chaos); cn20/21: feedback rank 4 / 2 (D21 = one dominant singular pair + a flat bulk; the chain moves at chaos level); V18: rank of the D21 feedback thin legs (F69 lean ladder: 8/16/32 -> 2.17/2.14/2.14e-8)
-    R_RES = int(_os.environ.get('CN_RRES', '8'))   # cn59: rank 8 (100 public mini nets, exact labels: -1.34% +- 0.23 MSE, +1.00% C; with RW_TAU 0.02: -0.70% at +0.05% C); cn35-39: residual rank 16 / 8 / 4 / 2 / 1; rank of the S21 residual leg (V17 ladder on dumps 0/1: 16/32/64 -> 2.35/2.39/2.41e-8 at 0.492/0.502/0.518xB)
+    R_RES = int(_os.environ.get('CN_RRES', '6'))   # cn59: rank 6 (100 public mini nets, exact labels: -0.97% +- 0.18 MSE, +0.50% C, net -0.47%; rank 8: -1.34% for +1.00%, net -0.34%); cn35-39: residual rank 16 / 8 / 4 / 2 / 1; rank of the S21 residual leg (V17 ladder on dumps 0/1: 16/32/64 -> 2.35/2.39/2.41e-8 at 0.492/0.502/0.518xB)
 
     def __init__(self) -> None:
         self._setup_rng = None

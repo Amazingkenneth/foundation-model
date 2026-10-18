@@ -421,3 +421,30 @@ mini and full split queued.
 - Real-Strassen label check on m0 / m1: MSE 1.8217e-8 / 1.8306e-8 vs fast mode 1.8202e-8 / 1.8252e-8 (max
   prediction difference 8e-6), finite.
 - Full split f0-199 queued. Rank 12 bills +2.00%.
+
+**Residual rank curve.**
+
+| CN_RRES | dMSE | dC | net |
+|---|---|---|---|
+| 2 | +3.81% | -0.50% | +3.3% |
+| 4 (shipped) | -- | -- | -- |
+| **6** | **-0.97% +- 0.18** (72/100) | +0.50% | **-0.47%** |
+| 8 | -1.34% +- 0.23 | +1.00% | -0.34% |
+| 12 | (not run) | +2.00% | |
+
+So cn59 switches to **RW_TAU 0.02 + CN_RRES 6** (predicted -0.37% MSE at -0.44% C, about -0.8% net).
+
+### 8.2 Where the compute goes vs where the error is created (per layer)
+
+Per-layer bill of cn54b on 0.12.3 (`scripts/hf/perlayer_cost.py`, % of B, total 18.96%), set against the error
+created per layer from section 6.3 (exact labels, e-9):
+
+| layer | 1 | 2 | 3 | 5 | 8 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| % of B | 0.29 | 0.50 | 0.72 | 1.15 | 1.52 | 1.64 | 1.72 | 1.69 | 1.75 | 1.74 | **0.75** |
+| created error | 0.25 | 0.52 | 0.88 | 1.52 | 2.24 | 2.80 | 3.04 | 3.12 | 3.50 | 3.89 | **4.40** |
+
+The cost ramps with the number of carried sources and flattens at about 1.7% per layer from layer 9 on. The
+created error keeps growing. The **final layer creates 22% of the final MSE on 4% of the bill**: it is mean-only
+(trimmed), and its error is the closure error of the mean formula (the D3 / kappa4-diagonal inputs and the
+truncated Edgeworth series). Layers 0-4 cost 2.5% of B together.
