@@ -622,3 +622,22 @@ s -> Phi * (W^T s), mean over m0-5 (`sc/corr2/gain.py`): 0.031 0.052 0.076 0.107
 layers by 2-3x. The propagated created errors without cross terms sum to 0.978 of the final MSE (shares rise from 0.1%
 at layer 0 to 22.3% at layer 15): the layers' contributions are nearly uncorrelated, so a per-layer loss weighted by
 g_l is close to the end-to-end objective.
+
+**Gate of the 974-network cn62 / cn62r (both pass):** 0.12.3 client/server emulator at the suite shape: cn62 C/B
+0.1924, residual 1.34 s; cn62r C/B 0.2054, residual 1.13 s; every smoke shape finite on both. Real Strassen m0:
+cn62r 1.7249e-8 (cn61r 1.7800e-8, -3.1%). 0.12.3 bill (runv, seed 1): cn62 0.19162 (wall 106.1 s, VmHWM 4.23 GB).
+
+### 8.6 A learned state carried through W (18254's 32-d carried state)
+
+`sc/corr2/fitrnn.py`: at layer l the MLP reads [24 features, layer one-hot, W_l^T state_{l-1} / sqrt(n mean W^2)] and
+returns [delta_l, state_l] (S = 32). It is trained through depth on whole networks (weights regenerated per network in
+DataLoader workers), with the per-layer loss weighted by the measured gain g_l.
+
+| train f0-199 (200 nets), 3x128 GELU, 12 epochs, test held-out mini | held-out dMSE | better |
+|---|---|---|
+| S = 0 (same trainer, one network per step) | -1.44% (halves -1.30 / -1.58) | 84/98 |
+| **S = 32** | **-2.44%** (halves -2.26 / -2.62) | 86/98 |
+
+At 200 training networks the state beats the 974-network per-layer model (-2.23%). The in-chain version (`sc/c63`,
+`self._corrS` from W3's width; W @ state per layer) matches torch to 2.3e-6 on m50. 0.12.3 bill 0.19221 vs cn62
+0.19162 (+0.31% C), in-process wall 108.7 s vs 106.1 s. The 974-network S = 32 model is training (~64 min).
