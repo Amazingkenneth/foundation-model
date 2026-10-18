@@ -343,3 +343,14 @@ queued). 0.12.3 bills this chain exactly like 0.12.1 (base 0.18886 in both). Exp
 
 **cn58** = cn54b with RW_TAU 0.02 (one default changed, no Gram cores). It is not submitted until the 200-network
 full-split check and the 0.12.3 emulator run pass.
+
+Cheap-side closures (100 mini, exact labels; dC on 0.12.3):
+
+| step | dMSE | dC | net |
+|---|---|---|---|
+| feedback legs off | +7.80% +- 0.33 | -1.81% | +6.0% |
+| CN_KEEP all | +2.55% +- 0.18 | -1.68% | +0.9% |
+| CN_RRES 2 | +3.81% +- 0.30 | -0.50% | +3.3% |
+| CN_RFB 1 | +0.49% +- 0.05 | -0.48% | +0.01% |
+
+Only RW_TAU 0.02 pays. cn58 stays a single-knob change.
