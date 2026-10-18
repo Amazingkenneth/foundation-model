@@ -376,3 +376,15 @@ cn54b (336770, 3.4544e-9) + cn54 (336850, 3.4588e-9) until a newer build grades 
 **Lesson for the gate:** the fast-mode accuracy runs bypass the Strassen kernels, and the emulator / billing runs
 never compared predictions. Every candidate now also gets one real-Strassen run on a public network with labels
 (`/tmp/claude-0/acc/runstr_hf.py`) before it is submitted.
+
+**E3, zero-cost scalars (100 mini, exact labels, cn55b settings; one-sided steps).**
+
+| probe | dMSE |
+|---|---|
+| METRIC_C x1.1 / x0.9 | +10.99% / +8.37% (parabola minimum at x0.993, worth -0.04%) |
+| lambda x1.1, layers <=4 / 5-9 / >=10 | -0.07% +- 0.03 / +0.27% +- 0.06 / +0.05% +- 0.04 |
+| learned gains x1.2: g3a / g3b / g4a / g4b | +0.05 / +0.12 / +0.04 / **+0.93%** |
+| learned gains x1.2: mna / mnb / mp | +0.18 / +0.28 / +0.23% |
+
+The learned operator and the lambda table sit at their optimum to within ~0.1% everywhere except possibly g4b.
+Down-steps x0.85 / x0.7 are queued.
