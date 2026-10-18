@@ -183,6 +183,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336965 | `candidates/v5b_cn54b` resubmitted unchanged (grader-health control; graded 3.4544e-9 as 336770 on Oct 17) | **0.0351** (~70% of networks zeroed) | 0.0351 | |
 | 336966 | **`candidates/v5b_cn61`** (cn54b + residual rank 6 + late dense window from layer 14; local: 300 public nets -1.27% MSE, +0.6..0.9% C) | **3.4404e-9** | 1.8012e-8 | 0.1910 |
 | 336968 | `candidates/v5b_cn61r` (cn61 at 4 Strassen levels on the young families: in-process wall 81.6 s vs 106.9 s, C/B 0.2035 vs 0.1906) | **3.6743e-9** (clean) | 1.8017e-8 | 0.2039 |
+| 336975 | `candidates/v5b_cn60` (cn61 + RW_TAU 0.02; 100 mini vs cn61: +0.63% MSE, -0.94% C, net -0.3%) | pending | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),

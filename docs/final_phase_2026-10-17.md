@@ -554,3 +554,10 @@ keeps ~25% wall headroom.
 
 **Corrector progress (held-out mini, trained on full f0-199, 157 networks):** 3x64 MLP -1.28% (80/98), 3x128 MLP
 **-1.72%** (81/98; halves -1.49 / -1.96). The full 1000-network dump finishes ~21:30 UTC.
+
+**cn60 = cn61 + RW_TAU 0.02.** 100 mini vs cn61: +0.63% +- 0.18 MSE (halves +0.64 / +0.62), -0.94% C, net -0.31%
+(vs base: -0.85% MSE at -0.34% C). Submitted 18:12 UTC as **336975**.
+
+**Corrector variants (train full f0-199, test mini):** the incoming correction J_l s_{l-1} as an input (two-stage)
+gives -1.60% vs -1.72% without it, so it is dropped. MLP billing per network (0.12.3): H=64 GELU 0.16% of C, H=128
+GELU 0.45% (ReLU 0.09 / 0.30%). In chain, the H=64 build costs +0.25% C (0.19108 vs 0.19060 on the same seed).
