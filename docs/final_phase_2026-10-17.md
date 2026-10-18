@@ -583,3 +583,6 @@ through the gate for Oct 19.
 - The package validator caught the corrector running at a non-suite shape; it now runs only at 1024 x 16, and
   every smoke shape is finite.
 - Prediction: 3.4404e-9 x 0.980 x 1.0054 ~ 3.39e-9.
+
+**336975 cn60 graded 3.4395e-9 clean** (raw 1.8177e-8, +0.92% vs cn61; C/B 0.1892, -0.94%). On the grader the
+RW_TAU 0.02 step is neutral (local -0.3%). cn61 stays the main nomination: it ties, and it avoids RW_TAU 0.02.
