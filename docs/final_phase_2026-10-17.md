@@ -574,3 +574,12 @@ About -0.3% per doubling, so ~-2.5% is expected at 1000 networks. Carrying all 1
 inputs) gives -1.81% vs -1.72% at 157 networks: noise level, so it is not adopted. The final model trains on all
 ~1000 full networks once the dump finishes (~22:00 UTC). Then cn62 (cn61 + corrector) and its 4-level twin go
 through the gate for Oct 19.
+
+**cn62 (early corrector, 297 training networks) submitted 18:46 UTC as 336979.**
+- 0.12.3 bill 0.19162 (+0.54% vs cn61), VmHWM 4.21 GB (releasing the per-layer references fixed the 5.81 GB of
+  the first draft), in-process wall 110.6 s vs 106.9 s.
+- Real-Strassen label check vs cn61: m0 1.730e-8 vs 1.781e-8 (-2.8%), m60 1.784e-8 vs 1.855e-8 (-3.8%).
+- Parity with the torch pipeline: 2.2e-6.
+- The package validator caught the corrector running at a non-suite shape; it now runs only at 1024 x 16, and
+  every smoke shape is finite.
+- Prediction: 3.4404e-9 x 0.980 x 1.0054 ~ 3.39e-9.
