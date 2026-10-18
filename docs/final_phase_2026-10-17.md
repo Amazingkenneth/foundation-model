@@ -651,3 +651,9 @@ The ReLU version on 1000 networks is training.
 At 200 training networks the state beats the 974-network per-layer model (-2.23%). The in-chain version (`sc/c63`,
 `self._corrS` from W3's width; W @ state per layer) matches torch to 2.3e-6 on m50. 0.12.3 bill 0.19221 vs cn62
 0.19162 (+0.31% C), in-process wall 108.7 s vs 106.1 s. The 974-network S = 32 model is training (~64 min).
+
+**Gate of cn63 / cn63r (pass).** Real Strassen m0: cn63 1.6675e-8, cn63r 1.6699e-8 (cn62 1.7228e-8, cn61 1.7806e-8:
+-6.4% vs cn61). 0.12.3 client/server emulator at the suite shape: cn63 C/B 0.1930 (residual 1.29 s), cn63r 0.2059
+(1.16 s); every smoke shape finite on both. Prediction for cn63: raw -2.9..-3.9% vs cn61 (grader transfer 0.75-1.0 of
+local), C +0.85%, score ~3.33-3.37e-9.
+In chain on all 100 mini networks (fast mode): **cn63 -3.89% +- 0.30** (88/100; halves -3.66 / -4.12), cn62 -2.25%.

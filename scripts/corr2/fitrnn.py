@@ -8,6 +8,7 @@ sys.path.insert(0, "/tmp/claude-0/hfwork"); sys.path.insert(0, "/tmp/claude-0/sc
 from prep import ids
 tag, trs, tes = sys.argv[1:4]
 EP, H, S = int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]); OUT = sys.argv[7]
+S2 = int(os.environ.get("S2", "0"))      # a second state channel carried through W*W (variance-like messages)
 NT = int(os.environ.get("NT", "2")); NW = int(os.environ.get("NW", "2")); torch.set_num_threads(NT)
 torch.manual_seed(int(os.environ.get("SEED", "0")))
 WMODE = os.environ.get("WMODE", "gain"); RHO = float(os.environ.get("RHO", "0.75")); ACT = os.environ.get("ACT", "gelu")
@@ -17,7 +18,7 @@ GAIN = [0.031, 0.052, 0.076, 0.107, 0.139, 0.180, 0.223, 0.282, 0.349, 0.412, 0.
 L = 16
 D = f"/tmp/claude-0/sc/corr/data_{tag}"
 tr = [k for k in ids(trs) if os.path.exists(f"{D}/{k}.npz")]; te = [k for k in ids(tes) if os.path.exists(f"{D}/{k}.npz")]
-print(f"train {len(tr)} test {len(te)} H {H} S {S} {WMODE} {ACT}", flush=True)
+print(f"train {len(tr)} test {len(te)} H {H} S {S} S2 {S2} {WMODE} {ACT}", flush=True)
 # standardisation from (up to) 200 training networks
 acc = []
 for k in tr[:200]:
@@ -46,18 +47,26 @@ A = torch.nn.ReLU if ACT == "relu" else torch.nn.GELU
 class Net(torch.nn.Module):
     def __init__(s):
         super().__init__()
-        s.f = torch.nn.Sequential(torch.nn.Linear(nx + L + S, H), A(), torch.nn.Linear(H, H), A(),
-                                  torch.nn.Linear(H, H), A(), torch.nn.Linear(H, 1 + S))
+        s.f = torch.nn.Sequential(torch.nn.Linear(nx + L + S + S2, H), A(), torch.nn.Linear(H, H), A(),
+                                  torch.nn.Linear(H, H), A(), torch.nn.Linear(H, 1 + S + S2))
     def forward(s, X, Ws):                                                    # X (L, n, nx), Ws (L, n, n)
-        n = X.shape[1]; eye = torch.eye(L); out = []; st = None
+        n = X.shape[1]; eye = torch.eye(L); out = []; st = None; st2 = None
         for l in range(L):
             parts = [X[l], eye[l].expand(n, L)]
             if S:
                 cin = torch.zeros(n, S) if st is None else (Ws[l].T @ st) * Ws_scale(Ws[l])
                 parts.append(cin)
+            if S2:
+                cin2 = torch.zeros(n, S2) if st2 is None else ((Ws[l] * Ws[l]).T @ st2) / (W2sum(Ws[l]) / n)
+                parts.append(cin2)
             o = s.f(torch.cat(parts, 1)); out.append(o[:, 0])
-            if S: st = o[:, 1:]
+            if S: st = o[:, 1:1 + S]
+            if S2: st2 = o[:, 1 + S:]
         return torch.stack(out)                                               # (L, n)
+
+
+def W2sum(W):
+    return (W * W).sum()
 
 
 def Ws_scale(W):                                                              # W^T st has ~ n * mean(W^2) x |st|^2
@@ -84,7 +93,7 @@ for ep in range(EP):
         tot += loss.item(); tb += float(base0)
     for g in opt.param_groups: g["lr"] *= DEC
     print(f"epoch {ep}: weighted loss / no-fit {tot / tb:.4f}", flush=True)
-torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, nx=nx, act=ACT), OUT)
+torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, S2=S2, nx=nx, act=ACT), OUT)
 base, corr = [], []
 with torch.no_grad():
     for X, Y, Ws, Phi, E in torch.utils.data.DataLoader(DS(te), batch_size=None, shuffle=False, num_workers=NW):
