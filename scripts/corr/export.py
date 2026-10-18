@@ -2,7 +2,7 @@
 import sys, numpy as np, torch
 ck = torch.load(sys.argv[1], weights_only=False); st = ck["state"]
 lin = sorted({k.split(".")[0] for k in st if k.endswith("weight")}, key=int)
-out = {"mu": ck["mu"].astype(np.float32), "sd": ck["sd"].astype(np.float32), "ysd": np.float32(ck["ysd"])}
+out = {"mu": np.ascontiguousarray(ck["mu"], dtype=np.float32), "sd": np.ascontiguousarray(ck["sd"], dtype=np.float32), "ysd": np.asarray(ck["ysd"], dtype=np.float32)}
 for i, l in enumerate(lin):
-    out[f"W{i}"] = st[f"{l}.weight"].numpy().T.astype(np.float32); out[f"b{i}"] = st[f"{l}.bias"].numpy().astype(np.float32)
+    out[f"W{i}"] = np.ascontiguousarray(st[f"{l}.weight"].numpy().T, dtype=np.float32); out[f"b{i}"] = np.ascontiguousarray(st[f"{l}.bias"].numpy(), dtype=np.float32)
 np.savez(sys.argv[2], **out); print({k: v.shape for k, v in out.items()})
