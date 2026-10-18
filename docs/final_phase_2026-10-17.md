@@ -326,3 +326,20 @@ That clears the -0.3% gate. And the row drop is capped: rows go in steps of 32 w
 dropped, while deep layers already have about 252 rows with Phi < 0.01 (280 / 312 at 0.02 / 0.04). So the cap
 binds from RW_TAU ~0.02 on. New knob `XRMIN` (a separate row floor, default 768) is in the scratch builds; RW_TAU
 0.03 / 0.04 and floor 640 are queued (billing on 0.12.3 and accuracy).
+
+**Row-mask frontier (Oct 18, 0.12.3 billing on cn55b's chain; accuracy on 100 mini, exact labels).**
+
+| RW_TAU | C/B | dC | dMSE | net |
+|---|---|---|---|---|
+| 0.01 (cn54b) | 0.18886 | -- | -- | -- |
+| **0.02** | 0.18708 | -0.94% | +0.60% +- 0.17 | **-0.34%** |
+| 0.03 | 0.18596 | -1.54% | +2.31% +- 0.26 | +0.77% |
+| 0.04 / 0.06 / 0.08 | 0.18499 / 0.18409 / 0.18307 | -2.05 / -2.53 / -3.07% | (not run: the slope past 0.02 is 2.8%/1%) | out |
+| 0.04 / 0.06 with row floor 640 | 0.18534 / 0.18437 | more than the 768 floor | -- | out: below 768 rows the Strassen recursion pays more than the rows save |
+
+Other 0.12.3 billing: feedback legs off -1.81%, CN_KEEP all -1.68%, CN_RRES 2 -0.50%, CN_RFB 1 -0.48% (accuracy runs
+queued). 0.12.3 bills this chain exactly like 0.12.1 (base 0.18886 in both). Expensive-side closures: AGE_OLD2 10
+-0.66% MSE / +0.97% C (net +0.31%), so every expensive step loses.
+
+**cn58** = cn54b with RW_TAU 0.02 (one default changed, no Gram cores). It is not submitted until the 200-network
+full-split check and the 0.12.3 emulator run pass.
