@@ -226,3 +226,39 @@ give is already in section 6.3: the final layer creates 22% of the MSE, the rest
 to the frontier tune (cn58) on exact labels.
 
 Submitted Oct 18 02:05 UTC: 336850 cn54, 336851 cn55b, 336852 cn55.
+
+### 7.1 Knob steps at cn55b settings (exact labels, 100 mini networks, vs k55_base)
+
+| knob step | dMSE (halves) | dC | net | verdict |
+|---|---|---|---|---|
+| AGE_OLD 4 | +10.56% +- 0.55 (52 nets; 0/52 better) | -5.10% | +5.5% | out |
+| CM_TAU 0.02 | +3.70% +- 0.26 (+3.81 / +3.59) | -1.42% | +2.3% | out |
+| R_OLD 288 | +2.75% +- 0.24 (+2.71 / +2.79) | -0.91% | +1.8% | out |
+| AGE_OLD2 8 | +1.75% +- 0.17 (96 nets) | -1.16% | +0.6% | out |
+| R_OLD2 128 | +1.58% +- 0.12 (+1.77 / +1.38) | -0.68% | +0.9% | out |
+| cn50 masks (0.006/0.012) instead of cn55b's | -0.50% +- 0.14 | +0.64% | +0.14% | cn55b's masks stay |
+
+Every cheapening step loses, at 1.5-3.0% MSE per 1% C. cn55b sits on the cheap side of the knob optimum. The
+expensive steps (AGE_OLD 6, R_OLD 352, AGE_OLD2 10, masks 0.005) are queued; their ceiling is the 4.5% truncation
+share.
+
+### 7.2 External sources re-read (Oct 18)
+
+- **18248 (il.miscusi), the leaders' recipe.** The carried kappa4 r=1 core plus scale-mode extraction: fit eps per
+  layer from the kappa3 (i,i,j) slice, then remove eps m m^T from C, 2 eps Sym(C x m) from kappa3 and
+  4 eps Pair3(C x C) from kappa4. It is worth x0.38 inside a carried chain. It *hurts* memoryless lambda chains. The
+  gain needs ARC's current term program. Their carried build bills 0.301 vs 0.152 and scored worse (5.18e-9 vs
+  3.06e-9).
+- **Sponsor paper 2605.05179 v2, section 4.2 / S.4.2 (augmented algorithm).** It tracks the kappa4 harmonic parts
+  that propagate in O(n^K), which improves the MSE constant at equal leading FLOPs. The factored version lives in the
+  ARC code. The off-diagonal r=1 core's birth is a partial-trace contraction of the post-ReLU kappa4. Our chain only
+  forms the post-ReLU *diagonal* core (K(4,) + K(2,2) row sums) and regenerates the off-diagonal one as lambda C_off.
+- **18219:** compute below the 0.1 floor buys nothing (we are at 0.19, so cost cuts still count). **18200:** a blend
+  with Monte Carlo needs comparable errors; final-layer var 0.075 means about 4e6 samples (about 60 B) to match
+  1.9e-8, so it is dead. **18216:** fitted constants absorb accumulated drift, not one-step skew; this matches our null
+  ridge result.
+
+**E4 (cheap carried kappa4 core) closed without a build.** Doing it honestly needs three things: the AUGMENT birth
+rule (a post-ReLU partial-trace contraction that is not in our term program), ARC's current term table (measured
+worse in our lambda chain), and a retrained learned k34/MP operator, whose inputs would change. 18248's own carried
+build lost on score at twice the cost. That cannot be built and validated before Oct 21.
