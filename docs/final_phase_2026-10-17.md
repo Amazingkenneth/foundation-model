@@ -388,3 +388,8 @@ never compared predictions. Every candidate now also gets one real-Strassen run 
 
 The learned operator and the lambda table sit at their optimum to within ~0.1% everywhere except possibly g4b.
 g4b x0.85: +1.07% +- 0.19, so g4b also sits at a sharp minimum. **E3 closed: no free gain.**
+
+**Long-process robustness (0.12.3 client/server emulator, idle machine, cn54b, 6 networks in one process).**
+Wall 167.4 s for the cold first network, then 150.7 / 144.2 / 144.1 / 147.7 / 145.0 s; residual 1.67 s, then
+1.24-1.32 s. There is no growth with the number of networks (forum 18238's op-log accumulation does not show), so
+there is about a 15% margin under the ~175 s emulator wall that maps to the grader's 120 s cap.
