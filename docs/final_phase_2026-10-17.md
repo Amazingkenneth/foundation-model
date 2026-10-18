@@ -561,3 +561,16 @@ keeps ~25% wall headroom.
 **Corrector variants (train full f0-199, test mini):** the incoming correction J_l s_{l-1} as an input (two-stage)
 gives -1.60% vs -1.72% without it, so it is dropped. MLP billing per network (0.12.3): H=64 GELU 0.16% of C, H=128
 GELU 0.45% (ReLU 0.09 / 0.30%). In chain, the H=64 build costs +0.25% C (0.19108 vs 0.19060 on the same seed).
+
+**Corrector scaling with training data (3x128 GELU MLP, 7 carried features, test = held-out mini):**
+
+| training networks (full split) | held-out mini |
+|---|---|
+| 37 (mini only) | -1.01% |
+| 157 | -1.72% (81/98) |
+| 297 | **-2.02%** (82/98; halves -1.72 / -2.33) |
+
+About -0.3% per doubling, so ~-2.5% is expected at 1000 networks. Carrying all 17 statistics (v2, 21 carried
+inputs) gives -1.81% vs -1.72% at 157 networks: noise level, so it is not adopted. The final model trains on all
+~1000 full networks once the dump finishes (~22:00 UTC). Then cn62 (cn61 + corrector) and its 4-level twin go
+through the gate for Oct 19.
