@@ -393,3 +393,24 @@ g4b x0.85: +1.07% +- 0.19, so g4b also sits at a sharp minimum. **E3 closed: no 
 Wall 167.4 s for the cold first network, then 150.7 / 144.2 / 144.1 / 147.7 / 145.0 s; residual 1.67 s, then
 1.24-1.32 s. There is no growth with the number of networks (forum 18238's op-log accumulation does not show), so
 there is about a 15% margin under the ~175 s emulator wall that maps to the grader's 120 s cap.
+
+### 8.1 Targeted spending (Oct 18 midday; 100 mini, exact labels; dC on 0.12.3)
+
+Two leads from the sweep: the residual rank had the steepest cheap-side rate (rank 2: +3.81% MSE for -0.50% C),
+and the error created per layer grows 9x with depth (section 6.3). The scratch hooks: `XAGE6FROM=L` (skip the
+tier-1 join at layer L so that source stays dense to the end; the tier-2 gate shifts by the same offset),
+`XAGE4UNTIL=L` (join one layer earlier up to L), and `XRWLATE=L,tau` (row-mask threshold by depth).
+
+| step | dMSE | dC | net |
+|---|---|---|---|
+| **CN_RRES 8** | **-1.34% +- 0.23** (71/100; halves -1.49 / -1.20) | +1.00% | **-0.34%** |
+| dense window from layer 13 | -0.68% +- 0.07 (82/100) | +0.57% | -0.11% |
+| dense window from layer 12 / 10 | (m0 alone: -2.25% for L=10) | +1.55% / +3.04% | dropped: cost grows faster than the gain |
+| dense window from layer 14 | queued | +0.10% | |
+| join earlier up to layer 8 | m0 +9.05% | -2.89% | out: the early ages matter most |
+| CN_RRES 6 / 12 | queued | +0.50% / queued | |
+| RW_TAU 0.03 below layer 10, 0.02 from it | queued | -1.46% | |
+| RW_TAU 0.01 below layer 10, 0.03 from it | (m0 +0.71%) | -0.52% | |
+
+Costs add: window from 13 + RW_TAU 0.02 bills -0.40% = +0.57 - 0.94. The cn59 candidate is RW_TAU 0.02 + CN_RRES 8,
+mini and full split queued.
