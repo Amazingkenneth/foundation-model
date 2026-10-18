@@ -592,3 +592,8 @@ npz reader raises "fortran-order arrays unsupported" (export wrote transposed to
 C-contiguous arrays. cn62 then runs clean on the emulator (C/B 0.1924, residual 1.37 s) and on all smoke shapes in
 client/server mode. Resubmitted 18:56 UTC as **336980**. **Gate amendment:** every build must also pass the 0.12.3
 client/server emulator at the suite shape and at the smoke shapes (`emu123/drive_shapes.py`) before upload.
+
+**336980 cn62 graded 0.0204** (~40% of networks zeroed): the same grader-load pattern; its in-process wall is +3.5%
+over cn61. **cn62r (cn61r + the corrector) submitted 19:37 UTC as 336984** with today's last slot. It is the
+corrector's clean-grade test on the robust chain (emulator clean, C/B 0.2054; smoke shapes finite; m0 1.7319e-8 vs
+cn61r 1.7800e-8). Prediction: raw ~0.98 x 1.8017e-8, score ~3.62e-9.
