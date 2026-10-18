@@ -179,7 +179,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336851 | `candidates/v5b_cn55b` (cn54b + Gram cores for the joiner/mover weighted cores; exact) | failed ("Error while scoring") | | |
 | 336852 | `candidates/v5b_cn55` (cn54 + Gram cores; exact; cn50 masks) | failed ("Error while scoring") | | |
 | 336887 | `candidates/v5b_cn58` (cn54b + RW_TAU 0.02; local prediction ~3.437e-9: 300 public nets +0.46% MSE, -0.94% C) | **0.0502** (score = raw MSE: every network zeroed at full budget) | 0.0502 | |
-| 336962 | `candidates/v5b_cn59` (cn54b + RW_TAU 0.02 + residual rank 6; local prediction ~3.425e-9: mini -0.70%/-0.37% est., full f0-199 -0.36% MSE, -0.44% C) | pending | | |
+| 336962 | `candidates/v5b_cn59` (cn54b + RW_TAU 0.02 + residual rank 6; local prediction ~3.43e-9) | **0.0310** (score = raw MSE: ~62% of networks zeroed; cn58 0.0502 = all) | 0.0310 | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),

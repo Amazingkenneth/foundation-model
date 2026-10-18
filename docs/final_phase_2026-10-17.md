@@ -470,3 +470,10 @@ full last-layer stream +5.09%, CN_RFB 3 +0.48% (accuracy queued).
 **cn60 = cn59 + age gate 6 from layer 14** (code default `CN_AGE6FROM=14`; the tier-2 gate shifts by the same
 offset). The smoke shapes are finite, and the real-Strassen m0 MSE is 1.797e-8 (cn59 fast mode 1.819e-8). The mini
 and full-split gate is queued.
+
+**336962 cn59 graded 0.0310** (score = raw MSE again). An all-zero network contributes about 0.050 (cn58), so about
+62% of cn59's networks failed and 38% graded. The two builds with RW_TAU 0.02 fail per network on the grader; the
+RW_TAU 0.01 builds (cn54, cn54b) never did. A partial, per-network failure points at a resource that grows over the
+grader's ~50-network process. In process, the Strassen pool's cached views grow with every network (cn59: 649 ->
+900 entries after 2 networks; cn54b 624 -> 828). RW_TAU 0.02 makes more distinct row counts, so more distinct
+shapes. Under test: the server-side memory of these views on the 0.12.3 client/server emulator over 8 networks.
