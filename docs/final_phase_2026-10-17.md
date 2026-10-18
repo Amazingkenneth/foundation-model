@@ -359,3 +359,20 @@ Only RW_TAU 0.02 pays. cn58 stays a single-knob change.
 (halves +0.52 / +0.40), so the full split alone is about +0.39%. dC -0.94% (0.12.3). Net about -0.5%; the
 prediction is 3.4544e-9 x 0.9952 ~ 3.437e-9. The 0.12.3 client/server emulator gives C/B 0.1883 (cn54b 0.1901), and
 wall and residual are on a par with cn54b. Submitted 05:51 UTC as **336887**.
+
+**336887 cn58 graded 0.0502 (Oct 18 ~07:00 UTC).** Score equals the raw MSE (0.050185), so the compute factor was
+1.0: every network failed and was scored as a zero prediction at full budget. Nothing local reproduces it:
+- The real Strassen cn58 on public m0 has MSE 1.837e-8 (cn54b 1.814e-8), finite.
+- Smoke shapes (4x2 ... 256x4) are finite on 0.12.3.
+- The 0.12.3 client/server emulator runs it clean. On an idle machine its wall is 150.8 / 138.8 s vs cn54b's
+  153.7 / 136.3 s (the 120 s grader cap maps to ~175 s here), with residual 1.27 / 1.15 s vs 1.25 / 1.11 s.
+
+Together with this morning's two unexplained "Error while scoring" results (cn55b, cn55, submitted in the same
+minute as cn54, which graded), the evidence points to grader-side trouble on Oct 18, not to the RW_TAU change.
+**Plan:** hold today's last slot. Retry cn58 unchanged later (if it grades, it is the expected ~3.44e-9; if it fails
+again on a healthy grader, it is code-specific and cn58 is dropped). Nominations default to the safe graded pair
+cn54b (336770, 3.4544e-9) + cn54 (336850, 3.4588e-9) until a newer build grades cleanly.
+
+**Lesson for the gate:** the fast-mode accuracy runs bypass the Strassen kernels, and the emulator / billing runs
+never compared predictions. Every candidate now also gets one real-Strassen run on a public network with labels
+(`/tmp/claude-0/acc/runstr_hf.py`) before it is submitted.
