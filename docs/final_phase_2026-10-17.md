@@ -354,3 +354,8 @@ Cheap-side closures (100 mini, exact labels; dC on 0.12.3):
 | CN_RFB 1 | +0.49% +- 0.05 | -0.48% | +0.01% |
 
 Only RW_TAU 0.02 pays. cn58 stays a single-knob change.
+
+**Gate for cn58 (RW_TAU 0.02).** Mini: +0.60% +- 0.17. Mini + full f0-199 (300 networks): **+0.46% +- 0.10**
+(halves +0.52 / +0.40), so the full split alone is about +0.39%. dC -0.94% (0.12.3). Net about -0.5%; the
+prediction is 3.4544e-9 x 0.9952 ~ 3.437e-9. The 0.12.3 client/server emulator gives C/B 0.1883 (cn54b 0.1901), and
+wall and residual are on a par with cn54b. Submitted 05:51 UTC as **336887**.
