@@ -12,6 +12,7 @@ NT = int(os.environ.get("NT", "2")); NW = int(os.environ.get("NW", "2")); torch.
 torch.manual_seed(int(os.environ.get("SEED", "0")))
 WMODE = os.environ.get("WMODE", "gain"); RHO = float(os.environ.get("RHO", "0.75")); ACT = os.environ.get("ACT", "gelu")
 LR = float(os.environ.get("LR", "2e-3")); DEC = float(os.environ.get("DEC", "0.8"))
+LOSS = os.environ.get("LOSS", "layer")   # layer | e2e (final error after propagation) | mix (layer + e2e)
 GAIN = [0.031, 0.052, 0.076, 0.107, 0.139, 0.180, 0.223, 0.282, 0.349, 0.412, 0.502, 0.580, 0.656, 0.765, 0.883, 1.0]
 L = 16
 D = f"/tmp/claude-0/sc/corr/data_{tag}"
@@ -69,9 +70,18 @@ for ep in range(EP):
     tot, tb = 0.0, 0.0
     for X, Y, Ws, Phi, E in dl:
         p = net(X, Ws)
-        loss = ((p - Y) ** 2).mean(1) @ wl / wl.sum()
+        lay = ((p - Y) ** 2).mean(1) @ wl / wl.sum(); lay0 = ((Y ** 2).mean(1) @ wl / wl.sum()).detach()
+        if LOSS == "layer":
+            loss = lay; base0 = lay0
+        else:
+            sL = torch.zeros(X.shape[1])                      # propagated correction, in units of ysd
+            for l in range(L):
+                sL = (Phi[l] * (Ws[l].T @ sL) if l > 0 else 0.0) + p[l]
+            eL = E[-1] / ysd
+            e2e = ((eL + sL) ** 2).mean() / (eL ** 2).mean()
+            loss = e2e if LOSS == "e2e" else lay / lay0 + e2e; base0 = torch.tensor(1.0 if LOSS == "e2e" else 2.0)
         opt.zero_grad(); loss.backward(); opt.step()
-        tot += loss.item(); tb += float(((Y ** 2).mean(1) @ wl / wl.sum()).item())
+        tot += loss.item(); tb += float(base0)
     for g in opt.param_groups: g["lr"] *= DEC
     print(f"epoch {ep}: weighted loss / no-fit {tot / tb:.4f}", flush=True)
 torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, nx=nx, act=ACT), OUT)

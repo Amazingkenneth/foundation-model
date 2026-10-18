@@ -637,6 +637,16 @@ DataLoader workers), with the per-layer loss weighted by the measured gain g_l.
 |---|---|---|
 | S = 0 (same trainer, one network per step) | -1.44% (halves -1.30 / -1.58) | 84/98 |
 | **S = 32** | **-2.44%** (halves -2.26 / -2.62) | 86/98 |
+| S = 32, layer weights rho^(15-l) (rho 0.75) instead of g_l | -1.94% (halves -1.70 / -2.18) | 84/98 |
+| S = 32, ReLU MLP (bills ~0.15% C less than exact GELU) | **-2.62%** (halves -2.41 / -2.84) | 81/98 |
+| S = 32, ReLU, loss = per-layer + end-to-end final error (both normalised) | -1.05% (halves -0.96 / -1.15) | 67/98 |
+
+The end-to-end term hurts (one noisy scalar per network); the per-layer loss weighted by g_l stays.
+
+**S = 32 GELU on all 1000 full networks (12 epochs, ~65 min): held-out mini -3.92%** (87/98; halves -3.64 /
+-4.21), against -2.23% for the 974-network per-layer model. Built as `candidates/v5b_cn63` (cn62 + the state; the
+`sc/c63` estimator) and its 4-level twin `v5b_cn63r` (`sc/corr2/build_cn63.sh`). In chain vs torch on m50: 2.3e-6.
+The ReLU version on 1000 networks is training.
 
 At 200 training networks the state beats the 974-network per-layer model (-2.23%). The in-chain version (`sc/c63`,
 `self._corrS` from W3's width; W @ state per layer) matches torch to 2.3e-6 on m50. 0.12.3 bill 0.19221 vs cn62
