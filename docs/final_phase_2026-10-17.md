@@ -597,3 +597,8 @@ client/server emulator at the suite shape and at the smoke shapes (`emu123/drive
 over cn61. **cn62r (cn61r + the corrector) submitted 19:37 UTC as 336984** with today's last slot. It is the
 corrector's clean-grade test on the robust chain (emulator clean, C/B 0.2054; smoke shapes finite; m0 1.7319e-8 vs
 cn61r 1.7800e-8). Prediction: raw ~0.98 x 1.8017e-8, score ~3.62e-9.
+
+**336984 cn62r graded 3.6369e-9, clean.** Raw 1.7745e-8 vs cn61r's 1.8017e-8 is **-1.51% on the grader**
+(held-out mini -2.02% locally), so the carried corrector transfers. C/B 0.2050 (+0.54%), score -1.0% vs cn61r, and
+raw 1.7745e-8 is our best yet. Nominations: cn61 (336966) + cn62r (336984, robust). Next: the 1000-network
+corrector (locally ~-2.5%) in cn62 / cn62r on Oct 19.

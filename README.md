@@ -186,7 +186,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336975 | `candidates/v5b_cn60` (cn61 + RW_TAU 0.02; 100 mini vs cn61: +0.63% MSE, -0.94% C, net -0.3%) | 3.4395e-9 (clean; = cn61 within noise) | 1.8177e-8 | 0.1892 |
 | 336979 | `candidates/v5b_cn62` (first upload) | failed ("Smoke test failed": corr.npz had Fortran-order arrays, which the client npz reader rejects) | | |
 | 336980 | `candidates/v5b_cn62` (cn61 + carried created-error corrector, MLP on 297 public full networks; held-out mini -2.02% MSE, +0.54% C; prediction ~3.39e-9) | 0.0204 (~40% of networks zeroed: grader load, wall +3.5% vs cn61) | 0.0204 | |
-| 336984 | `candidates/v5b_cn62r` (cn61r + the same corrector: the corrector on the 4-level robust chain) | pending | | |
+| 336984 | **`candidates/v5b_cn62r`** (cn61r + the carried corrector, 297-network MLP) | **3.6369e-9** (clean; raw -1.51% vs cn61r) | **1.7745e-8** | 0.2050 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -207,7 +207,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection (Oct 18 evening): 336966 (`v5b_cn61`, 3.4404e-9, best clean grade) and 336968 (`v5b_cn61r`, 3.6743e-9: the same chain at 4 Strassen levels, wall -24%, graded clean on the day the grader zeroed ~70% of an unchanged cn54b).** The pair hedges the private run against grader load; cn54b (336770) and cn61 share the same 5-level wall, so their failure risk is correlated.
+**For the final (private) selection (Oct 18 night): 336966 (`v5b_cn61`, 3.4404e-9, best clean grade) and 336984 (`v5b_cn62r`, 3.6369e-9: the 4-level robust chain with the carried corrector, wall ~-21% vs cn61, graded clean under the Oct 18 load).** Replace them only by cleanly graded builds of the 1000-network corrector (cn62 / cn62r) on Oct 19-21.
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
