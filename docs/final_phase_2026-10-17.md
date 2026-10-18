@@ -455,3 +455,18 @@ truncated Edgeworth series). Layers 0-4 cost 2.5% of B together.
 - Net about -0.8%, so the prediction is 3.4544e-9 x 0.992 ~ 3.43e-9.
 - Submitted 14:54 UTC as **336962**, in today's last slot, in place of the cn58 retry: it tests the same grader
   question with a better expected score.
+
+**Late dense window from layer 14 (`XAGE6FROM=14`).** -0.49% +- 0.05 MSE (81/100; halves -0.55 / -0.43) for +0.10%
+C, **net -0.39%**. This is the efficient end of the depth-targeted spend:
+
+| window from layer | dMSE | dC | net |
+|---|---|---|---|
+| 13 | -0.68% | +0.57% | -0.11% |
+| **14** | **-0.49%** | **+0.10%** | **-0.39%** |
+
+So most of the dense-window value sits in the last two layers. The other probes billed on 0.12.3: CN_RRES 5 +0.25%,
+full last-layer stream +5.09%, CN_RFB 3 +0.48% (accuracy queued).
+
+**cn60 = cn59 + age gate 6 from layer 14** (code default `CN_AGE6FROM=14`; the tier-2 gate shifts by the same
+offset). The smoke shapes are finite, and the real-Strassen m0 MSE is 1.797e-8 (cn59 fast mode 1.819e-8). The mini
+and full-split gate is queued.
