@@ -218,3 +218,11 @@ and both dead-neuron masks (CM_TAU = RW_TAU = 0) lowers final MSE by only **-4.4
 -4.28 / -4.65). All of our cost-side truncation together costs ~4.5% of the MSE; the gap to the 1.1-1.35e-8 raw band
 of the leaders (30-40%) is closure error. Cost knobs can only pay where their marginal damage stays well under their
 compute saving; accuracy has to come from the closure.
+
+**Closure bet (step 3) deprioritized.** The (3,1) laws were already tested on this chain and hurt (+1.4..+4.0%;
+brainstorm doc row 1). A Monte Carlo oracle for exact last-layer moments would need about 2.5e7 samples per network
+just to resolve the mean to the 1e-4 level that matters (about 5 h per network on one core). The layer split it would
+give is already in section 6.3: the final layer creates 22% of the MSE, the rest is propagated. The remaining days go
+to the frontier tune (cn58) on exact labels.
+
+Submitted Oct 18 02:05 UTC: 336850 cn54, 336851 cn55b, 336852 cn55.
