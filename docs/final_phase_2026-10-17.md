@@ -866,3 +866,8 @@ inputs behind a `v3` key in corr.npz.
 (`sc/corr2/eval_rnn.py`): old features -3.44% (86/98; halves -2.88 / -4.03), **v3 -3.73%** (89/98; halves -3.44 /
 -4.04). +0.29pp, all of it in one half: suggestive, not conclusive. The 1000-network v3 dumps (f200-999) are running
 (~2.2 h), then prep, a 16-epoch training and the gate; adopted only if the held-out gain holds at 1000 networks.
+
+**v3 inputs on 1000 networks (16 epochs, decay 0.85), same 98 held-out mini networks:** -4.90% (93/98; halves -4.82 /
+-4.98) vs cn66's corrector -4.72% (89/98; -4.61 / -4.83); training loss 0.9604 vs 0.9620. Both halves improve.
+**cn68 / cn68r = cn67 + v3 inputs + this corrector** (`sc/c68` estimator; `v3` key in corr.npz). In chain vs torch on
+m50: 2.2e-6. In-chain mini 100, real Strassen, emulator and round trips in progress.
