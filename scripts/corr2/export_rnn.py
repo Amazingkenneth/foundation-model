@@ -15,4 +15,5 @@ for i, l in enumerate(lin):
 if ck.get("act", "gelu") == "relu": out["relu"] = np.ones(1, np.float32)
 if ck.get("S2", 0): out["nS2"] = np.array([float(ck["S2"])], np.float32)
 if ck.get("S3", 0): out["nS3"] = np.array([float(ck["S3"])], np.float32)
+if int(ck.get("nx", 24)) == 28: out["v3"] = np.ones(1, np.float32)   # v3 inputs (20 local + 8 carried features)
 np.savez(sys.argv[2], **out); print({k: v.shape for k, v in out.items()})

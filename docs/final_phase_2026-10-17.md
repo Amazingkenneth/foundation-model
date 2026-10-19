@@ -849,3 +849,10 @@ client/server mode. cn67's chain makes 43.0k round trips per MLP against cn63's 
 Open: a 24-epoch corrector and an S2 = 32 corrector on 1000 networks (training).
 
 **337060 cn67r graded 3.5588e-9, clean** (raw 1.7313e-8, C/B 0.2056). **Nominations: cn66 (337053) + cn67r (337060).**
+
+**In progress (07:25 UTC):** (1) the S = 32 + S2 = 16 corrector at 24 epochs (decay 0.9) and (2) at S2 = 32
+(16 epochs), both on 1000 networks; (3) v3 inputs: each neuron's pre-activation correlation structure (row sums of
+C_off^2, |C_off| and of rho_ij^2 = C_ij^2 / (var_i var_j); the last also carried through W*W). Rho2r grows with
+depth (~1 at layer 0, ~5 at layer 5, ~10 at layer 10). Dumps `ld61c` (`sc/xs_d3`; the chain is identical to
+`ld61`) for m0-99 + f0-199 are running, then a 200-network A/B against -3.44%. `sc/c68` carries the in-chain v3
+inputs behind a `v3` key in corr.npz.
