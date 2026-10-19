@@ -189,6 +189,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 336984 | **`candidates/v5b_cn62r`** (cn61r + the carried corrector, 297-network MLP) | **3.6369e-9** (clean; raw -1.51% vs cn61r) | **1.7745e-8** | 0.2050 |
 | 337009 | `candidates/v5b_cn63` (cn61 + carried-state corrector: S=32 learned state through W, 3x128 GELU on 1000 public full nets; in-chain mini -3.89% MSE, +0.85% C; prediction ~3.33-3.37e-9) | **0.0220** (~44% of networks zeroed: the 5-level wall under grader load, as cn62's 0.0204) | 0.0220 | |
 | 337017 | **`candidates/v5b_cn63r`** (cn63 at 4 Strassen levels on the young families; C/B 0.2059 on the emulator; prediction ~3.57-3.60e-9) | **3.5984e-9** (clean; raw -2.83% vs cn61r, local -3.89%) | **1.7507e-8** | 0.2055 |
+| 337030 | `candidates/v5b_cn64` (cn61 + carried-state corrector S=32 + W*W channel S2=16, ReLU, 1000 public full nets; in-chain mini -4.58% MSE, +0.85% C; lazy-view Strassen kernel: -23% slices; prediction ~3.35e-9 if clean) | pending | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
