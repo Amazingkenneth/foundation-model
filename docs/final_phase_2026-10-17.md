@@ -932,3 +932,31 @@ created error 1.00 +- 0.02 per layer). The per-layer gain weights already are th
 (-0.46%, 0.12.3, seed 1; wall and VmHWM unchanged). It pays if its held-out gain stays within ~0.5pp of -4.90%
 (grader transfer ~0.85 of the local gain). Training on 1000 networks with weight averaging (EMA 0.999 per step;
 the raw weights are scored too), next to the full-size corrector with EMA.
+
+### 8.14 Where we stand (board of Oct 19 20:35 UTC) and what the public sources still offer
+
+**Board (150 teams):** #1 marius_binner 1.30e-9 (raw 1.10e-8, C/B 0.122); #2-4 at 1.40e-9 (J2W raw 1.36e-8 at 0.107,
+oliver_chen 1.13e-8 at 0.128, mliston 1.32e-8 at 0.110). We are #59 at 3.3e-9 (raw 1.73e-8, C/B 0.193). The top-30
+medians are raw 1.50e-8 and C/B 0.133. **Our raw error is mid-table (better than 22 of the top 50); our compute
+factor is the highest in the top 60.** The movers since Oct 17 (Niko, tristan_miano, Nanoloom, Hack2Publish:
+C/B 0.205 -> 0.152 at raw ~2.0e-8) switched to the public e30_a engine (C/B 0.1517, raw 2.06e-8); the top 10 did not
+move except oliver_chen (raw 1.20 -> 1.13e-8) and mliston (C/B 0.115 -> 0.110).
+
+**What that means for us.** Same-family engines at C/B 0.15 trade ~0.9% raw per 1% compute; our chain's measured
+cheap side is 1.5-3% per 1% (AGE_OLD 4: +10.6% MSE for -5.1% C; CM_TAU 0.02 +3.7% for -1.4%), and its truncation
+share is only ~4.5% of the MSE. The leaders' gap is structural (cheaper exact pieces, a better closure), not a knob.
+Inside our structure the open levers are the learned corrector's own cost and any chain cut the corrector, retrained
+on the cut chain, can absorb.
+
+**Forum 18255 (hyojun_kwon, Oct 19) re-read for usable facts:**
+- residual is the binding gate for Strassen-heavy builds: 24-28k logged operations per prediction ran at 0.34-0.41 s
+  official, ~5-14 us per removed operation; local absolute residuals over-predict (0.39-0.45 s local vs 0.319 s
+  official). Our cn68 makes 43k client round trips and graded with no failures; the small corrector keeps the op
+  count (only shapes shrink), so its residual risk is cn68's.
+- alternative-basis Strassen (Schwartz-Vaknin) and a rank-48 4x4 recursion gave them -1.4% at 832 x 7680 x 832
+  products. For our square 1024 products at 5 levels the Winograd combinations are ~7% of a product; an alternative
+  basis saves 3 of 15 additions per node but pays ~3 n^2/4 per level per operand in basis changes: about +-0 here.
+  Not pursued.
+- their learned terminal corrector: data (-0.9% from 256 -> 384 nets, -0.6% to 760), the terminal objective, shared
+  weights across layers; capacity (H 128 vs 64), extra state, ensembling and per-layer weights all failed. Our tests
+  agree (state width, hidden width, seeds, terminal objective).
