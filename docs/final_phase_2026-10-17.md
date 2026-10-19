@@ -736,7 +736,7 @@ and every `__getitem__` land in it. Measured here (0.12.3, in-process):
 | item | residual |
 |---|---|
 | one op | ~25-50 us (mild growth with size and ndim) |
-| one slice of a flopscope array | ~26 us |
+| one slice of a flopscope array | ~1.6-1.9 us (26 us only for arrays carrying symmetry tags, e.g. from fnp.ones) |
 | cn63 per predict: 35,149 ops + 23,182 slices | 1.4-1.6 s (GC 0.13 s of it) |
 
 Same load, same seed: cn61 1.62 s, cn62 1.54, cn63 1.47, **cn63r 1.31** (4 levels: 32,518 ops), cn63k (strassen5c,
@@ -757,3 +757,13 @@ stays.
 **Held-out mini -4.60%** (91/98; halves -4.31 / -4.90), cn63's model -3.92%. Built as `v5b_cn64` / `v5b_cn64r`
 (estimator from `sc/c63`, lazy-view `strassen4.py`). In chain vs torch on m50: 2.2e-6. Real Strassen m0: cn64
 1.6296e-8 (cn63 1.6675e-8, cn61 1.7806e-8: -8.5%).
+
+**Residual is per flopscope op, ~40-45 us here, independent of ndim (3-D to 7-D) and nearly of size.** Measured
+with the machine otherwise idle (seed 1): cn63 1.529 s, cn64 (lazy views, -23% slices) 1.514 s, cn63r 1.344 s,
+cn64r 1.343 s. The slices were cheap after all; the 4-level builds' lead is their op count (32.5k vs 35.1k) at
+~41-44 us per op. Batch chunks of 3 plus a fused PK2 einsum per term (cn65 scratch: 34.0k numpy calls, C/B
+0.19310, +0.46%) measured 1.50 s: inside the noise, not adopted. Flopscope's per-op cost in-process is ~350 us,
+of which ~29 us is residual (bookkeeping after its timer stops), so only fewer ops would move it.
+
+**cn64r gate:** emulator C/B 0.2060, residual 1.19 s, smoke shapes finite; real Strassen m0 1.6318e-8.
+**337030 = cn64 submitted 03:14 UTC Oct 19.**

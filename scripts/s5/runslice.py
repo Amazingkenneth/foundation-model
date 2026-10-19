@@ -33,4 +33,4 @@ print("slices", sum(SL.values()), "ops", sum(OP.values()), "residual %.3f" % ctx
 print("top slice sites:"); [print("  %6d %s" % (v, k)) for k, v in SL.most_common(15)]
 F = collections.Counter(); [F.__setitem__(k.split(":")[0], F[k.split(":")[0]] + v) for k, v in OP.items()]
 print("ops by file:", dict(F))
-print("top op sites:"); [print("  %6d %s" % (v, k)) for k, v in OP.most_common(25)]
+print("top op sites:"); [print("  %6d %s" % (v, k)) for k, v in OP.most_common(60) if "estimator" in k]
