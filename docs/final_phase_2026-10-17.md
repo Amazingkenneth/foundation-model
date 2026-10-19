@@ -880,3 +880,14 @@ emulator C/B 0.1931, smoke shapes finite; client/server round trips 43,136 (cold
 **337134 cn68 graded 3.3268e-9, clean: the new best** (raw 1.7264e-8 = -4.15% vs cn61; local -4.85%: transfer 0.86;
 C/B 0.1927). **337147 = cn68r submitted 15:05 UTC** as the robust nomination. Nominations: cn68 (337134) + cn67r
 (337060), cn68r to replace cn67r once graded.
+
+**337147 cn68r graded 3.5510e-9, clean** (raw 1.7268e-8, C/B 0.2056). **Nominations: cn68 (337134, 3.3268e-9) +
+cn68r (337147, 3.5510e-9).**
+
+| build | graded | raw | C/B |
+|---|---|---|---|
+| cn61 (336966, Oct 18) | 3.4404e-9 | 1.8012e-8 | 0.1910 |
+| cn64 (337030) | 3.3386e-9 | 1.7332e-8 | 0.1926 |
+| cn66 (337053) | 3.3341e-9 | 1.7309e-8 | 0.1926 |
+| **cn68 (337134)** | **3.3268e-9** | **1.7264e-8** | 0.1927 |
+| cn68r (337147, robust) | 3.5510e-9 | 1.7268e-8 | 0.2056 |
