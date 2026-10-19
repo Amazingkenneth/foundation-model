@@ -876,3 +876,7 @@ m50: 2.2e-6. In-chain mini 100, real Strassen, emulator and round trips in progr
 1.6770e-8 vs fast 1.6788e-8 (finite; m0 alone is one of cn68's worse networks); 0.12.3 bill 0.19231 (+0.04% vs cn66);
 emulator C/B 0.1931, smoke shapes finite; client/server round trips 43,136 (cold 49,945). **Submitted 14:29 UTC as
 337134.**
+
+**337134 cn68 graded 3.3268e-9, clean: the new best** (raw 1.7264e-8 = -4.15% vs cn61; local -4.85%: transfer 0.86;
+C/B 0.1927). **337147 = cn68r submitted 15:05 UTC** as the robust nomination. Nominations: cn68 (337134) + cn67r
+(337060), cn68r to replace cn67r once graded.
