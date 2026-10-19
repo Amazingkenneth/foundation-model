@@ -830,3 +830,20 @@ Leaderboard 06:15 UTC: rank 57 (3.3e-9 display; tie with two teams), up from 59.
 MP step (the learned message passing on layers 8-15) off: C/B 0.18678 vs 0.19060 (-2.0%); accuracy on 30 mini in
 progress (a win only if the corrector, retrained on MP-off dumps, recovers most of it).
 MP step off, 30 mini networks (chain only, fast mode): **+14.06% +- 1.20 MSE** (0/30 better) for -2.0% C. MP stays.
+
+### 8.12 Summary, Oct 19 morning
+
+| build | what it adds | graded | raw | C/B |
+|---|---|---|---|---|
+| cn61 (336966) | chain only | 3.4404e-9 | 1.8012e-8 | 0.1910 |
+| cn63r (337017) | 4 levels + carried state S=32 | 3.5984e-9 | 1.7507e-8 | 0.2055 |
+| cn64 (337030) | + W*W channel S2=16, ReLU | 3.3386e-9 | 1.7332e-8 | 0.1926 |
+| cn64r (337037) | cn64 at 4 levels | 3.5636e-9 | 1.7336e-8 | 0.2056 |
+| **cn66 (337053)** | + 16-epoch training, PK2 views once per layer | **3.3341e-9** | **1.7309e-8** | 0.1926 |
+| cn67r (337060) | cn66 at 4 levels + persistent PK2 buffers | pending | | |
+
+The corrector line (forum 18254's carried state, plus our measured layer-gain weights and the W*W channel) is
+-3.9% raw on the grader (-4.7% locally) for +0.85% C. The grading failures of the 5-level builds match the 0.4 s
+residual cap (forum 18202): residual is client Python per server round trip, and slices are round trips in
+client/server mode. cn67's chain makes 43.0k round trips per MLP against cn63's 49.4k, at identical predictions.
+Open: a 24-epoch corrector and an S2 = 32 corrector on 1000 networks (training).
