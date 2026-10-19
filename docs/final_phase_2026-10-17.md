@@ -960,3 +960,25 @@ on the cut chain, can absorb.
 - their learned terminal corrector: data (-0.9% from 256 -> 384 nets, -0.6% to 760), the terminal objective, shared
   weights across layers; capacity (H 128 vs 64), extra state, ensembling and per-layer weights all failed. Our tests
   agree (state width, hidden width, seeds, terminal objective).
+
+**Forum survey (all ~60 topics of the challenge category, Oct 19 21:00; texts in the session scratchpad).** New since
+Oct 17: 18251 (organizers: 0.12.3, extension, nominations), 18252, 18254, 18255, replies on 18246. Mapped to our
+chain:
+- *Young-atom pruning* (18254, x0.963 adj, -9% C/B in Susupro's chain B): ours already has the dead-at-birth column
+  mask (CM_TAU 0.01, live columns in steps of 32, floor 768); its next step (CM_TAU 0.02) cost +3.7% MSE for -1.4% C.
+  A norm score ranks columns mostly like Phi does, so little is left for us.
+- *Dead-row schedules* (18252 alpha < -2.5 rows; 18255 fixed keep counts): ours is RW_TAU 0.01 (~alpha < -2.33);
+  0.02 graded neutral (cn60).
+- *Free exact fixes* (18252): the C_off^3 / 6 pair term = our C0^3 Mehler test (null); **E1, the kappa4 all-distinct
+  pendant-edge term** E1_j = 12 sum_c W_jc (W a_b)_jc (w2_c / w1_c) M_old[j, c], added to the consumed kappa4 diagonal
+  at layers 1..L-2 (graded -3.5% raw in the V29 line, scale 0.9; zero extra products once D21 is formed as M W^T)
+  is **untested here**. Caveat: our learned MP operator outputs g4row from layer 7 on and already reads D21, so it
+  may absorb E1 as it absorbed the per-neuron metric. Next: a chain-only fast screen with an E1 scale knob.
+- *Corrector recipe differences* (18254: log-normalised inputs, tanh state, incoming-correction inputs, 3,048
+  training networks incl. another participant's corpus, which we do not use): our tests of the comparable pieces
+  (root transform, incoming correction, more epochs) were null; more data needs our own Monte Carlo labels
+  (2^25 samples ~ 1e15 FLOPs per network): out of reach.
+- *Grader facts for the nominations:* one zeroed network costs ~0.009 of mean adjusted score (vs our 3e-9), failures
+  in the sealed 50 do not show on the public board, the same code can lose networks on a loaded day (6 Strassen
+  levels), and the private ranking uses fresh MLPs on 0.12.3. This keeps the 4-level twin as one of the two
+  nominations.
