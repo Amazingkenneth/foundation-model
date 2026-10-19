@@ -657,3 +657,22 @@ At 200 training networks the state beats the 974-network per-layer model (-2.23%
 (1.16 s); every smoke shape finite on both. Prediction for cn63: raw -2.9..-3.9% vs cn61 (grader transfer 0.75-1.0 of
 local), C +0.85%, score ~3.33-3.37e-9.
 In chain on all 100 mini networks (fast mode): **cn63 -3.89% +- 0.30** (88/100; halves -3.66 / -4.12), cn62 -2.25%.
+
+**337009 = cn63, submitted 00:00 UTC Oct 19** (first slot of the day, alone, so that our own jobs do not load the
+grader together). The stale 00:04 reminder (cn62 plan) was deleted.
+
+Width of the state (200 training nets, ReLU, gain weights): S = 64 -2.55% (86/98) vs S = 32 -2.62%: no gain for twice
+the state product. S stays 32.
+
+**A second state channel carried through W*W (variance-like messages)**, S2 = 16 next to S = 32 (200 training nets,
+ReLU, gain weights): **-3.44%** (86/98; halves -2.88 / -4.03) against -2.62% without it. The training loss is lower
+at every epoch from the 3rd on. In chain: `(W*W) @ state2 / (sum(W*W) / n)` per layer (+0.12% C at S2 = 16).
+The 1000-network S = 32 + S2 = 16 ReLU model is training (00:27 UTC); the ReLU S = 32-only run was stopped for it.
+A third channel through W*W*W (S3 = 16, kappa3-like messages, scaled by 1 / sqrt(sum W^6 / n)) is on test.
+
+**337009 cn63 graded 0.0220**: ~44% of its networks zeroed (score = raw MSE; all-zero would be ~0.050). Second
+5-level corrector build lost to the per-network wall cap (cn62 336980: 0.0204). The 4-level builds (cn61r, cn62r)
+graded clean both times; the 5-level cn61 / cn60 graded clean on Oct 18 afternoon. The 5-level chain plus the
+corrector (in-process 108.7 s vs cn61 106.9 s) sits too close to the cap under the current grader load.
+Next: a Strassen level per family (young transport / newborn trees T, young D21 hub H; `sc/c63w`, CN_SLEVT /
+CN_SLEVH) to find a wall cut cheaper than the full 4-level twin (+6.8% C).
