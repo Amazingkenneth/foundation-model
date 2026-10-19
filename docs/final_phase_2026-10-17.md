@@ -715,3 +715,45 @@ X, R and out; the transpose is free). Shared left trees cache one combo set per 
 | one full prediction (cn63 + the S2 corrector, seed 1) | **bitwise identical** predictions; C/B 0.19223 -> 0.19269 (+0.24%); wall 107.3 -> **92.0 s (-14%)**; VmHWM 4.20 -> 4.94 GB |
 
 That is most of the 4-level twin's wall margin (82.6 s) at +0.24% C instead of +6.7%.
+
+**strassen5 in the client/server emulator: little gain.** Back to back on the loaded container: strassen5c 180.6 s
+vs strassen4 184.1 s (-2%), residual 2.0 s vs 1.1 s. In-process compute is not what the client/server wall is made
+of; strassen5 stays out of the submitted builds for now.
+
+**Two container restarts (01:23, 01:45 UTC)** killed the S2 training at epoch 6; `fitrnn.py` now writes a per-epoch
+checkpoint and resumes from it.
+
+**337017 cn63r graded 3.5984e-9, clean** (raw 1.7507e-8 = -2.83% vs cn61r, local -3.89%: transfer 0.73, as cn62r's
+0.75). Best robust grade (cn62r 3.6369e-9).
+
+### 8.8 The failure mode is probably the 0.4 s residual cap, not the 120 s wall
+
+whestbench's graded limits (`whestbench/cli.py`, `runner.py`): wall 120 s per MLP, **residual wall time 0.4 s per
+predict() call** ("non-flopscope time ... Exceeding it zeroes that MLP's predictions"), memory 8192 MB, setup 5 s.
+Residual = wall - flopscope backend - flopscope dispatch time; flopscope's own per-op bookkeeping after its timer
+and every `__getitem__` land in it. Measured here (0.12.3, in-process):
+
+| item | residual |
+|---|---|
+| one op | ~25-50 us (mild growth with size and ndim) |
+| one slice of a flopscope array | ~26 us |
+| cn63 per predict: 35,149 ops + 23,182 slices | 1.4-1.6 s (GC 0.13 s of it) |
+
+Same load, same seed: cn61 1.62 s, cn62 1.54, cn63 1.47, **cn63r 1.31** (4 levels: 32,518 ops), cn63k (strassen5c,
+36,709 ops) 1.59. Emulator residuals: cn62 1.335 vs cn62r 1.134 s, cn63 1.29 vs cn63r 1.16 s, while the emulator
+walls of the 5- and 4-level builds are about equal. Our builds graded clean at ~1.1-1.3 s here, so the grader
+runs ~3x faster and our 5-level builds sit near the cap; load pushes a share of MLPs over it. The 4-level builds
+have ~10-15% less residual and have always graded clean. The levers are fewer ops and fewer slices at the same
+FLOPs:
+- lazy pooled views (`strassen4.py` in cn64): slices 23,182 -> 17,946 (-23%), bitwise-identical predictions, same
+  bill;
+- Strassen batch chunks of 3 (fits the ~135 MB array cap at 5 levels): ops -5.5%, bill +0.27%;
+- the PK2 term program issues ~2.1k ops and ~4.2k slices (2-3 ops + 3 slices per term); batching terms is next.
+GC: disabling it inside predict only defers one large collection into the same window (no gain); `gc.freeze()`
+stays.
+
+### 8.9 cn64: S = 32 + W*W channel S2 = 16, ReLU, 1000 networks
+
+**Held-out mini -4.60%** (91/98; halves -4.31 / -4.90), cn63's model -3.92%. Built as `v5b_cn64` / `v5b_cn64r`
+(estimator from `sc/c63`, lazy-view `strassen4.py`). In chain vs torch on m50: 2.2e-6. Real Strassen m0: cn64
+1.6296e-8 (cn63 1.6675e-8, cn61 1.7806e-8: -8.5%).

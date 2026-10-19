@@ -80,8 +80,14 @@ def Ws_scale(W):                                                              # 
 
 
 net = Net(); opt = torch.optim.Adam(net.parameters(), lr=LR)
+CK = OUT + ".ckpt"; ep0 = 0          # per-epoch checkpoint: a container restart resumes at the next epoch
+if os.path.exists(CK):
+    ck = torch.load(CK, weights_only=False)
+    net.load_state_dict(ck["net"]); opt.load_state_dict(ck["opt"]); ep0 = ck["ep"] + 1
+    torch.set_rng_state(ck["rng"])
+    print(f"resumed after epoch {ck['ep']}", flush=True)
 dl = torch.utils.data.DataLoader(DS(tr), batch_size=None, shuffle=True, num_workers=NW, persistent_workers=True, prefetch_factor=2)
-for ep in range(EP):
+for ep in range(ep0, EP):
     tot, tb = 0.0, 0.0
     for X, Y, Ws, Phi, E in dl:
         p = net(X, Ws)
@@ -99,6 +105,8 @@ for ep in range(EP):
         tot += loss.item(); tb += float(base0)
     for g in opt.param_groups: g["lr"] *= DEC
     print(f"epoch {ep}: weighted loss / no-fit {tot / tb:.4f}", flush=True)
+    torch.save(dict(net=net.state_dict(), opt=opt.state_dict(), ep=ep, rng=torch.get_rng_state()), CK + ".tmp")
+    os.replace(CK + ".tmp", CK)
 torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, S2=S2, S3=S3, nx=nx, act=ACT), OUT)
 base, corr = [], []
 with torch.no_grad():
