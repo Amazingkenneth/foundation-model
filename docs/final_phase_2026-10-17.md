@@ -808,3 +808,10 @@ The residual is ~24-25 us per round trip here. PK2: the term loop made ~6 slices
 `WR2[t][None, :]`, `PK2[g]`); the broadcast stacks and the PK2 planes are now viewed once per layer (2 slices per
 term). Batch chunks of 3 bill +0.27% (FLOPs by op: matmul +1.26e9, because a chunk runs at its widest source's
 live width); not adopted. cn66 = cn64 + the PK2 change (+ the 16-epoch corrector if it is better).
+
+### 8.11 cn66
+
+16-epoch corrector (decay 0.85; final training loss 0.9620 vs 0.9642): held-out mini -4.72% (89/98; halves -4.61 /
+-4.83) vs -4.60%. **cn66 = cn64 + PK2 views once per layer + this corrector.** In chain vs torch on m50 2.3e-6;
+in chain on 100 mini **-4.72% +- 0.33** (91/100; cn64 -4.58%); real Strassen m0 1.6380e-8 (finite); emulator
+C/B 0.1930, smoke shapes finite. **Submitted 05:37 UTC as 337053.**
