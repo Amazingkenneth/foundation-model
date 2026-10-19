@@ -4,7 +4,7 @@ set -e
 cd /home/user/foundation-model/candidates
 N=$1; C=$2
 rm -rf $N ${N}r; mkdir -p $N ${N}r
-for d in $N ${N}r; do cp /tmp/claude-0/sc/c66/{LICENSE_504aldo,estimator.py,k34.npz,mp.npz,strassen4.py} $d/; cp $C $d/corr.npz; done
+for d in $N ${N}r; do cp /tmp/claude-0/sc/${SRC:-c66}/{LICENSE_504aldo,estimator.py,k34.npz,mp.npz,strassen4.py} $d/; cp $C $d/corr.npz; done
 python3 - ${N}r/estimator.py <<'PY'
 import sys
 p = sys.argv[1]; s = open(p).read()

@@ -815,3 +815,10 @@ live width); not adopted. cn66 = cn64 + the PK2 change (+ the 16-epoch corrector
 -4.83) vs -4.60%. **cn66 = cn64 + PK2 views once per layer + this corrector.** In chain vs torch on m50 2.3e-6;
 in chain on 100 mini **-4.72% +- 0.33** (91/100; cn64 -4.58%); real Strassen m0 1.6380e-8 (finite); emulator
 C/B 0.1930, smoke shapes finite. **Submitted 05:37 UTC as 337053.**
+
+Client-side slice round trips of c66 by call site (steady MLP, 9,189): Strassen `_quads` (the operands' quadrant views
+of every call) 3,608; the PK2 term loop 1,423 (2 per term); pool plane views 1,064; pool slab slices 313; the
+rest under 160 each. **c67 / cn67 = cn66 + the PK2 coefficient stacks in persistent per-mode buffers** (matmul with
+`out=`; their row and broadcast views made once per process): **43,001 round trips (cold 49,810)**, slices 7,551,
+bitwise-identical predictions (real Strassen m0 all layers 0.0), same bill. Emulator C/B 0.1930, residual 1.26 s,
+smoke shapes finite. Round trips: cn64 47,595 -> cn66 44,639 -> **cn67 43,001 (-9.7%)**, below cn64r's 44,905.
