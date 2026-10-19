@@ -210,7 +210,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection (Oct 18 night): 336966 (`v5b_cn61`, 3.4404e-9, best clean grade) and 336984 (`v5b_cn62r`, 3.6369e-9: the 4-level robust chain with the carried corrector, wall ~-21% vs cn61, graded clean under the Oct 18 load).** Replace them only by cleanly graded builds of the 1000-network corrector (cn62 / cn62r) on Oct 19-21.
+**For the final (private) selection (Oct 19, 03:40 UTC): 336966 (`v5b_cn61`, 3.4404e-9, best clean grade) and 337017 (`v5b_cn63r`, 3.5984e-9: the 4-level robust chain with the carried-state corrector; 4-level builds have graded clean every time).** Replace cn61 by a cleanly graded 5-level corrector build (cn64, 337030 pending) and cn63r by cn64r once graded.
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
