@@ -793,3 +793,18 @@ client's own Python around each round trip. Counted in our 0.12.3 client/server 
 in-process they are free), 9.5k add, 8.5k subtract, 5.0k copyto, 4.7k multiply, 2.8k matmul. Client residual
 1.25-1.31 s here, ~26 us per round trip. So the slice count does matter on the grader, and the lazy views of cn64
 are a real cut there (counts below).
+
+Round trips per MLP in the 0.12.3 client/server emulator (steady state; the cold first MLP of a process in brackets):
+
+| build | round trips | slices | residual here |
+|---|---|---|---|
+| cn63 (failed on the grader) | 49,354 (59,729) | 13,900 | 1.25 s |
+| cn64 (graded clean) | 47,595 (54,164) | 12,145 | 1.18 s |
+| cn64r (graded clean) | 44,905 (50,781) | 12,066 | 1.08 s |
+| **c66 = cn64 + PK2 views made once per layer** (bitwise-identical predictions, same bill) | **44,639 (51,208)** | 9,189 | 1.15 s |
+| c66 + batch chunks of 3 | 42,924 (49,743) | 9,432 | 1.06 s |
+
+The residual is ~24-25 us per round trip here. PK2: the term loop made ~6 slices per term (`WL2[t][:, None]`,
+`WR2[t][None, :]`, `PK2[g]`); the broadcast stacks and the PK2 planes are now viewed once per layer (2 slices per
+term). Batch chunks of 3 bill +0.27% (FLOPs by op: matmul +1.26e9, because a chunk runs at its widest source's
+live width); not adopted. cn66 = cn64 + the PK2 change (+ the 16-epoch corrector if it is better).
