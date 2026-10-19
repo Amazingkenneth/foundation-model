@@ -829,3 +829,4 @@ Leaderboard 06:15 UTC: rank 57 (3.3e-9 display; tie with two teams), up from 59.
 
 MP step (the learned message passing on layers 8-15) off: C/B 0.18678 vs 0.19060 (-2.0%); accuracy on 30 mini in
 progress (a win only if the corrector, retrained on MP-off dumps, recovers most of it).
+MP step off, 30 mini networks (chain only, fast mode): **+14.06% +- 1.20 MSE** (0/30 better) for -2.0% C. MP stays.
