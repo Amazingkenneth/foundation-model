@@ -989,3 +989,12 @@ torch -4.76% (94/98; halves -4.63 / -4.90) vs -4.90%; in chain on 100 mini **-4.
 1.6664e-8; emulator C/B 0.1922 (cn68 0.1931), smoke shapes finite, residual 1.42 s; 43,136 round trips (= cn68);
 cn69r emulator C/B 0.2051. Predicted 3.3268e-9 x 1.0012 x 0.9953 ~ 3.316e-9. **Submitted 22:20 UTC as 337211.**
 cn69r (4-level twin) follows once 337211 grades.
+
+**337211 cn69 graded 3.3201e-9, clean: the new best** (raw 1.7309e-8 = +0.26% vs cn68, local +0.15%; C/B 0.1918 =
+-0.46%; score -0.20%). **337220 = cn69r submitted 22:56 UTC** with today's last slot.
+
+**E1 screen (chain only, `sc/c70`, M_old = D21_old W^-T in float64, newborn's own terms removed; 24 even mini nets
+vs the XE1 = 0 control):** scale +0.25 -1.15% +- 0.15 (22/24), +0.5 -1.41% +- 0.31 (18/24), -0.25 +2.10%, -0.5
++5.12%: the sign holds and the optimum is near 0.45 (~-1.4% chain-only). Our D21 is not formed as M W^T, so the
+exact term costs one more dense product per layer (~+0.26% C each, ~+3.4% for layers 2-14): it pays only if the
+gain sits in a few late layers. Layer-window test on the 24 odd nets running.
