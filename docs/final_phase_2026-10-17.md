@@ -891,3 +891,16 @@ cn68r (337147, 3.5510e-9).**
 | cn66 (337053) | 3.3341e-9 | 1.7309e-8 | 0.1926 |
 | **cn68 (337134)** | **3.3268e-9** | **1.7264e-8** | 0.1927 |
 | cn68r (337147, robust) | 3.5510e-9 | 1.7268e-8 | 0.2056 |
+
+### 8.13 Oct 19 evening: calibration probes and v4 inputs
+
+**The corrector is calibrated (zero-cost probes, v3 1000-net model, 98 held-out mini):** a global scale a * s_L
+gives a = 0.9 -4.88%, 1.0 -4.90%, 1.1 -4.81% (optimum ~0.97); per-layer scales a_l fitted on one half and tested
+on the other give -4.86% (even -4.73, odd -5.00) against -4.90%. Neither is adopted.
+
+**v4 inputs (in progress):** `sc/xs_d4` records, per neuron, the tail and sign of the correlations (sum rho^4,
+sum rho, max rho^2), the D21 row / column mass (sum D21^2) and the kappa4-slice row mass (|wk431|, |wk4m|);
+`sc/corr/prep_v4.py` adds two carried participation ratios of the incoming variance
+(sum_i W_ji^4 v_i^2 / (sum_i W_ji^2 v_i)^2 for v = var and pk2v). `fitrnn.py` gains `DROP=<names>` (feature subsets
+on one data set) and `EMA=<decay>` (weight averaging, zero inference cost). In chain: `sc/c69` (a `v4` mask in
+corr.npz).

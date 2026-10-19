@@ -19,11 +19,16 @@ GAIN = [0.031, 0.052, 0.076, 0.107, 0.139, 0.180, 0.223, 0.282, 0.349, 0.412, 0.
 L = 16
 D = f"/tmp/claude-0/sc/corr/data_{tag}"
 tr = [k for k in ids(trs) if os.path.exists(f"{D}/{k}.npz")]; te = [k for k in ids(tes) if os.path.exists(f"{D}/{k}.npz")]
-print(f"train {len(tr)} test {len(te)} H {H} S {S} S2 {S2} S3 {S3} {WMODE} {ACT}", flush=True)
+z0 = np.load(f"{D}/{tr[0]}.npz")
+NAMES = [str(x) for x in z0["names"]] if "names" in z0.files else [str(i) for i in range(z0["X"].shape[2])]
+DROP = [x for x in os.environ.get("DROP", "").split(",") if x]    # feature names (or column indices) to leave out
+KEEP = np.array([i for i, nm in enumerate(NAMES) if nm not in DROP and str(i) not in DROP]); del z0
+print(f"train {len(tr)} test {len(te)} H {H} S {S} S2 {S2} S3 {S3} {WMODE} {ACT} nx {len(KEEP)}/{len(NAMES)}"
+      f"{' drop ' + ','.join(DROP) if DROP else ''}", flush=True)
 # standardisation from (up to) 200 training networks
 acc = []
 for k in tr[:200]:
-    z = np.load(f"{D}/{k}.npz"); acc.append((z["X"].astype(np.float64).reshape(-1, z["X"].shape[2]), z["C"].astype(np.float64).ravel()))
+    z = np.load(f"{D}/{k}.npz"); acc.append((z["X"][..., KEEP].astype(np.float64).reshape(-1, len(KEEP)), z["C"].astype(np.float64).ravel()))
 Xa = np.concatenate([a for a, _ in acc]); mu = Xa.mean(0).astype(np.float32); sd = (Xa.std(0) + 1e-12).astype(np.float32)
 ysd = float(np.concatenate([b for _, b in acc]).std()); del acc, Xa
 nx = mu.shape[0]
@@ -36,7 +41,7 @@ class DS(torch.utils.data.Dataset):
     def __getitem__(self, i):
         from regen import hf_weights
         z = np.load(f"{D}/{self.keys[i]}.npz")
-        X = ((z["X"].astype(np.float32) - mu) / sd).astype(np.float32)
+        X = ((z["X"][..., KEEP].astype(np.float32) - mu) / sd).astype(np.float32)
         Ws = np.stack(hf_weights(int(z["seed"])))                              # (L, n, n) float32
         return (torch.from_numpy(X), torch.from_numpy((-z["C"] / ysd).astype(np.float32)), torch.from_numpy(Ws),
                 torch.from_numpy(z["Phi"].astype(np.float32)), torch.from_numpy(z["E"].astype(np.float32)))
@@ -80,10 +85,13 @@ def Ws_scale(W):                                                              # 
 
 
 net = Net(); opt = torch.optim.Adam(net.parameters(), lr=LR)
+EMA = float(os.environ.get("EMA", "0"))   # exponential moving average of the weights (per step), used for the output
+ema = {k: v.detach().clone() for k, v in net.state_dict().items()} if EMA else None; nstep = 0
 CK = OUT + ".ckpt"; ep0 = 0          # per-epoch checkpoint: a container restart resumes at the next epoch
 if os.path.exists(CK):
     ck = torch.load(CK, weights_only=False)
     net.load_state_dict(ck["net"]); opt.load_state_dict(ck["opt"]); ep0 = ck["ep"] + 1
+    if EMA: ema = ck["ema"]; nstep = ck["nstep"]
     torch.set_rng_state(ck["rng"])
     print(f"resumed after epoch {ck['ep']}", flush=True)
 dl = torch.utils.data.DataLoader(DS(tr), batch_size=None, shuffle=True, num_workers=NW, persistent_workers=True, prefetch_factor=2)
@@ -102,20 +110,30 @@ for ep in range(ep0, EP):
             e2e = ((eL + sL) ** 2).mean() / (eL ** 2).mean()
             loss = e2e if LOSS == "e2e" else lay / lay0 + e2e; base0 = torch.tensor(1.0 if LOSS == "e2e" else 2.0)
         opt.zero_grad(); loss.backward(); opt.step()
+        if EMA:
+            nstep += 1; dcy = min(EMA, (1 + nstep) / (10 + nstep))
+            with torch.no_grad():
+                for k, v in net.state_dict().items(): ema[k].mul_(dcy).add_(v, alpha=1 - dcy)
         tot += loss.item(); tb += float(base0)
     for g in opt.param_groups: g["lr"] *= DEC
     print(f"epoch {ep}: weighted loss / no-fit {tot / tb:.4f}", flush=True)
-    torch.save(dict(net=net.state_dict(), opt=opt.state_dict(), ep=ep, rng=torch.get_rng_state()), CK + ".tmp")
+    torch.save(dict(net=net.state_dict(), opt=opt.state_dict(), ep=ep, rng=torch.get_rng_state(), ema=ema, nstep=nstep), CK + ".tmp")
     os.replace(CK + ".tmp", CK)
-torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, S2=S2, S3=S3, nx=nx, act=ACT), OUT)
-base, corr = [], []
-with torch.no_grad():
-    for X, Y, Ws, Phi, E in torch.utils.data.DataLoader(DS(te), batch_size=None, shuffle=False, num_workers=NW):
-        dlt = net(X, Ws).double() * ysd; Phi = Phi.double(); W64 = Ws.double(); s = torch.zeros(X.shape[1], dtype=torch.float64)
-        for l in range(L):
-            s = (Phi[l] * (W64[l].T @ s) if l > 0 else 0.0) + dlt[l]
-        eL = E[-1].double(); base.append(float((eL ** 2).mean())); corr.append(float(((eL + s) ** 2).mean()))
-base, corr = np.array(base), np.array(corr)
-ev = np.array([int(k[1:]) % 2 == 0 for k in te])
-print(f"TEST final-layer dMSE {corr.sum()/base.sum()-1:+.2%} (even {corr[ev].sum()/base[ev].sum()-1:+.2%} "
-      f"odd {corr[~ev].sum()/base[~ev].sum()-1:+.2%}), better {np.sum(corr < base)}/{len(te)}", flush=True)
+def test(lbl):
+    base, corr = [], []
+    with torch.no_grad():
+        for X, Y, Ws, Phi, E in torch.utils.data.DataLoader(DS(te), batch_size=None, shuffle=False, num_workers=NW):
+            dlt = net(X, Ws).double() * ysd; Phi = Phi.double(); W64 = Ws.double(); s = torch.zeros(X.shape[1], dtype=torch.float64)
+            for l in range(L):
+                s = (Phi[l] * (W64[l].T @ s) if l > 0 else 0.0) + dlt[l]
+            eL = E[-1].double(); base.append(float((eL ** 2).mean())); corr.append(float(((eL + s) ** 2).mean()))
+    base, corr = np.array(base), np.array(corr)
+    ev = np.array([int(k[1:]) % 2 == 0 for k in te])
+    print(f"TEST{lbl} final-layer dMSE {corr.sum()/base.sum()-1:+.2%} (even {corr[ev].sum()/base[ev].sum()-1:+.2%} "
+          f"odd {corr[~ev].sum()/base[~ev].sum()-1:+.2%}), better {np.sum(corr < base)}/{len(te)}", flush=True)
+def save(path):
+    torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, S2=S2, S3=S3, nx=nx, act=ACT,
+                    names=[NAMES[i] for i in KEEP]), path)
+if EMA:
+    save(OUT + ".raw"); test(" raw"); net.load_state_dict(ema)
+save(OUT); test(" ema" if EMA else "")

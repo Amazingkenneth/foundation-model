@@ -9,7 +9,10 @@ f = torch.nn.Sequential(torch.nn.Linear(nx + L + S + S2 + S3, H), A(), torch.nn.
                         torch.nn.Linear(H, 1 + S + S2 + S3))
 f.load_state_dict({k[2:]: v for k, v in ck["state"].items()})
 z = np.load(f"/tmp/claude-0/sc/corr/data_{tag}/{key}.npz"); Ws = [torch.from_numpy(w) for w in hf_weights(int(z["seed"]))]
-X = torch.from_numpy(((z["X"].astype(np.float32) - ck["mu"]) / ck["sd"]).astype(np.float32)); n = X.shape[1]
+Xr = z["X"]
+if "names" in ck and "names" in z.files:     # a DROP-trained model reads its kept columns by name
+    nm = [str(x) for x in z["names"]]; Xr = Xr[..., [nm.index(c) for c in ck["names"]]]
+X = torch.from_numpy(((Xr.astype(np.float32) - ck["mu"]) / ck["sd"]).astype(np.float32)); n = X.shape[1]
 Phi = z["Phi"].astype(np.float64); s = np.zeros(n); st = None; st2 = None; st3 = None
 with torch.no_grad():
     for l in range(L):
