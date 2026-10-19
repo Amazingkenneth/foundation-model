@@ -195,6 +195,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 337060 | **`candidates/v5b_cn67r`** (cn66 at 4 Strassen levels + persistent PK2 buffers: bitwise = cn66r, round trips -9.7%; emulator C/B 0.2060) | **3.5588e-9** (clean; best robust grade) | 1.7313e-8 | 0.2056 |
 | 337134 | **`candidates/v5b_cn68`** (cn67 + corrector inputs for each neuron's pre-activation correlation structure: in-chain mini -4.85% vs cn66 -4.72%; round trips 43.1k) | **3.3268e-9** (clean; new best; raw -4.15% vs cn61) | **1.7264e-8** | 0.1927 |
 | 337147 | **`candidates/v5b_cn68r`** (cn68 at 4 Strassen levels; emulator C/B 0.2060) | **3.5510e-9** (clean; best robust grade) | 1.7268e-8 | 0.2056 |
+| 337211 | `candidates/v5b_cn69` (cn68 with a small corrector, H 64 / S 16 / S2 8: in-chain mini -4.71% vs -4.85%, emulator C/B 0.1922 vs 0.1931, round trips 43.1k) | grading (predicted ~3.316e-9) | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),

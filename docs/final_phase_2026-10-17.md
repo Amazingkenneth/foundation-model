@@ -982,3 +982,10 @@ chain:
   in the sealed 50 do not show on the public board, the same code can lose networks on a loaded day (6 Strassen
   levels), and the private ranking uses fresh MLPs on 0.12.3. This keeps the 4-level twin as one of the two
   nominations.
+
+**cn69 = cn68 + the small corrector (H 64, S 16, S2 8; raw weights, EMA did not help: -4.74% vs -4.76%).** Held-out
+torch -4.76% (94/98; halves -4.63 / -4.90) vs -4.90%; in chain on 100 mini **-4.71% +- 0.29** (95/100; halves
+-4.66 / -4.77) vs cn68 -4.85%; parity vs torch on m50 2.31e-6; real Strassen m0 1.6639e-8 (cn68 1.6770e-8), cn69r
+1.6664e-8; emulator C/B 0.1922 (cn68 0.1931), smoke shapes finite, residual 1.42 s; 43,136 round trips (= cn68);
+cn69r emulator C/B 0.2051. Predicted 3.3268e-9 x 1.0012 x 0.9953 ~ 3.316e-9. **Submitted 22:20 UTC as 337211.**
+cn69r (4-level twin) follows once 337211 grades.
