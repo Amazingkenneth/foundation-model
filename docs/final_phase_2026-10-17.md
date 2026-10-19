@@ -840,10 +840,12 @@ MP step off, 30 mini networks (chain only, fast mode): **+14.06% +- 1.20 MSE** (
 | cn64 (337030) | + W*W channel S2=16, ReLU | 3.3386e-9 | 1.7332e-8 | 0.1926 |
 | cn64r (337037) | cn64 at 4 levels | 3.5636e-9 | 1.7336e-8 | 0.2056 |
 | **cn66 (337053)** | + 16-epoch training, PK2 views once per layer | **3.3341e-9** | **1.7309e-8** | 0.1926 |
-| cn67r (337060) | cn66 at 4 levels + persistent PK2 buffers | pending | | |
+| cn67r (337060) | cn66 at 4 levels + persistent PK2 buffers | 3.5588e-9 | 1.7313e-8 | 0.2056 |
 
 The corrector line (forum 18254's carried state, plus our measured layer-gain weights and the W*W channel) is
 -3.9% raw on the grader (-4.7% locally) for +0.85% C. The grading failures of the 5-level builds match the 0.4 s
 residual cap (forum 18202): residual is client Python per server round trip, and slices are round trips in
 client/server mode. cn67's chain makes 43.0k round trips per MLP against cn63's 49.4k, at identical predictions.
 Open: a 24-epoch corrector and an S2 = 32 corrector on 1000 networks (training).
+
+**337060 cn67r graded 3.5588e-9, clean** (raw 1.7313e-8, C/B 0.2056). **Nominations: cn66 (337053) + cn67r (337060).**
