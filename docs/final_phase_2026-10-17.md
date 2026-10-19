@@ -859,3 +859,10 @@ inputs behind a `v3` key in corr.npz.
 
 **24 epochs (decay 0.9):** held-out mini -4.74% (91/98; halves -4.42 / -5.07), training loss 0.9583: no gain over
 16 epochs (-4.72%, 0.9620); the lower training loss does not carry over. cn66's 16-epoch corrector stays.
+
+**S2 = 32 on 1000 networks (16 epochs): -4.53%** (93/98) vs S2 = 16's -4.72%: dropped.
+
+**v3 inputs (correlation structure), 200 training networks, scored on the same 98 mini networks**
+(`sc/corr2/eval_rnn.py`): old features -3.44% (86/98; halves -2.88 / -4.03), **v3 -3.73%** (89/98; halves -3.44 /
+-4.04). +0.29pp, all of it in one half: suggestive, not conclusive. The 1000-network v3 dumps (f200-999) are running
+(~2.2 h), then prep, a 16-epoch training and the gate; adopted only if the held-out gain holds at 1000 networks.
