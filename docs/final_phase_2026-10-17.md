@@ -776,3 +776,20 @@ falling).
 transfer 0.83; C/B 0.1926). Below 3.35e-9, so the leaderboard shows 3.3e-9 (from 3.4e-9). It graded at ~03:30-03:50
 UTC, when the queue was slow but the run clean. **337037 = cn64r submitted 03:50 UTC** as the robust nomination.
 Nominations now: cn64 (337030) + cn63r (337017), cn64r to replace cn63r once graded.
+
+**337037 cn64r graded 3.5636e-9, clean** (raw 1.7336e-8 = cn64's; C/B 0.2056). **Nominations: cn64 (337030) + cn64r
+(337037).**
+
+Backward state (a second pass from the last layer down through W, SBW = 16, next to S = 32 and S2 = 16; 200 nets):
+-3.35% (85/98) vs -3.44% without it: dropped.
+
+### 8.10 What the residual clock counts on the grader (public forum 18202, our client/server counts)
+
+Forum 18202 (an entrant's own grader data, August): the 0.4 s residual gate is enforced on the live evaluator; an
+estimator at ~21k calls per MLP went from 5/50 RESIDUAL failures to a clean pass by removing client-side sync
+points. With flopscope-client 0.12.3 every op is a synchronous round trip billed as dispatch, so the residual is the
+client's own Python around each round trip. Counted in our 0.12.3 client/server emulator (one MLP, steady state):
+**cn63 makes 49,354 round trips, of which 13,900 are `__getitem__`** (slices are server round trips in client mode;
+in-process they are free), 9.5k add, 8.5k subtract, 5.0k copyto, 4.7k multiply, 2.8k matmul. Client residual
+1.25-1.31 s here, ~26 us per round trip. So the slice count does matter on the grader, and the lazy views of cn64
+are a real cut there (counts below).

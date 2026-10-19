@@ -190,7 +190,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 337009 | `candidates/v5b_cn63` (cn61 + carried-state corrector: S=32 learned state through W, 3x128 GELU on 1000 public full nets; in-chain mini -3.89% MSE, +0.85% C; prediction ~3.33-3.37e-9) | **0.0220** (~44% of networks zeroed: the 5-level wall under grader load, as cn62's 0.0204) | 0.0220 | |
 | 337017 | **`candidates/v5b_cn63r`** (cn63 at 4 Strassen levels on the young families; C/B 0.2059 on the emulator; prediction ~3.57-3.60e-9) | **3.5984e-9** (clean; raw -2.83% vs cn61r, local -3.89%) | **1.7507e-8** | 0.2055 |
 | 337030 | **`candidates/v5b_cn64`** (cn61 + carried-state corrector S=32 + W*W channel S2=16, ReLU, 1000 public full nets; in-chain mini -4.58% MSE, +0.85% C; lazy-view Strassen kernel: -23% slices) | **3.3386e-9** (clean; new best; raw -3.78% vs cn61, local -4.58%) | **1.7332e-8** | 0.1926 |
-| 337037 | `candidates/v5b_cn64r` (cn64 at 4 Strassen levels on the young families; emulator C/B 0.2060; prediction ~3.57e-9) | pending | | |
+| 337037 | **`candidates/v5b_cn64r`** (cn64 at 4 Strassen levels on the young families; emulator C/B 0.2060) | **3.5636e-9** (clean; best robust grade) | 1.7336e-8 | 0.2056 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -211,7 +211,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection (Oct 19, 03:51 UTC): 337030 (`v5b_cn64`, 3.3386e-9, best clean grade) and 337017 (`v5b_cn63r`, 3.5984e-9: the 4-level robust chain with the carried-state corrector; 4-level builds have graded clean every time).** Replace cn63r by cn64r (337037) once it grades clean.
+**For the final (private) selection (Oct 19, 04:25 UTC): 337030 (`v5b_cn64`, 3.3386e-9, best clean grade) and 337037 (`v5b_cn64r`, 3.5636e-9: the same corrector on the 4-level robust chain; 4-level builds have graded clean every time).**
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
