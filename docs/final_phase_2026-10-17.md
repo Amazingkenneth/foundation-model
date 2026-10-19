@@ -822,3 +822,10 @@ rest under 160 each. **c67 / cn67 = cn66 + the PK2 coefficient stacks in persist
 `out=`; their row and broadcast views made once per process): **43,001 round trips (cold 49,810)**, slices 7,551,
 bitwise-identical predictions (real Strassen m0 all layers 0.0), same bill. Emulator C/B 0.1930, residual 1.26 s,
 smoke shapes finite. Round trips: cn64 47,595 -> cn66 44,639 -> **cn67 43,001 (-9.7%)**, below cn64r's 44,905.
+
+**337053 cn66 graded 3.3341e-9, clean: the new best** (raw 1.7309e-8 = -3.90% vs cn61; local -4.72%: transfer 0.83;
+C/B 0.1926). **337060 = cn67r submitted 06:22 UTC** (the robust nomination with every round-trip cut).
+Leaderboard 06:15 UTC: rank 57 (3.3e-9 display; tie with two teams), up from 59.
+
+MP step (the learned message passing on layers 8-15) off: C/B 0.18678 vs 0.19060 (-2.0%); accuracy on 30 mini in
+progress (a win only if the corrector, retrained on MP-off dumps, recovers most of it).
