@@ -16,11 +16,14 @@ if ck.get("act", "gelu") == "relu": out["relu"] = np.ones(1, np.float32)
 if ck.get("S2", 0): out["nS2"] = np.array([float(ck["S2"])], np.float32)
 if ck.get("S3", 0): out["nS3"] = np.array([float(ck["S3"])], np.float32)
 V4_FEATS = ("Rho4r", "Rhosr", "Rho2max", "D21qr", "D21qc", "W431a", "W4ma", "ipr_var", "ipr_pk2v")
-if "names" in ck:                      # prep_v4 data: v3 + a subset of the v4 features, named
+if "names" in ck and "Rho2r" in list(ck["names"]):   # prep_v4 data: v3 + a subset of the v4 features, named
     nm = list(ck["names"]); assert "Rho2r" in nm and "wRho2r" in nm, nm
     exp = [k for k in nm if k not in V4_FEATS]
     assert len(exp) == 28, exp          # all v3 features kept, in order
     out["v3"] = np.ones(1, np.float32)
     if any(k in V4_FEATS for k in nm): out["v4"] = np.array([float(k in nm) for k in V4_FEATS], np.float32)
 elif int(ck.get("nx", 24)) == 28: out["v3"] = np.ones(1, np.float32)   # v3 inputs (20 local + 8 carried features)
+if ck.get("root"):
+    assert [tuple(x) for x in ck["root"]] == [(7, 2), (8, 3), (9, 4)], ck["root"]
+    out["root"] = np.ones(1, np.float32)   # pk2v, pk3v, pk4v as signed square / cube / fourth roots
 np.savez(sys.argv[2], **out); print({k: v.shape for k, v in out.items()})

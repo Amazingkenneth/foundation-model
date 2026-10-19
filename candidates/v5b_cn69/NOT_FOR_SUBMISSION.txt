@@ -1,1 +1,0 @@
-Placeholder corr.npz (random weights, final shapes H=64 S=16 S2=8) for shape/billing/emulator gating only. NOT FOR SUBMISSION. Rebuilt with the trained corrector before any submit.

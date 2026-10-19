@@ -12,7 +12,9 @@ z = np.load(f"/tmp/claude-0/sc/corr/data_{tag}/{key}.npz"); Ws = [torch.from_num
 Xr = z["X"]
 if "names" in ck and "names" in z.files:     # a DROP-trained model reads its kept columns by name
     nm = [str(x) for x in z["names"]]; Xr = Xr[..., [nm.index(c) for c in ck["names"]]]
-X = torch.from_numpy(((Xr.astype(np.float32) - ck["mu"]) / ck["sd"]).astype(np.float32)); n = X.shape[1]
+Xr = Xr.astype(np.float32)
+for c, kk_ in ck.get("root", []): Xr[..., c] = np.sign(Xr[..., c]) * np.abs(Xr[..., c]) ** (1.0 / kk_)
+X = torch.from_numpy(((Xr - ck["mu"]) / ck["sd"]).astype(np.float32)); n = X.shape[1]
 Phi = z["Phi"].astype(np.float64); s = np.zeros(n); st = None; st2 = None; st3 = None
 with torch.no_grad():
     for l in range(L):

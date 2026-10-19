@@ -23,12 +23,17 @@ z0 = np.load(f"{D}/{tr[0]}.npz")
 NAMES = [str(x) for x in z0["names"]] if "names" in z0.files else [str(i) for i in range(z0["X"].shape[2])]
 DROP = [x for x in os.environ.get("DROP", "").split(",") if x]    # feature names (or column indices) to leave out
 KEEP = np.array([i for i, nm in enumerate(NAMES) if nm not in DROP and str(i) not in DROP]); del z0
+ROOT = os.environ.get("ROOT", "0") == "1"   # pk2v, pk3v, pk4v (raw columns 7, 8, 9) -> signed k-th roots (heavy tails)
+ROOTC = [(int(np.where(KEEP == c)[0][0]), k) for c, k in ((7, 2), (8, 3), (9, 4)) if c in KEEP] if ROOT else []
+def rootx(X):
+    for c, k in ROOTC: X[..., c] = np.sign(X[..., c]) * np.abs(X[..., c]) ** (1.0 / k)
+    return X
 print(f"train {len(tr)} test {len(te)} H {H} S {S} S2 {S2} S3 {S3} {WMODE} {ACT} nx {len(KEEP)}/{len(NAMES)}"
       f"{' drop ' + ','.join(DROP) if DROP else ''}", flush=True)
 # standardisation from (up to) 200 training networks
 acc = []
 for k in tr[:200]:
-    z = np.load(f"{D}/{k}.npz"); acc.append((z["X"][..., KEEP].astype(np.float64).reshape(-1, len(KEEP)), z["C"].astype(np.float64).ravel()))
+    z = np.load(f"{D}/{k}.npz"); acc.append((rootx(z["X"][..., KEEP].astype(np.float64)).reshape(-1, len(KEEP)), z["C"].astype(np.float64).ravel()))
 Xa = np.concatenate([a for a, _ in acc]); mu = Xa.mean(0).astype(np.float32); sd = (Xa.std(0) + 1e-12).astype(np.float32)
 ysd = float(np.concatenate([b for _, b in acc]).std()); del acc, Xa
 nx = mu.shape[0]
@@ -41,7 +46,7 @@ class DS(torch.utils.data.Dataset):
     def __getitem__(self, i):
         from regen import hf_weights
         z = np.load(f"{D}/{self.keys[i]}.npz")
-        X = ((z["X"][..., KEEP].astype(np.float32) - mu) / sd).astype(np.float32)
+        X = ((rootx(z["X"][..., KEEP].astype(np.float32)) - mu) / sd).astype(np.float32)
         Ws = np.stack(hf_weights(int(z["seed"])))                              # (L, n, n) float32
         return (torch.from_numpy(X), torch.from_numpy((-z["C"] / ysd).astype(np.float32)), torch.from_numpy(Ws),
                 torch.from_numpy(z["Phi"].astype(np.float32)), torch.from_numpy(z["E"].astype(np.float32)))
@@ -84,7 +89,13 @@ def Ws_scale(W):                                                              # 
     return 1.0 / torch.sqrt(W.shape[0] * (W * W).mean())
 
 
-net = Net(); opt = torch.optim.Adam(net.parameters(), lr=LR)
+net = Net()
+INIT = os.environ.get("INIT", "")   # fine-tune from a fitrnn model (its standardisation is kept)
+if INIT:
+    ck0 = torch.load(INIT, weights_only=False); net.load_state_dict(ck0["state"])
+    mu, sd, ysd = ck0["mu"], ck0["sd"], ck0["ysd"]; assert ck0.get("names", None) in (None, [NAMES[i] for i in KEEP])
+    print(f"init from {INIT}", flush=True)
+opt = torch.optim.Adam(net.parameters(), lr=LR)
 EMA = float(os.environ.get("EMA", "0"))   # exponential moving average of the weights (per step), used for the output
 ema = {k: v.detach().clone() for k, v in net.state_dict().items()} if EMA else None; nstep = 0
 CK = OUT + ".ckpt"; ep0 = 0          # per-epoch checkpoint: a container restart resumes at the next epoch
@@ -102,6 +113,12 @@ for ep in range(ep0, EP):
         lay = ((p - Y) ** 2).mean(1) @ wl / wl.sum(); lay0 = ((Y ** 2).mean(1) @ wl / wl.sum()).detach()
         if LOSS == "layer":
             loss = lay; base0 = lay0
+        elif LOSS == "e2ep":                                  # pooled final-layer MSE (the scored quantity)
+            sL = torch.zeros(X.shape[1])
+            for l in range(L):
+                sL = (Phi[l] * (Ws[l].T @ sL) if l > 0 else 0.0) + p[l]
+            eL = E[-1] / ysd
+            loss = ((eL + sL) ** 2).mean(); base0 = (eL ** 2).mean().detach()
         else:
             sL = torch.zeros(X.shape[1])                      # propagated correction, in units of ysd
             for l in range(L):
@@ -133,7 +150,7 @@ def test(lbl):
           f"odd {corr[~ev].sum()/base[~ev].sum()-1:+.2%}), better {np.sum(corr < base)}/{len(te)}", flush=True)
 def save(path):
     torch.save(dict(state=net.state_dict(), mu=mu, sd=sd, ysd=ysd, H=H, S=S, S2=S2, S3=S3, nx=nx, act=ACT,
-                    names=[NAMES[i] for i in KEEP]), path)
+                    names=[NAMES[i] for i in KEEP], root=ROOTC), path)
 if EMA:
     save(OUT + ".raw"); test(" raw"); net.load_state_dict(ema)
 save(OUT); test(" ema" if EMA else "")
