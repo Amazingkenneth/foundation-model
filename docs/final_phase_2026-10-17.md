@@ -871,3 +871,8 @@ inputs behind a `v3` key in corr.npz.
 -4.98) vs cn66's corrector -4.72% (89/98; -4.61 / -4.83); training loss 0.9604 vs 0.9620. Both halves improve.
 **cn68 / cn68r = cn67 + v3 inputs + this corrector** (`sc/c68` estimator; `v3` key in corr.npz). In chain vs torch on
 m50: 2.2e-6. In-chain mini 100, real Strassen, emulator and round trips in progress.
+
+**cn68 gate:** in chain on 100 mini **-4.85% +- 0.32** (94/100; halves -4.85 / -4.85; cn66 -4.72%); real Strassen m0
+1.6770e-8 vs fast 1.6788e-8 (finite; m0 alone is one of cn68's worse networks); 0.12.3 bill 0.19231 (+0.04% vs cn66);
+emulator C/B 0.1931, smoke shapes finite; client/server round trips 43,136 (cold 49,945). **Submitted 14:29 UTC as
+337134.**
