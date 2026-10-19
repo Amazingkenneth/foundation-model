@@ -676,3 +676,20 @@ graded clean both times; the 5-level cn61 / cn60 graded clean on Oct 18 afternoo
 corrector (in-process 108.7 s vs cn61 106.9 s) sits too close to the cap under the current grader load.
 Next: a Strassen level per family (young transport / newborn trees T, young D21 hub H; `sc/c63w`, CN_SLEVT /
 CN_SLEVH) to find a wall cut cheaper than the full 4-level twin (+6.8% C).
+
+Third channel through W*W*W (S3 = 16 next to S = 32, S2 = 16; 200 nets): -3.17% (86/98) vs -3.44% without it.
+Training loss a little lower, held-out worse: dropped.
+**337017 = cn63r submitted 00:41 UTC** (robust 4-level twin; its grade measures the state corrector's transfer).
+
+**Strassen level per family (cn63, 0.12.3 bill and in-process wall, seed 1, container under training load):**
+
+| transport / newborn trees T | young D21 hub H | C/B | wall |
+|---|---|---|---|
+| 5 | 5 (cn63) | 0.19221 | 113.4 s |
+| 5 | 4 | 0.19856 (+3.3%) | 94.8 s (-16%) |
+| 4 | 5 | 0.19875 (+3.4%) | 92.5 s (-18%) |
+| 4 | 4 (cn63r) | 0.20510 (+6.7%) | 82.6 s (-27%) |
+
+The trade is linear: each family costs ~+3.3% C per ~-17% wall, so a half-way build only ties cn61's score once the
+corrector's gain is counted. The useful pair stays the full 5-level chain (best score when it grades clean) and the
+4-level twin (robust hedge).

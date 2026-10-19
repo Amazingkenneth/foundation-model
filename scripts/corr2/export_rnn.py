@@ -8,10 +8,11 @@ W0 = st[f"{pre}{lin[0]}.weight"].numpy().T; nin = W0.shape[0]
 mu = np.zeros(nin, np.float32); sd = np.ones(nin, np.float32)
 m = np.asarray(ck["mu"], np.float32); s = np.asarray(ck["sd"], np.float32)
 mu[:len(m)] = m; sd[:len(s)] = s
-if len(m) == nin - 0 and "nx" not in ck: pass
 out = {"mu": np.ascontiguousarray(mu), "sd": np.ascontiguousarray(sd), "ysd": np.asarray(ck["ysd"], dtype=np.float32)}
 for i, l in enumerate(lin):
     out[f"W{i}"] = np.ascontiguousarray(st[f"{pre}{l}.weight"].numpy().T, dtype=np.float32)
     out[f"b{i}"] = np.ascontiguousarray(st[f"{pre}{l}.bias"].numpy(), dtype=np.float32)
 if ck.get("act", "gelu") == "relu": out["relu"] = np.ones(1, np.float32)
+if ck.get("S2", 0): out["nS2"] = np.array([float(ck["S2"])], np.float32)
+if ck.get("S3", 0): out["nS3"] = np.array([float(ck["S3"])], np.float32)
 np.savez(sys.argv[2], **out); print({k: v.shape for k, v in out.items()})
