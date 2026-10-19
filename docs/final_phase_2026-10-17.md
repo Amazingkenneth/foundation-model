@@ -856,3 +856,6 @@ C_off^2, |C_off| and of rho_ij^2 = C_ij^2 / (var_i var_j); the last also carried
 depth (~1 at layer 0, ~5 at layer 5, ~10 at layer 10). Dumps `ld61c` (`sc/xs_d3`; the chain is identical to
 `ld61`) for m0-99 + f0-199 are running, then a 200-network A/B against -3.44%. `sc/c68` carries the in-chain v3
 inputs behind a `v3` key in corr.npz.
+
+**24 epochs (decay 0.9):** held-out mini -4.74% (91/98; halves -4.42 / -5.07), training loss 0.9583: no gain over
+16 epochs (-4.72%, 0.9620); the lower training loss does not carry over. cn66's 16-epoch corrector stays.
