@@ -767,3 +767,12 @@ of which ~29 us is residual (bookkeeping after its timer stops), so only fewer o
 
 **cn64r gate:** emulator C/B 0.2060, residual 1.19 s, smoke shapes finite; real Strassen m0 1.6318e-8.
 **337030 = cn64 submitted 03:14 UTC Oct 19.**
+
+Hidden width with the two channels (200 nets, ReLU): H = 192 -3.32% (82/98) vs H = 128 -3.44%: no gain. The 1000-net
+S = 32 + S2 = 16 model is retrained for 16 epochs at a slower decay (0.85 per epoch; the 12-epoch loss was still
+falling).
+
+**337030 cn64 graded 3.3386e-9, clean: the new best** (raw 1.7332e-8 = -3.78% vs cn61's 1.8012e-8, local -4.58%:
+transfer 0.83; C/B 0.1926). Below 3.35e-9, so the leaderboard shows 3.3e-9 (from 3.4e-9). It graded at ~03:30-03:50
+UTC, when the queue was slow but the run clean. **337037 = cn64r submitted 03:50 UTC** as the robust nomination.
+Nominations now: cn64 (337030) + cn63r (337017), cn64r to replace cn63r once graded.
