@@ -914,3 +914,21 @@ epochs, LR 2e-4, the loss through the propagation s_l = Phi_l (W s_{l-1}) + delt
 0.9444, held-out mini **-4.79%** (even -4.62, odd -4.97) vs -4.90%: it overfits, as our per-network-normalised
 end-to-end term did on Oct 18. The gain-weighted per-layer loss stays. Clipping final predictions at 0 (as that
 write-up does): 1,540 of 100,352 corrected outputs are negative, all negligibly, so MSE is unchanged to 1e-6.
+
+**v4 inputs: no gain** (196 training networks, same 98 held-out mini): all nine v4 inputs -3.50% (87/98), the seven
+local ones -3.69% (88/98), vs v3 -3.73% / -3.58% (seeds 0 / 1); final training loss 0.9694 / 0.9691 vs 0.9695. The
+extra correlation, D21 and kappa4-slice statistics carry no information the corrector does not already have. The
+f200-999 v4 dumps were stopped.
+
+**Root transform of the heavy-tailed moment inputs** (pk2v, pk3v, pk4v reach 20-70 sigma after standardisation on
+held-out networks; signed square / cube / fourth roots): seed 0 -3.88% vs -3.73%, seed 1 -3.58% vs -3.58%. Mean
++0.075pp, inside the 0.15pp seed noise: not adopted (`ROOT=1` in fitrnn, `root` flag in `sc/c69`).
+
+**Per-neuron propagation gains** (diag of J^T J, J = the linearised map from layer l to the output, exact on m0 /
+m1): within a layer they vary by 6-27% (CV) and are uncorrelated with the created errors (gain-weighted / uniform
+created error 1.00 +- 0.02 per layer). The per-layer gain weights already are the right loss.
+
+**Corrector cost is a lever:** a same-shape H = 64, S = 16, S2 = 8 corrector bills C/B 0.19142 vs cn68's 0.19231
+(-0.46%, 0.12.3, seed 1; wall and VmHWM unchanged). It pays if its held-out gain stays within ~0.5pp of -4.90%
+(grader transfer ~0.85 of the local gain). Training on 1000 networks with weight averaging (EMA 0.999 per step;
+the raw weights are scored too), next to the full-size corrector with EMA.
