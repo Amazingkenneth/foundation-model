@@ -904,3 +904,13 @@ sum rho, max rho^2), the D21 row / column mass (sum D21^2) and the kappa4-slice 
 (sum_i W_ji^4 v_i^2 / (sum_i W_ji^2 v_i)^2 for v = var and pk2v). `fitrnn.py` gains `DROP=<names>` (feature subsets
 on one data set) and `EMA=<decay>` (weight averaging, zero inference cost). In chain: `sc/c69` (a `v4` mask in
 corr.npz).
+
+**Seed noise at 200 training networks:** v3 seed 0 -3.73% (89/98), seed 1 -3.58% (86/98): about 0.15pp, the floor
+for the 200-network A/Bs below.
+
+**Forum 18255 (Oct 19) terminal objective, tested on our corrector:** that write-up's corrector gained 0.57% graded
+from training on the pooled final-layer MSE itself. A pooled end-to-end fine-tune of our 1000-net v3 model (3
+epochs, LR 2e-4, the loss through the propagation s_l = Phi_l (W s_{l-1}) + delta_l): training ratio 0.9509 ->
+0.9444, held-out mini **-4.79%** (even -4.62, odd -4.97) vs -4.90%: it overfits, as our per-network-normalised
+end-to-end term did on Oct 18. The gain-weighted per-layer loss stays. Clipping final predictions at 0 (as that
+write-up does): 1,540 of 100,352 corrected outputs are negative, all negligibly, so MSE is unchanged to 1e-6.
