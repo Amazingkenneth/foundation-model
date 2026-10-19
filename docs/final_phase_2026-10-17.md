@@ -693,3 +693,25 @@ Training loss a little lower, held-out worse: dropped.
 The trade is linear: each family costs ~+3.3% C per ~-17% wall, so a half-way build only ties cn61's score once the
 corrector's gain is counted. The useful pair stays the full 5-level chain (best score when it grades clean) and the
 4-level twin (robust hedge).
+
+Width of the W*W channel: S2 = 32 -3.22% (84/98) vs S2 = 16 -3.44%: S2 stays 16.
+
+### 8.7 strassen5: the kernel's wall is strided memory traffic
+
+Profile of one cn63 prediction (0.12.3, in-process, one thread; the container was under training load): 85 s of 124 s
+inside numpy (`_call_numpy_impl`), of which the pointwise wrappers take ~75 s. Inside the Strassen kernel: fused leaf
+43.5 s, left combos 11.1 s, right combos 14.0 s, assembly 14.8 s (~83 s of 111 s). The corrector block is 0.35 s.
+Micro-benchmark: an add over 32-float quadrant rows costs 2.4 ns per element against 1.1 contiguous (2.6x at 64-float
+rows); a batched 32x32 matmul with a strided right operand and output 11.1 ms against 7.9 contiguous.
+
+`strassen5.py` keeps strassen4's arithmetic operation by operation, but below the top level every plane is stored in
+the recursive block layout (..., (2, 2) * r, m >> r, k >> r), so every quadrant at every level is a contiguous
+sub-block. The top level reads the operands' quadrants through split views (fnp.reshape: one FLOP per element of
+X, R and out; the transpose is free). Shared left trees cache one combo set per level count.
+
+| test | result |
+|---|---|
+| 10 shapes (trees, ksum hub form, mb 20 / 24, levels 1-5, widths 768 / 960) | **bitwise identical** to strassen4; per call -15..-37% time, bill +0.20..+0.36% |
+| one full prediction (cn63 + the S2 corrector, seed 1) | **bitwise identical** predictions; C/B 0.19223 -> 0.19269 (+0.24%); wall 107.3 -> **92.0 s (-14%)**; VmHWM 4.20 -> 4.94 GB |
+
+That is most of the 4-level twin's wall margin (82.6 s) at +0.24% C instead of +6.7%.
