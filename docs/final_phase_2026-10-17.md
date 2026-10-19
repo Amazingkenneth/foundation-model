@@ -1004,3 +1004,7 @@ gain sits in a few late layers. Layer-window test on the 24 odd nets running.
 In our D21 form the exact term needs one more dense product per layer (~+0.26% C each: ~+3.4% for all layers,
 ~+1.0% for 11-14), so every window loses on score. **E1 closed for this chain** (it is free only where D21 is
 already formed as M W^T, as in 18252's v31/v33).
+
+**337220 cn69r graded 3.5448e-9, clean** (raw 1.7313e-8, C/B 0.2048; cn68r 3.5510e-9). **Nominations: cn69 (337211,
+3.3201e-9) + cn69r (337220, 3.5448e-9).** Overnight: the cn69 corrector recipe retrained on all 1,098 labelled
+networks (f0-999 + mini), a candidate for Oct 20.
