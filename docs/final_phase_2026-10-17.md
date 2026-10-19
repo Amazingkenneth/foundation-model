@@ -998,3 +998,9 @@ vs the XE1 = 0 control):** scale +0.25 -1.15% +- 0.15 (22/24), +0.5 -1.41% +- 0.
 +5.12%: the sign holds and the optimum is near 0.45 (~-1.4% chain-only). Our D21 is not formed as M W^T, so the
 exact term costs one more dense product per layer (~+0.26% C each, ~+3.4% for layers 2-14): it pays only if the
 gain sits in a few late layers. Layer-window test on the 24 odd nets running.
+
+**E1 layer windows (scale 0.45, the 25 odd mini nets, independent of the sweep):** layers 1-14 **-0.78% +- 0.30**
+(17/25), layers 8-14 -0.45% +- 0.27, layers 11-14 -0.42% +- 0.15 (16/25). Across both halves ~-1.1% for all layers.
+In our D21 form the exact term needs one more dense product per layer (~+0.26% C each: ~+3.4% for all layers,
+~+1.0% for 11-14), so every window loses on score. **E1 closed for this chain** (it is free only where D21 is
+already formed as M W^T, as in 18252's v31/v33).
