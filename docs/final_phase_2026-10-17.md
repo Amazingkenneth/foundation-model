@@ -1052,3 +1052,11 @@ null. In-chain support for all options is in `sc/c71` (`corr.npz` keys: 2-D `mu`
   with cn69's corr.npz. The extra cost is a few n- and n^2-element multiplies per layer.
 - Container restarts on Oct 20 (01:29, 03:16 UTC) showed that predictions differ across hosts at float32
   rounding: up to 2.6e-6 from layer 9 on, against errors of ~1.3e-4 rms.
+
+**cn71 gate:**
+- real Strassen m0 1.6005e-8 (cn69 1.6639e-8), finite; cn71r 1.6041e-8;
+- 0.12.3 bill 0.19145 (+0.02%), VmHWM 4.21 GB;
+- emulator C/B 0.1922, smoke shapes finite (cn71r 0.2052, finite);
+- 43,279 round trips (+0.3%).
+
+**Submitted 03:39 UTC as 337265.**
