@@ -1082,3 +1082,14 @@ Round 2 of the knob fit (17 knobs around cn71, 32 even nets) is running.
   var_b / mean var`) and the gate-weighted (2,2) term (`B4 = (g_i + g_j) / 2 C_ij`).
 
 With round 1's ~0.15x grader transfer, no round-2 build is justified. **The closure-knob line ends at cn71.**
+
+**Corrector A/Bs, round 2** (200 nets, same base):
+- incoming-correction inputs `Phi_l o (W s_{l-1})` and `W s_{l-1}` (`IC=1`): TEST -3.43% vs -3.67% / -3.51%. Null.
+- mliston's mixed loss, 30% per layer + 70% transported final error (`LOSS=mixp`): **-1.65%** vs -3.73%. This is the
+  third failure of an output-weighted objective here.
+
+Every corrector design variant is closed. The per-layer, gain-weighted, 16-epoch recipe of cn69 stands.
+
+**cn72 = cn71's code + the small corrector trained on all 1,098 labelled networks** (f0-999 + mini). The expected
+gain (~0.07pp) cannot be validated locally because mini is in-sample. Parity vs torch on m50 is 2.27e-6. It is
+nominated only if its paired grade beats cn71.
