@@ -5,6 +5,10 @@ It is written for someone (human or AI) who wants to improve it without re-runni
 from code, the 0.12.3 profiler run of Oct 20 (`scripts/gate/prof_fn.py`), graded submissions, and the experiment
 logs in `docs/final_phase_2026-10-17.md`. That file is the full record; the section numbers cited below are its own.
 
+**Update Oct 20:** the current best is **337265 cn71 3.3183e-9** (raw 1.7297e-8). Its twin **337275 cn71r
+3.5407e-9** is the robust nomination. cn71 = cn69 + closure knobs refit end to end (Section 2a); everything below
+holds for both.
+
 Graded: **337211 cn69 3.3201e-9** (raw MSE 1.7309e-8, C/B 0.1918). Its 4-level twin **337220 cn69r 3.5448e-9**
 (raw 1.7313e-8, C/B 0.2048). Leaderboard on Oct 19: #1 1.30e-9 (raw 1.10e-8, C/B 0.122); we are about #57.
 
@@ -77,6 +81,31 @@ Per layer `li` (`_predict_core`, sections marked `# ---- ... ----`):
    `pk1v + s_L` (corrector). The old ridge rider is off (`V17_NO_CORR=1`).
 
 The 4-level twin differs in one line: `SLEV = 4` (`CN_SLEV`) on the young families.
+
+## 2a. cn71: closure knobs refit end to end (Oct 20)
+
+`candidates/v5b_cn71/estimator.py` = cn69 + a `KN` table (l.461-468), applied in the WK-slice block right after the
+learned k34 / MP steps (l.1129-1140) and at birth (feed, l.1562). Bands: E = layers < 8, L = 8-14, F = final layer.
+
+| knob | value | what |
+|---|---|---|
+| D3 E / L / F | 0.9958 / 0.9975 / 1.0027 | consumed kappa3 diagonal |
+| g4row E / L / F | 1.0140 / 0.9966 / 0.9990 | consumed kappa4 diagonal (and wk4m, built from it) |
+| wk431 E / L | 1.1349 / 0.9140 | (3,1) slice |
+| D21 E / L | 0.9975 / 0.9946 | (2,1) slice as consumed (after MP) |
+| LF | 0.7996 | kappa4 -> kappa3 feed `c1_b = lambda w1` of the newborn (suite shape only) |
+| S22 | -0.2752 | added SSC-type (2,2) structure `S22 x lambda x METRIC_C x C_off o C_off` |
+
+How the values were found:
+- Fit: a finite-difference Jacobian (+5% per knob) of the final means of cn69 *with its corrector*, on 24 even mini
+  networks, followed by one ridge Gauss-Newton step (rho 1e-2). The linear prediction (-0.88%) was realised exactly.
+- Validation: all 100 mini -0.50% +- 0.13; the 50 odd networks, never in the fit, -0.59%.
+- Grader: -0.07% raw (transfer ~0.15x, within ~2 sigma on 50 networks).
+- Cost: +0.02% C, +0.3% round trips.
+
+Round 2 (17 knobs re-linearised at cn71, plus a variance-scaled (3,1) term, a gate-weighted (2,2) term, (2,2)
+multipliers and a late-only feed knob) found nothing: every knob is at its optimum. Tools: `sc/c72` (env `XKN`),
+`sc/c73`, and `/tmp/claude-0/acc/knobsolve*.py` (see `docs/final_phase_2026-10-17.md` 8.15).
 
 ## 3. Cost breakdown (measured)
 
@@ -220,13 +249,20 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | v4 inputs (rho^4, signed rho, max rho^2, D21 squared mass, kappa4-slice mass, participation ratios) | -3.50% / -3.69% [-3.58 / -3.73% over two seeds]; training loss unchanged |
 | root transform of pk2v/pk3v/pk4v (20-70 sigma tails) | +0.075pp (two seeds) |
 | EMA of weights | -4.74% [-4.76%] |
+| per-layer input standardisation (Susupro's recipe) | 200 nets -3.85% [-3.73 / -3.58]; **1000 nets -4.76% [-4.76%]** |
+| per-layer output scale (targets normalised per layer, same objective) | -3.76% [-3.73 / -3.58] |
+| tanh on the carried states | -3.64% |
+| incoming-correction inputs `Phi o (W s)`, `W s` | -3.43% (TEST, m0-99) [-3.67 / -3.51] |
+| mixed loss 30% per layer + 70% transported (mliston 18170) | **-1.65%** [-3.73%] |
+| closure knobs, round 2 (17, incl. the SSC (3,1) and gate-weighted (2,2) terms) | at the optimum, <= 0.03% per knob |
 
 Seed noise: about 0.15pp at 200 training networks.
 
 ## 7. Open levers (ranked by expected value per day)
 
 1. **Corrector trained on all 1,098 labelled networks** (adds the 98 mini).
-   - Status: training (`rnn_f1098_v3_small`).
+   - Status: trained; built as `candidates/v5b_cn72` (cn71 code + this corrector). It is adopted only if its paired
+     grade beats cn71.
    - Expected: about -0.07pp MSE, by the corrector's measured learning curve (-0.3..-0.5pp per doubling).
    - Catch: no held-out set remains, so the grade is the validation.
 2. **Fewer client round trips.**
