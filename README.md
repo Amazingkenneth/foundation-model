@@ -18,6 +18,8 @@ a learned carried corrector. The shipped estimator is not the `submission/` desi
 - **[`docs/ALGORITHM.md`](docs/ALGORITHM.md)**: verified spec of cn69 (task and limits, chain structure, measured
   cost breakdown, learned corrector, closed ideas, open levers, validation gate, file map).
 - **[`docs/PROGRESS_2026-10-19.md`](docs/PROGRESS_2026-10-19.md)**: status, nominations and plan to the deadline.
+- **[`docs/leaders_2026-10-20.md`](docs/leaders_2026-10-20.md)**: what the top teams most likely build (carried kappa4
+  core + scale-mode extraction), the cubature test, and our port of it (`scripts/tchain/`): +14% vs cn71's chain.
 - [`scripts/gate/README.md`](scripts/gate/README.md): the pre-submission gate tools.
 
 ## Layout

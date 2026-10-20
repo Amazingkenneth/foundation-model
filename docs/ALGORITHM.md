@@ -223,7 +223,8 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | (3,1) two-term law [18246] | +1.4..+4.0% | our learned MP already carries that slice |
 | per-neuron metric diag(W W^T) [18248, e30_a] | +0.06% +- 1.35 | absorbed by the learned operator |
 | C0^3 Mehler pair term (= 18252's "missing C_off^3/6 H3 H3") | -0.2% +- 1.9 | null |
-| scale-mode extraction with a carried kappa4 core [18248] | needs a carried kappa4 core (~2x cost) | no |
+| scale-mode extraction with a carried kappa4 core [18248] | ported Oct 20 (`docs/leaders_2026-10-20.md`): carried G + K211 (newborn) + extraction 0.25 on ARC's augment table, learned ops off: +14.3% vs the cn71 chain on 8 mini nets (0/8); the learned k34/MP break on it (x50) | no (needs retrained operators + corrector) |
+| spherical cubature, 8,192 orthonormal-frame points [marius_binner P1] | 4.5e-6 final MSE on m70 (iid: 7.3e-6) | no (400x short) |
 | MP from layer 6 instead of 8 | +1.8% +- 3.1 | out |
 | MP pair strength x0.4 | -2.2% on 6 tuning nets, +3.1% on 6 held-out | selection effect |
 | post-Jul-31 term tables (Edgeworth fix) | worse for lambda-law chains (il.miscusi) | no |
