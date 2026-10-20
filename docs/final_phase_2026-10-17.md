@@ -1060,3 +1060,8 @@ null. In-chain support for all options is in `sc/c71` (`corr.npz` keys: 2-D `mu`
 - 43,279 round trips (+0.3%).
 
 **Submitted 03:39 UTC as 337265.**
+
+**337265 cn71 graded 3.3183e-9, clean: a new best by -0.05%** (raw 1.7297e-8 = -0.07% vs cn69's 1.7309e-8; C/B
+0.1918). The local held-out gain (-0.38..-0.59%) transferred at ~0.15x. Per-network spread makes that ~2 sigma on the
+grader's 50 public networks, so the transfer is weak but not zero. **337275 = cn71r submitted 04:25 UTC.**
+Round 2 of the knob fit (17 knobs around cn71, 32 even nets) is running.
