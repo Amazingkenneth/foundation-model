@@ -1,0 +1,69 @@
+--- candidates/v5b_cn68/estimator.py
++++ sc/c70/estimator.py (E1 screen)
+@@ -459,6 +459,11 @@
+ # The V16b CORR_BETA mean rider was ridge-fitted on V16b's OWN trajectory and is
+ # anti-correlated with V16b's base error; on the regen base it HURTS (dump0: 3.57e-8
+ # with vs 2.51e-8 without). Off by default until refitted on the V17 trajectory.
++# E1 screen (forum 18252 s3.1): kappa4 all-distinct pendant-edge term added to the consumed g4row at
++# layers 1..L-2: E1_j = 12 sum_c W_jc (W a_b)_jc (w2_c / w1_c) M_old[j, c], D21_old = M_old W^T.
++XE1 = float(_os.environ.get("XE1", "0"))
++XE1_LMIN = int(_os.environ.get("XE1_LMIN", "1"))
++import numpy as _np
+ NO_CORR = _os.environ.get("V17_NO_CORR", "1") == "1"
+ # V25: table scale 0.95 (8-dump scan 0.9/0.92/0.95/1.0 -> 2.2752/2.2727/2.2704/2.2782e-8)
+ LAM = [c * float(_os.environ.get("V17_LAM_SCALE", "0.95")) for c in LAM]
+@@ -1086,7 +1091,7 @@
+                                         kb=kb, FA2=FA2, FP2=FP2, U2=U,
+                                         yw=max(ms_list[ka:A_st.shape[0]]) if ka < A_st.shape[0] else n,
+                                         w1t=max(ms_list[kb:ka]) if ka > kb else n,
+-                                        msl=ms_list)
++                                        msl=ms_list, e1=(XE1 != 0.0 and not trim and li >= XE1_LMIN))
+                 if regen:
+                     # F68: exact transported diagonal of the regenerated core
+                     # G = diag(g) + lam C_off:  dG = (W*W) g + lam (diag(C_pre)
+@@ -1124,6 +1129,21 @@
+                         g22c = fnp.reshape(g4row * (1.0 / 6.0), (-1, 1))
+                         wk4m = _zero_diag(g22c + g22c.T)
+                     k4_prev = g4row
++                    if XE1 != 0.0 and not trim and li >= XE1_LMIN and D21 is not None and A_st is not None:
++                        kn = A_st.shape[0] - 1
++                        Wd = _np.asarray(W, dtype=_np.float64)
++                        Mo = _np.linalg.solve(Wd, _np.asarray(self._e1_d21old, dtype=_np.float64).T).T   # D21_old W^-T
++                        pr = perm_list[kn]
++                        w1d = _np.maximum(_np.asarray(w1, dtype=_np.float64), 1e-6)
++                        rat = _np.asarray(w2, dtype=_np.float64) / w1d
++                        if pr is not None:
++                            pr = _np.asarray(pr); rat = rat[pr]; Mo = Mo[:, pr]
++                        E1 = 12.0 * _np.sum(_np.asarray(P_st[kn], dtype=_np.float64) * _np.asarray(A_st[kn], dtype=_np.float64)
++                                            * rat[None, :] * Mo, axis=1)
++                        if _os.environ.get("XE1_DBG", "0") == "1":
++                            print("E1", li, "rms %.3e g4 rms %.3e" % (_np.sqrt(_np.mean(E1 ** 2)), float(fnp.sqrt(fnp.mean(g4row * g4row)))), flush=True)
++                        g4row = g4row + fnp.asarray((XE1 * E1).astype(_np.float32))
++                        del Wd, Mo
+                     if _os.environ.get("V17_DEBUG", "0") == "1":
+                         DEBUG.append(dict(layer=li, dG=dG, g_prev=g_prev, var_prev=var_prev,
+                                           lam=lam_prev, var=var, D3=D3, D21=D21))
+@@ -1710,7 +1730,7 @@
+     def _dslices(self, A_st, P_st, Z_st, L_st, w2b_list, s_list, e_list,
+                  c1_list, c2_list, y_list, n, bufs, rres, rfb, Zf_st, R1T_st, R2T_st,
+                  need_d21=True, ka=0, FAo=None, FPo=None, Qc=None,
+-                 kb=0, FA2=None, FP2=None, U2=None, yw=None, w1t=None, msl=None):
++                 kb=0, FA2=None, FP2=None, U2=None, yw=None, w1t=None, msl=None, e1=False):
+         """(3,) and (2,1) dslices with the M leg expressed through A, P and the thin
+         residual leg: M = P*diag(s) + 3*A*diag(e) + Z L^T (the factor 3 of the
+         residual is folded into Z at birth). Two dense contractions (right factors
+@@ -1845,6 +1865,14 @@
+         D21 = D21 + fnp.einsum("kiq,kcq->ic", PPL, Z_st) * (1.0 / 3.0)
+         if D21_fb is not None:
+             D21 = D21 + D21_fb
++        if e1:
++            # the newborn's (last slot's) own contributions, removed to leave the old-birth part
++            kn = k - 1
++            nb = (LA[kn] @ A_st[kn].T + LP[kn] @ P_st[kn].T
++                  + fnp.outer(R[kn], Yk[kn]) * (1.0 / 3.0) + (PPL[kn] @ Z_st[kn].T) * (1.0 / 3.0))
++            if rfb > 0:
++                nb = nb + GYR[kn] @ F2[kn].T + GXR[kn] @ F1[kn].T
++            self._e1_d21old = D21 - nb
+         return D3, _zero_diag(D21)
+ 
+ 
