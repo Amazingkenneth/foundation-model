@@ -1008,3 +1008,36 @@ already formed as M W^T, as in 18252's v31/v33).
 **337220 cn69r graded 3.5448e-9, clean** (raw 1.7313e-8, C/B 0.2048; cn68r 3.5510e-9). **Nominations: cn69 (337211,
 3.3201e-9) + cn69r (337220, 3.5448e-9).** Overnight: the cn69 corrector recipe retrained on all 1,098 labelled
 networks (f0-999 + mini), a candidate for Oct 20.
+
+### 8.15 Oct 20 night: corrector design A/Bs and the end-to-end knob refit
+
+**Research (agent survey of forum + arXiv):**
+- **Puffi's SSC closure** (18175, Phase 1) models kappa4 as `sum_ab Lambda_ab Sym(B_a x B_b)` with modes C, Q, I and a
+  gate-weighted C, rebuilt after every ReLU.
+- **Susupro ported it into a V29-lineage chain** (18254 step 5): they placed its Sym(C x C) slices next to the lambda
+  regeneration law, decoupled lambda's three uses, and refit 9 coefficients end to end on 12 public networks, for raw
+  **-5.4%** graded, 49/50 networks better, at the same C/B.
+- No top-10 team has a Phase 2 write-up (due Oct 28). mliston's Phase 1 corrector (GRU, mixed direct / transported
+  loss) cut raw by 17-19%. No arXiv follow-up to 2605.05179 was found.
+
+**Corrector design A/Bs, after Susupro's recipe** (200 nets, H 128 / S 32 / S2 16, 12 epochs, 98 held-out mini;
+base -3.73% / -3.58% for seeds 0 / 1):
+
+| variant | held-out | halves | final training loss |
+|---|---|---|---|
+| per-layer input standardisation (`PLSTD=1`) | **-3.85%** (91/98) | -3.73 / -3.97 | **0.9639** (base 0.9695 / 0.9708) |
+| per-layer output scale (`TNORM=1`; target rms 0.34-1.40 by layer) | -3.76% | -3.36 / -4.16 | 0.9702 |
+| tanh on the states (`TANH=1`) | -3.64% | -3.32 / -3.96 | 0.9705 |
+
+PLSTD lowers the training loss far more than any earlier variant. At 200 nets it reaches the held-out set only
+partly (+0.2pp vs the seed mean), so it is being retrained at 1000 nets with the small config. TNORM and TANH are
+null. In-chain support for all options is in `sc/c71` (`corr.npz` keys: 2-D `mu` / `sd`, `lsc`, `tanh`, `ic`).
+
+**End-to-end knob refit** (`sc/c72`: cn69 plus 12 zero-cost knobs; with all knobs at default it reproduces cn69 to
+0.0 on m50).
+- Knobs:
+  - multipliers on D3, g4row, wk431 and D21, in bands E (layers < 8), L (8 to 14) and F (final layer);
+  - the kappa4 -> kappa3 feed strength;
+  - an additive SSC-type (2,2) term `S22 x lambda x 2 x C_off o C_off`.
+- Fit: finite-difference Jacobian of the final means on 24 even mini networks (cn69 with its corrector), a ridge
+  Gauss-Newton step, and validation on all 100 mini (the odd 50 never enter the fit).
