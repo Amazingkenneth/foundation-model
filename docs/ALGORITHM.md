@@ -225,6 +225,8 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | C0^3 Mehler pair term (= 18252's "missing C_off^3/6 H3 H3") | -0.2% +- 1.9 | null |
 | scale-mode extraction with a carried kappa4 core [18248] | ported Oct 20 (`docs/leaders_2026-10-20.md`): carried G + K211 (newborn) + extraction 0.25 on ARC's augment table, learned ops off: +14.3% vs the cn71 chain on 8 mini nets (0/8); the learned k34/MP break on it (x50) | no (needs retrained operators + corrector) |
 | spherical cubature, 8,192 orthonormal-frame points [marius_binner P1] | 4.5e-6 final MSE on m70 (iid: 7.3e-6) | no (400x short) |
+| tiers restructured by the age-rank law: ages 3-5 in a rank-640 basis, ages >= 6 at 320 (`V21_AGE_OLD=2 V21_R_OLD=640 V24_AGE_OLD2=5 V24_R_OLD2=320`) | C/B **0.246** (cn71 0.191), wall 187 s in process | no (tier legs at rank 640 cost more than dense young legs) |
+| skip the final layer's source work (`V19_NO_SRC_LAST=1`, D3 := 0 at the last layer; probe path fixed to transport C) | C/B 0.1834 (-4.2%), chain-only MSE x11.7 on m70 | no (the final kappa3 diagonal is essential) |
 | MP from layer 6 instead of 8 | +1.8% +- 3.1 | out |
 | MP pair strength x0.4 | -2.2% on 6 tuning nets, +3.1% on 6 held-out | selection effect |
 | post-Jul-31 term tables (Edgeworth fix) | worse for lambda-law chains (il.miscusi) | no |
@@ -256,6 +258,7 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | incoming-correction inputs `Phi o (W s)`, `W s` | -3.43% (TEST, m0-99) [-3.67 / -3.51] |
 | mixed loss 30% per layer + 70% transported (mliston 18170) | **-1.65%** [-3.73%] |
 | closure knobs, round 2 (17, incl. the SSC (3,1) and gate-weighted (2,2) terms) | at the optimum, <= 0.03% per knob |
+| network context: per-layer means over neurons of the standardized inputs (CTX1) / + pooled carried states (CTX2), 200 nets | CTX1 -3.79%; CTX2 -3.96 / -3.68 / -3.90% over 3 seeds (mean -3.85%) [-3.73 / -3.58%], better-count 85-88/100 [92]; ~+0.1% C for the larger first layer, so ~0 net |
 
 Seed noise: about 0.15pp at 200 training networks.
 
