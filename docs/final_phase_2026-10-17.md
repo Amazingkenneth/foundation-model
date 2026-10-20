@@ -1097,3 +1097,7 @@ nominated only if its paired grade beats cn71.
 **cn72 gate:** in chain on 100 mini -0.53% +- 0.15 vs cn69 (cn71 -0.50%; the mini networks are in-sample for this
 corrector); real Strassen m0 1.5952e-8 (cn71 1.6005e-8), finite; code and shapes identical to cn71. **Submitted
 05:58 UTC as 337282.**
+
+**337282 cn72 graded 3.3218e-9** (raw 1.7315e-8; cn71 3.3183e-9 / 1.7297e-8). At +0.10% it is inside the paired
+noise: the 98 extra training networks add nothing measurable. cn72r is not submitted. **Nominations stay cn71
+(337265) + cn71r (337275).**

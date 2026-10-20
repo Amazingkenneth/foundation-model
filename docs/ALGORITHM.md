@@ -261,8 +261,8 @@ Seed noise: about 0.15pp at 200 training networks.
 ## 7. Open levers (ranked by expected value per day)
 
 1. **Corrector trained on all 1,098 labelled networks** (adds the 98 mini).
-   - Status: trained; built as `candidates/v5b_cn72` (cn71 code + this corrector). It is adopted only if its paired
-     grade beats cn71.
+   - Status: built as `candidates/v5b_cn72` (cn71 code + this corrector) and graded 3.3218e-9 (+0.10% vs cn71,
+     noise). Closed.
    - Expected: about -0.07pp MSE, by the corrector's measured learning curve (-0.3..-0.5pp per doubling).
    - Catch: no held-out set remains, so the grade is the validation.
 2. **Fewer client round trips.**
