@@ -1074,3 +1074,11 @@ Round 2 of the knob fit (17 knobs around cn71, 32 even nets) is running.
   generalise, so PLSTD is closed.
 - All 1,098 networks: -4.78% on m0-99, but those are in-sample now. Not adopted: no held-out set remains, and the
   expected gain is ~0.07pp.
+
+**Knob round 2 (17 knobs around cn71, 32 even mini nets):** cn71 sits at the optimum.
+- Every one-knob optimal move is worth <= 0.03% on the fit set.
+- The joint 17-knob step predicts -0.22% on the fit set, which partly overlaps round 1's.
+- Puffi's other cheap SSC structures add nothing: the variance-scaled (3,1) term (`wk431 += S31 lambda C_ab
+  var_b / mean var`) and the gate-weighted (2,2) term (`B4 = (g_i + g_j) / 2 C_ij`).
+
+With round 1's ~0.15x grader transfer, no round-2 build is justified. **The closure-knob line ends at cn71.**
