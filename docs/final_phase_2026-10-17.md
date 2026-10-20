@@ -1041,3 +1041,14 @@ null. In-chain support for all options is in `sc/c71` (`corr.npz` keys: 2-D `mu`
   - an additive SSC-type (2,2) term `S22 x lambda x 2 x C_off o C_off`.
 - Fit: finite-difference Jacobian of the final means on 24 even mini networks (cn69 with its corrector), a ridge
   Gauss-Newton step, and validation on all 100 mini (the odd 50 never enter the fit).
+
+**Knob refit result.** At +5% steps, D3 / g4row / D21 are at a sharp optimum: one step costs +2..+29% on the fit set.
+- Joint ridge Gauss-Newton step (rho 1e-2): `D3 x0.996 / 0.998 / 1.003` (E / L / F), `g4row x1.014 / 0.997 / 0.999`,
+  `wk431 x1.135 / 0.914` (E / L), `D21 x0.998 / 0.995`, kappa4 -> kappa3 feed **x0.80**, S22 = **-0.28**.
+- Predicted -0.88% on the fit set; realised **-0.89%** there, so the linearisation holds.
+- Validation (fast mode, all 100 mini vs cn69's in-chain run): **-0.50% +- 0.13** (67/100; halves -0.41 / -0.59).
+  The 50 odd networks never entered the fit: **-0.59%**. All 76 networks outside the fit: -0.38%.
+- **cn71 = cn69 + these knobs** baked as code defaults (no env hook; the feed knob acts on the suite-shape path only),
+  with cn69's corr.npz. The extra cost is a few n- and n^2-element multiplies per layer.
+- Container restarts on Oct 20 (01:29, 03:16 UTC) showed that predictions differ across hosts at float32
+  rounding: up to 2.6e-6 from layer 9 on, against errors of ~1.3e-4 rms.
