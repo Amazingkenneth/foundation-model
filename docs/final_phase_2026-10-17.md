@@ -1065,3 +1065,12 @@ null. In-chain support for all options is in `sc/c71` (`corr.npz` keys: 2-D `mu`
 0.1918). The local held-out gain (-0.38..-0.59%) transferred at ~0.15x. Per-network spread makes that ~2 sigma on the
 grader's 50 public networks, so the transfer is weak but not zero. **337275 = cn71r submitted 04:25 UTC.**
 Round 2 of the knob fit (17 knobs around cn71, 32 even nets) is running.
+
+**337275 cn71r graded 3.5407e-9, clean** (raw 1.7290e-8; cn69r 3.5448e-9). **Nominations: cn71 (337265) + cn71r
+(337275).**
+
+**1000-net checks (small config, 98 held-out mini):**
+- PLSTD: -4.76% (94/98; halves -4.55 / -4.98) vs -4.76% without it. The lower training loss does not
+  generalise, so PLSTD is closed.
+- All 1,098 networks: -4.78% on m0-99, but those are in-sample now. Not adopted: no held-out set remains, and the
+  expected gain is ~0.07pp.

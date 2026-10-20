@@ -209,7 +209,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 337211 | **`candidates/v5b_cn69`** (cn68 with a small corrector, H 64 / S 16 / S2 8: in-chain mini -4.71% vs -4.85%, emulator C/B 0.1922 vs 0.1931, round trips 43.1k) | **3.3201e-9** (clean; new best) | 1.7309e-8 | 0.1918 |
 | 337220 | **`candidates/v5b_cn69r`** (cn69 at 4 Strassen levels; emulator C/B 0.2051) | **3.5448e-9** (clean; best robust grade) | 1.7313e-8 | 0.2048 |
 | 337265 | **`candidates/v5b_cn71`** (cn69 + closure knobs refit end to end: all 100 mini -0.50%, held-out odd 50 -0.59%; C/B 0.19145; round trips 43.3k) | **3.3183e-9** (clean; new best, -0.05% vs cn69) | 1.7297e-8 | 0.1918 |
-| 337275 | `candidates/v5b_cn71r` (cn71 at 4 Strassen levels) | grading | | |
+| 337275 | **`candidates/v5b_cn71r`** (cn71 at 4 Strassen levels) | **3.5407e-9** (clean; best robust grade) | 1.7290e-8 | 0.2048 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -230,7 +230,7 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection (Oct 19, 23:32 UTC): 337211 (`v5b_cn69`, 3.3201e-9, best clean grade) and 337220 (`v5b_cn69r`, 3.5448e-9: the same estimator on the 4-level robust chain; 4-level builds have graded clean every time).**
+**For the final (private) selection (Oct 20, 05:12 UTC): 337265 (`v5b_cn71`, 3.3183e-9, best clean grade) and 337275 (`v5b_cn71r`, 3.5407e-9: the same estimator on the 4-level robust chain; 4-level builds have graded clean every time).**
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).
