@@ -210,6 +210,7 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 337220 | **`candidates/v5b_cn69r`** (cn69 at 4 Strassen levels; emulator C/B 0.2051) | **3.5448e-9** (clean; best robust grade) | 1.7313e-8 | 0.2048 |
 | 337265 | **`candidates/v5b_cn71`** (cn69 + closure knobs refit end to end: all 100 mini -0.50%, held-out odd 50 -0.59%; C/B 0.19145; round trips 43.3k) | **3.3183e-9** (clean; new best, -0.05% vs cn69) | 1.7297e-8 | 0.1918 |
 | 337275 | **`candidates/v5b_cn71r`** (cn71 at 4 Strassen levels) | **3.5407e-9** (clean; best robust grade) | 1.7290e-8 | 0.2048 |
+| 337282 | `candidates/v5b_cn72` (cn71 code + the small corrector trained on all 1,098 labelled networks; in-chain mini -0.53% vs cn69, in-sample) | grading | | |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),

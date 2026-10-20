@@ -1093,3 +1093,7 @@ Every corrector design variant is closed. The per-layer, gain-weighted, 16-epoch
 **cn72 = cn71's code + the small corrector trained on all 1,098 labelled networks** (f0-999 + mini). The expected
 gain (~0.07pp) cannot be validated locally because mini is in-sample. Parity vs torch on m50 is 2.27e-6. It is
 nominated only if its paired grade beats cn71.
+
+**cn72 gate:** in chain on 100 mini -0.53% +- 0.15 vs cn69 (cn71 -0.50%; the mini networks are in-sample for this
+corrector); real Strassen m0 1.5952e-8 (cn71 1.6005e-8), finite; code and shapes identical to cn71. **Submitted
+05:58 UTC as 337282.**
