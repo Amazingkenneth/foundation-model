@@ -622,6 +622,7 @@ def _term_prog(mode: int):
                 NPROD=len(prod_t), OG=[tuple(g) for g in OG], G2=G2, XOF=XOF, ORD2=ORD2)
 
 
+XDUMPS = []
 _AX = "abc"
 
 
@@ -1768,6 +1769,14 @@ class Estimator(BaseEstimator):
                     G_post = (K31 + K31.T) * (0.5 * float(st["cS"])) + fnp.diagflat(g_prev)
                     if K211add is not None:
                         G_post = G_post + K211add
+                    if _os.environ.get("XDUMP", "0") == "1" and li <= int(_os.environ.get("XDUMP_L", "2")):
+                        import numpy as _np
+                        _a = lambda x: None if x is None else _np.array(x, dtype=_np.float64)
+                        XDUMPS.append(dict(li=li, G=_a(G_post), K4v=_a(K4v), K22=_a(K22), K31=_a(K31),
+                                           K211c=_a(K211c_) if XK211 else None, birth=_a(birth_) if XK211 else None,
+                                           pk211=_a(pk211_) if XK211 else None, mu=_a(K1v), C=_a(C), K21=_a(K21),
+                                           var=_a(var), Coff=_a(C_off), D3=_a(D3), D21=_a(D21), g4row=_a(g4row),
+                                           Gpre=_a(G_po) if G_po is not None else None))
                     if ext is not None and "4" in XEXTP:
                         eps_, _m, vb_, Cbo_ = ext
                         t4_ = vb_ * vb_ * 12.0

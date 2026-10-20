@@ -12,3 +12,7 @@ See `docs/leaders_2026-10-20.md` for the measurements and the decision (not ship
 - `patch_c80.py`, `patch_c80_k211.py`: the scripted part of the change from cn71.
 - `cubtest.py`, `wcache.py`: spherical-cubature / structured-sampling test on public mini networks.
 - `mse.py`: final-layer MSE per prediction tag (`/tmp/claude-0/acc/<tag>/pred_m*.npy`) against the 1e9 labels.
+- Layer-by-layer comparison (Oct 20): `dump_ours.py` (our estimator with `XDUMP=1`, fast mode) and `dump_lean.py`
+  (the helper-patched lean `/tmp/claude-0/lean_ext/lean_k3_aug_ext.py`, `debug_state`) write per-layer pickles;
+  `cmpdump.py` diffs them; `perlayer.py` prints per-layer MSE of prediction sets; `run_mine.py` runs the patched
+  lean with arbitrary keyword arguments (used for the walk toward our engine in `docs/leaders_2026-10-20.md`).
