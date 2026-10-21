@@ -212,6 +212,7 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | RW_TAU 0.02 / 0.03 | +0.60% / +2.31% | -0.94% / -1.54% | 0.02 graded neutral (cn60); rows are capped at 768 anyway |
 | CN_RRES 2 / 8 | +3.81% / -1.34% | -0.50% / +1.00% | 6 is the optimum |
 | CN_RFB 1; feedback legs off; CN_KEEP all | +0.49%; +7.80%; +2.55% | -0.48%; -1.81%; -1.68% | lose |
+| two-sided newborn column mask: also drop columns with Phi > 0.99 at birth, floor 512 (`CM_SAT=0.01 CN_MINC=512`, scratch c76, 12 mini nets) | +110% | -5.2% | no: the saturated-on columns carry the kappa4 -> kappa3 feed (weight w1 ~ 1), only their newborn terms (w2 ~ phi) vanish |
 | dead rows / columns / saturated rows of the D21 hub | +7.9..+55% / +8.9% / +14.6% | | they carry real content |
 | low-rank D21, dropping old sources | x4 MSE | | out |
 | Strassen level 6 (young families) | | -0.9..-1.2% | failed on the grader 4 times (wall) |
@@ -235,7 +236,19 @@ dMSE is on exact labels (mini networks unless stated); dC is the 0.12.3 bill.
 | young-atom pruning by norm score [18254] | | our dead-at-birth column mask + 768 floor already covers it |
 | final-layer ridge rider, per-network scale | null (bias negligible) | off |
 
-**Corrector variants** (held-out mini; base in brackets):
+**Final-layer row restriction (Oct 21, scratch c77 emulation / c78 implementation, mini m0-23, base = cn71):**
+the last layer consumes D3 only through the Edgeworth term of the mean, `dE[relu z] = -kappa3 alpha phi(alpha) / (6 sigma^2)`,
+so rows far in either tail need little of it. Emulation = compute everything, zero D3 on the dropped rows.
+
+| rows without D3 | dMSE | note |
+|---|---|---|
+| Phi outside [0.01, 0.99] (~50% of rows) | +31.9% (se 1.3) | far too many |
+| Phi outside [0.001, 0.999] (~36%) | +0.75% (se 0.11); low side only +0.32%, high side only +0.42% | both tails cost the same |
+| the same, star feature of the k34 step also zeroed there (what a restricted build computes) | +0.78% (se 0.11) | star costs nothing in the tails |
+| lowest 36% by sigma abs(alpha) phi(alpha), star zeroed | +1.29% (se 0.29) | worse: drops rows near alpha = 0, where the k34 star (kappa4) input matters |
+| dropped rows keep the newborn source's own D3 share (full-height legs, O(n^2)) | m0: recovers ~12% of the move | not worth it (old sources dominate) |
+
+
 
 | variant | result |
 |---|---|
