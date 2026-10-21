@@ -5,7 +5,10 @@ It is written for someone (human or AI) who wants to improve it without re-runni
 from code, the 0.12.3 profiler run of Oct 20 (`scripts/gate/prof_fn.py`), graded submissions, and the experiment
 logs in `docs/final_phase_2026-10-17.md`. That file is the full record; the section numbers cited below are its own.
 
-**Update Oct 20:** the current best is **337265 cn71 3.3183e-9** (raw 1.7297e-8). Its twin **337275 cn71r
+**Update Oct 21:** the current best is **337555 cn78 3.2888e-9** (raw 1.7301e-8, C/B 0.1901): cn71 plus the
+final-layer row restriction of section 6 (-0.89% graded, predicted 3.290e-9). Its 4-level twin cn78r is 337564.
+
+**Update Oct 20:** the then best was **337265 cn71 3.3183e-9** (raw 1.7297e-8). Its twin **337275 cn71r
 3.5407e-9** is the robust nomination. cn71 = cn69 + closure knobs refit end to end (Section 2a); everything below
 holds for both.
 
@@ -264,7 +267,9 @@ and with `ROWF=0` reproduces cn71 bit for bit.
 **cn78** (`candidates/v5b_cn78`, ROWF 0.27 band): real Strassen m0 finite, deviation from fast mode as cn71's (5.7e-6);
 VmHWM 4.24 GB; emulator C/B 0.1905 (cn71 0.1922), residual 1.037 s (cn71 1.039 s), smoke shapes finite; 43,422 round
 trips (cn71 43,279, +0.3%). Predicted score 3.3183e-9 x (1 + 0.85 x 0.0006) x 0.18970 / 0.19145 = **3.290e-9**.
-Submitted Oct 21 16:10 UTC as **337555**. `candidates/v5b_cn78r` is its 4-level twin.
+Submitted Oct 21 16:10 UTC as **337555: graded 3.2888e-9, clean** (raw 1.7301e-8 = +0.02% vs cn71, C/B 0.1901 =
+-0.89%; the prediction was off by 0.04%). `candidates/v5b_cn78r` (4-level twin: bill 0.20247, emulator C/B 0.2033,
+residual 1.166 s vs cn71r 1.116 s measured back to back, smoke finite, real Strassen m0 1.6043e-8) is **337564**.
 
 
 

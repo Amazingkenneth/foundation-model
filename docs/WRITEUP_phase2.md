@@ -3,15 +3,16 @@
 *ARC White-Box Estimation Challenge 2026, Phase 2 (width 1024, depth 16). Algorithmic write-up, draft of
 Oct 21. Team: **[team name / handles: to fill in]**.*
 
-**Nominated builds.** `candidates/v5b_cn71` (submission 337265, score **3.3183e-9**: raw final-layer MSE
-1.7297e-8, C/B 0.1918) and its robust twin `candidates/v5b_cn71r` (337275, 3.5407e-9: same estimator, young
-families one Strassen level shallower for wall-clock margin). Both graded clean on all networks.
+**Best graded build.** `candidates/v5b_cn78` (submission 337555, score **3.2888e-9**: raw final-layer MSE
+1.7301e-8, C/B 0.1901), with its robust twin `candidates/v5b_cn78r` (337564: same estimator, young families one
+Strassen level shallower for wall-clock margin). The previous pair, `v5b_cn71` (337265, 3.3183e-9) and `v5b_cn71r`
+(337275, 3.5407e-9), graded clean on all networks. **[Team: the two nominations are selected on the website.]**
 
 **What this write-up claims as ours.** We started from our team's own graded v5b submission (score 4.4e-9, raw
 1.75e-8, C/B 0.2518). v5b was 504aldo's MIT-licensed factorized K=3 chain plus the team's learned ReLU-step
 operator. Section 2 lists everything we built on. Our contributions are:
 
-1. **Cost engineering of the chain.** C/B 0.2518 -> 0.191 (-24%) with raw MSE held at 1.73-1.82e-8
+1. **Cost engineering of the chain.** C/B 0.2518 -> 0.190 (-25%) with raw MSE held at 1.73-1.82e-8
    (section 3), over more than two dozen graded builds.
 2. **A learned carried corrector**, following the design Susupro published in forum post 18254 (section 4):
    - our implementation and training on 1,000 public networks;
@@ -57,7 +58,7 @@ The public labels we validate against are the dataset's own per-layer means (1e9
 1,000 full public networks. We read them through HTTP range requests and regenerated the weights from
 `mlp_seed`, exactly as `whest dataset bake` does.
 
-## 3. Cost engineering: C/B 0.2518 -> 0.191
+## 3. Cost engineering: C/B 0.2518 -> 0.190
 
 Where v5b spent its budget:
 - about 76% went to the young kappa3 sources: transporting their dense legs and contracting them into the (2,1)
@@ -82,8 +83,10 @@ step changes the chain's accuracy, so its graded raw MSE is the result.
 | cn53b | Strassen-Winograd kernel with a slab buffer pool and no billed reshapes | exact | 1.8205e-8 | 0.1915 | 3.486e-9 |
 | cn54b | nonlinear term program accumulated elementwise (3 n^2 per term instead of a 4-operand einsum) | exact | 1.8202e-8 | 0.1898 | 3.454e-9 |
 | cn61 | residual rank 6 and a late dense window (from layer 14 the age gate is one older) | trade (better) | 1.8012e-8 | 0.1910 | 3.440e-9 |
+| cn71 | the carried corrector (section 4) and closure knobs refit end to end | trade (better) | 1.7297e-8 | 0.1918 | 3.318e-9 |
+| cn78 | **final-layer row restriction**: the last layer's source transports and D3 slices run on the 768 rows farthest from saturation (section 3.1) | trade | 1.7301e-8 | 0.1901 | 3.289e-9 |
 
-Over these steps raw MSE stayed within 1.73-1.82e-8 while C/B fell by 24%. Alongside them we cut the client round
+Over these steps raw MSE stayed within 1.73-1.82e-8 while C/B fell by 25%. Alongside them we cut the client round
 trips: lazy views, persistent per-layer buffers, and batched PK2 accumulation (43.1k round trips per network).
 That keeps the residual under the 0.4 s cap at 5 Strassen levels.
 
@@ -102,6 +105,17 @@ process (81.6 s vs 106.9 s), and it graded clean every time. It is our second no
 - The final layer creates about 22% of the final MSE. Created error grows ~9x from layer 2 to 15, and the
   measured propagation gain of a created error to the output rises from 0.031 (layer 0) to 1.0 (layer 15).
 - Bias is negligible: per-network oracle fits of any final-layer affine fix recover only 0.4-1.6%.
+
+### 3.1 Final-layer row restriction (cn78)
+
+The final layer is mean-only, and the mean of `relu(z)` sees the third cumulant only through the Edgeworth term
+`-kappa3 alpha phi(alpha) / (6 sigma^2)`. Rows deep in either tail (Phi near 0 or 1) need little of D3. cn78 forms
+the final `W C` first, ranks the rows by `min(Phi, 1 - Phi)`, and runs every source transport, thin leg and D3 slice
+of the last layer on the top 768 rows only, with row-restricted Strassen trees. Dropped rows get D3 = 0. The newborn
+leg stays full height, because the learned step's Stein features read it. Measured on the 100 mini networks: MSE
++0.06% (se 0.02) for C/B -0.91%. The cost curve is very convex: dropping 352 rows costs +0.78% and dropping half the
+rows +32%. Ranking rows by the Edgeworth weight `sigma |alpha| phi(alpha)` instead is worse (+1.29%), because it drops
+rows near alpha = 0, where the learned step's kappa4 input matters. Graded: 3.2888e-9 against cn71's 3.3183e-9.
 
 ## 4. A learned carried corrector (design after 18254; implementation, objective and inputs ours)
 
