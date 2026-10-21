@@ -5,7 +5,7 @@ Oct 21. Team: **[team name / handles: to fill in]**.*
 
 **Best graded build.** `candidates/v5b_cn79` (submission 337588, score **3.2790e-9**: raw final-layer MSE
 1.7311e-8, C/B 0.1894), with its robust twin `candidates/v5b_cn79r` (337606: same estimator, young families one
-Strassen level shallower for wall-clock margin). Before it: `v5b_cn78` (337555, 3.2888e-9) and its twin `v5b_cn78r`
+Strassen level shallower for wall-clock margin; score 3.4985e-9). Both graded clean. Before them: `v5b_cn78` (337555, 3.2888e-9) and its twin `v5b_cn78r`
 (337564, 3.5089e-9), both graded clean. The previous pair, `v5b_cn71` (337265, 3.3183e-9) and `v5b_cn71r`
 (337275, 3.5407e-9), graded clean on all networks. **[Team: the two nominations are selected on the website.]**
 
