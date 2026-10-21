@@ -5,7 +5,10 @@ It is written for someone (human or AI) who wants to improve it without re-runni
 from code, the 0.12.3 profiler run of Oct 20 (`scripts/gate/prof_fn.py`), graded submissions, and the experiment
 logs in `docs/final_phase_2026-10-17.md`. That file is the full record; the section numbers cited below are its own.
 
-**Update Oct 21:** the current best is **337555 cn78 3.2888e-9** (raw 1.7301e-8, C/B 0.1901): cn71 plus the
+**Update Oct 21, evening:** the current best is **337588 cn79 3.2790e-9** (raw 1.7311e-8, C/B 0.1894): cn78 plus
+scale-mode surrogates for the dropped final rows (section 6). Twin cn79r is 337606.
+
+**Update Oct 21:** cn78 was **337555 3.2888e-9** (raw 1.7301e-8, C/B 0.1901): cn71 plus the
 final-layer row restriction of section 6 (-0.89% graded, predicted 3.290e-9). Its 4-level twin **337564 cn78r 3.5089e-9**.
 
 **Update Oct 20:** the then best was **337265 cn71 3.3183e-9** (raw 1.7297e-8). Its twin **337275 cn71r
@@ -298,7 +301,9 @@ diagonally, `(W o W o W) kappa3(h_15)`, explains only corr 0.17 of it. Paired vs
 halves -0.05 / -0.08 (vs cn71 -0.00%); real Strassen m0 finite (1.6004e-8, deviation from fast mode 5.7e-6 as cn78);
 0.12.3 bill **0.18904** (cn78 0.18970), VmHWM 4.18 GB; emulator C/B 0.1898, residual 0.995 s (cn78 1.037 s, both under
 load), smoke shapes finite; 43,448 round trips (cn78 43,422). Predicted 3.3183e-9 x 0.18904 / 0.19145 = **3.277e-9**.
-Submitted 18:22 UTC as **337588**.
+Submitted 18:22 UTC as **337588: graded 3.2790e-9, clean** (raw 1.7311e-8, C/B 0.1894; -0.30% vs cn78, -1.18% vs cn71;
+the prediction was off by +0.07%). Twin `candidates/v5b_cn79r` (bill 0.20176, emulator C/B 0.2026, residual 0.886 s, smoke
+finite, real Strassen m0 1.6040e-8) submitted 19:12 UTC as **337606**.
 
 Closed the same evening:
 - **No D21 hub at layer 14** (`XD21ALL=14`, scratch c79): +172% (6 nets); **no old-source D21 at layer 14**: +42%. The

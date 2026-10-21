@@ -3,16 +3,17 @@
 *ARC White-Box Estimation Challenge 2026, Phase 2 (width 1024, depth 16). Algorithmic write-up, draft of
 Oct 21. Team: **[team name / handles: to fill in]**.*
 
-**Best graded build.** `candidates/v5b_cn78` (submission 337555, score **3.2888e-9**: raw final-layer MSE
-1.7301e-8, C/B 0.1901), with its robust twin `candidates/v5b_cn78r` (337564: same estimator, young families one
-Strassen level shallower for wall-clock margin; score 3.5089e-9). Both graded clean. The previous pair, `v5b_cn71` (337265, 3.3183e-9) and `v5b_cn71r`
+**Best graded build.** `candidates/v5b_cn79` (submission 337588, score **3.2790e-9**: raw final-layer MSE
+1.7311e-8, C/B 0.1894), with its robust twin `candidates/v5b_cn79r` (337606: same estimator, young families one
+Strassen level shallower for wall-clock margin). Before it: `v5b_cn78` (337555, 3.2888e-9) and its twin `v5b_cn78r`
+(337564, 3.5089e-9), both graded clean. The previous pair, `v5b_cn71` (337265, 3.3183e-9) and `v5b_cn71r`
 (337275, 3.5407e-9), graded clean on all networks. **[Team: the two nominations are selected on the website.]**
 
 **What this write-up claims as ours.** We started from our team's own graded v5b submission (score 4.4e-9, raw
 1.75e-8, C/B 0.2518). v5b was 504aldo's MIT-licensed factorized K=3 chain plus the team's learned ReLU-step
 operator. Section 2 lists everything we built on. Our contributions are:
 
-1. **Cost engineering of the chain.** C/B 0.2518 -> 0.190 (-25%) with raw MSE held at 1.73-1.82e-8
+1. **Cost engineering of the chain.** C/B 0.2518 -> 0.189 (-25%) with raw MSE held at 1.73-1.82e-8
    (section 3), over more than two dozen graded builds.
 2. **A learned carried corrector**, following the design Susupro published in forum post 18254 (section 4):
    - our implementation and training on 1,000 public networks;
@@ -58,7 +59,7 @@ The public labels we validate against are the dataset's own per-layer means (1e9
 1,000 full public networks. We read them through HTTP range requests and regenerated the weights from
 `mlp_seed`, exactly as `whest dataset bake` does.
 
-## 3. Cost engineering: C/B 0.2518 -> 0.190
+## 3. Cost engineering: C/B 0.2518 -> 0.189
 
 Where v5b spent its budget:
 - about 76% went to the young kappa3 sources: transporting their dense legs and contracting them into the (2,1)
@@ -85,7 +86,7 @@ step changes the chain's accuracy, so its graded raw MSE is the result.
 | cn61 | residual rank 6 and a late dense window (from layer 14 the age gate is one older) | trade (better) | 1.8012e-8 | 0.1910 | 3.440e-9 |
 | cn71 | the carried corrector (section 4) and closure knobs refit end to end | trade (better) | 1.7297e-8 | 0.1918 | 3.318e-9 |
 | cn78 | **final-layer row restriction**: the last layer's source transports and D3 slices run on the 768 rows farthest from saturation (section 3.1) | trade | 1.7301e-8 | 0.1901 | 3.289e-9 |
-| cn79 | dropped rows get scale-mode surrogates instead of zeros, so 672 rows suffice (section 3.1) | trade | pending | pending | pending (predicted 3.277e-9) |
+| cn79 | dropped rows get scale-mode surrogates instead of zeros, so 672 rows suffice (section 3.1) | trade | 1.7311e-8 | 0.1894 | 3.279e-9 |
 
 Over these steps raw MSE stayed within 1.73-1.82e-8 while C/B fell by 25%. Alongside them we cut the client round
 trips: lazy views, persistent per-layer buffers, and batched PK2 accumulation (43.1k round trips per network).
