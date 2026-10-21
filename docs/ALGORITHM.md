@@ -272,6 +272,39 @@ Submitted Oct 21 16:10 UTC as **337555: graded 3.2888e-9, clean** (raw 1.7301e-8
 residual 1.166 s vs cn71r 1.116 s measured back to back, smoke finite, real Strassen m0 1.6043e-8) is **337564:
 graded 3.5089e-9, clean** (raw 1.7295e-8; cn71r 3.5407e-9, -0.90%).
 
+**Scale-mode surrogates for the dropped rows (cn79, Oct 21 evening).** A probe of the final layer (m0-m2, ROWF 0):
+the standardized skew `g3 = D3 / sigma^3` is almost a function of alpha, **corr(g3, alpha) = 0.95**, `g3 ~ 0.036 alpha`
+for |alpha| > 1 with a within-bin spread of only ~0.035. This is the coherent norm mode of a bias-free net
+(`z = (1 + delta) y`; to first order `kappa3(z) = kappa3(y) + 6 eps mu sigma^2`, eps = Var delta ~ 0.006 here, far above the
+input's 1/(2n)). By source group, the final D3 of the tier-2 / tier-1 / older young / newborn sources is 88% / 87% / 75-80%
+/ 16-20% scale mode. The k34 star feature is almost constant: `star / sigma^4 = -0.014 +- 0.003`, uncorrelated with alpha.
+So zeroing the dropped rows put both k34 inputs off their manifold (that is what blew up the 50% drop). cn79 fills
+them instead: `D3 = c mu sigma^2` with c least-squares fitted on the kept rows, and `star = mean(star / sigma^4) sigma^4`
+(`ROWFILL` 1 = D3, 2 = D3 + star; `scripts/rowf/patch_c79.py`). Mini m0-23 vs cn71 (fast mode):
+
+| rows dropped | no fill | D3 fill | D3 + star fill | C/B |
+|---|---|---|---|---|
+| 256 (25%, cn78) | +0.06% | | | 0.18970 |
+| 352 (34.4%) | +0.78% (emulation) | **-0.04% (se 0.03), 16/24** | +0.01% (10 nets; paired vs D3 fill +0.00%) | 0.18904 |
+| 384 (37.5%) | | | +0.18% (se 0.13, 10 nets) | 0.18882 |
+| 448 (43.75%) | | | +1.11% (se 0.39, 14 nets) | 0.18838 |
+| 512 (50%) | +32% (emulation) | +5.63% | +5.31% (10 nets) | 0.18793 |
+
+The fill's floor is the residual (non-scale) skew of the rows near the cut: the neurons' own skew transported
+diagonally, `(W o W o W) kappa3(h_15)`, explains only corr 0.17 of it. Paired vs cn78 on m0-23 the 34.4% fill is
+-0.15% (se 0.07) MSE and -0.35% C. **cn79 = cn78 + fill at ROWF 0.36 (672 rows kept).**
+
+Closed the same evening:
+- **No D21 hub at layer 14** (`XD21ALL=14`, scratch c79): +172% (6 nets); **no old-source D21 at layer 14**: +42%. The
+  newborn residual `S21 = K21 - rep21` is a difference of two large terms, and errors in D21 do not cancel in it.
+- **Final-layer scale-mode extraction** (evaluate the mean from y's cumulants, `var_y = (var - eps mu^2) / (1 + eps)`,
+  `kappa3_y = (D3 - 6 eps mu var_y) / (1 + 3 eps)`, `kappa4_y` by the first-order formula, eps from the D3 fit): +0.82%
+  with the corrector, +0.49% chain-only (m0, m1). The chain's own final cumulants are better used as they are.
+- **Replacing the tier sources' final D3 by their scale-mode fit**: their residual (0.006 / 0.012 sigma^3) applies to all
+  kept rows, est. ~+0.7-1% MSE for ~-0.9% C. Not tried.
+- **Corrector ensemble**: the corrector costs 0.43% of C (bill without it 0.18889); a second member would need > 0.5pp
+  held-out gain (seed spread 0.15pp).
+
 
 
 | variant | result |
