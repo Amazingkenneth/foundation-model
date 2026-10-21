@@ -491,8 +491,8 @@ KEEP = _os.environ.get("CN_KEEP", "alt")
 # weight per unit skew is sigma |alpha| phi(alpha) (ROWMODE imp; band = min(Phi, 1 - Phi)). The young / tier transports,
 # the thin legs and the D3 slices of the last layer run on the ROWF-complement of rows ranked highest (rounded up to
 # 32 rows); dropped rows get D3 = 0 and no star feature. The newborn A leg stays full (the k34 Stein features read it).
-ROWF = float(_os.environ.get("ROWF", "0"))
-ROWMODE = _os.environ.get("ROWMODE", "imp")
+ROWF = float(_os.environ.get("ROWF", "0.27"))   # cn78: 768 of 1024 final rows keep D3 (mini m0-99: see ALGORITHM.md section 6)
+ROWMODE = _os.environ.get("ROWMODE", "band")
 RW_TAU = float(_os.environ.get("RW_TAU", "0.01"))   # cn61: back to 0.01 (the two RW_TAU 0.02 builds, 336887 / 336962, lost 100% / ~62% of their networks on the grader for a reason we could not reproduce); cn11: rows at Phi < 0.01 (distance to the
 # exact-row chain 1.0-1.2e-5 vs 0.75-0.93e-5 at 0.002, ~+0.3% MSE for -1.5% C)
 # cn46: step-level fixes from the 75-network screen (docs/experiments_2026-10-17.md): the third Mehler
@@ -799,7 +799,8 @@ class Estimator(BaseEstimator):
             last = li == L - 1
             trim = last and not FULL_LAST  # V19: mean-only final layer
             skip_src = trim and NO_SRC_LAST
-            rsel = trim and riders and ROWF > 0.0 and n == 1024 and A_st is not None and not skip_src
+            rsel = (trim and riders and ROWF > 0.0 and n == 1024 and A_st is not None and newborn is not None
+                    and not skip_src)
             w32 = w if w.dtype == fnp.float32 else w.astype(f32)
             W = w32.T
             # ---- linear ----
