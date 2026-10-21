@@ -85,6 +85,7 @@ step changes the chain's accuracy, so its graded raw MSE is the result.
 | cn61 | residual rank 6 and a late dense window (from layer 14 the age gate is one older) | trade (better) | 1.8012e-8 | 0.1910 | 3.440e-9 |
 | cn71 | the carried corrector (section 4) and closure knobs refit end to end | trade (better) | 1.7297e-8 | 0.1918 | 3.318e-9 |
 | cn78 | **final-layer row restriction**: the last layer's source transports and D3 slices run on the 768 rows farthest from saturation (section 3.1) | trade | 1.7301e-8 | 0.1901 | 3.289e-9 |
+| cn79 | dropped rows get scale-mode surrogates instead of zeros, so 672 rows suffice (section 3.1) | trade | pending | pending | pending (predicted 3.277e-9) |
 
 Over these steps raw MSE stayed within 1.73-1.82e-8 while C/B fell by 25%. Alongside them we cut the client round
 trips: lazy views, persistent per-layer buffers, and batched PK2 accumulation (43.1k round trips per network).
@@ -116,6 +117,19 @@ leg stays full height, because the learned step's Stein features read it. Measur
 +0.06% (se 0.02) for C/B -0.91%. The cost curve is very convex: dropping 352 rows costs +0.78% and dropping half the
 rows +32%. Ranking rows by the Edgeworth weight `sigma |alpha| phi(alpha)` instead is worse (+1.29%), because it drops
 rows near alpha = 0, where the learned step's kappa4 input matters. Graded: 3.2888e-9 against cn71's 3.3183e-9.
+
+**cn79: scale-mode surrogates for the dropped rows.** A probe of the final layer shows that the standardized skew
+`D3 / sigma^3` is almost a function of alpha: correlation 0.95, slope ~0.036, within-bin spread ~0.035. That is the
+coherent norm mode of a bias-free network. Write `z = (1 + delta) y`; to first order
+`kappa3(z) = kappa3(y) + 6 eps mu sigma^2`, and eps ~ 0.006 at depth 16, far above the input's 1/(2n). Split by source, the
+final D3 of the old (tier) sources is ~88% this mode and the newborn's ~18%. The learned step's star input is almost a
+constant times sigma^4. So cn78's zeros pushed both learned-step inputs of the dropped rows off their manifold, which
+is why dropping half the rows had cost +32%. cn79 fills the dropped rows instead, at zero cost: `D3 = c mu sigma^2`, with c
+fitted on the kept rows, and `star = mean(star / sigma^4) sigma^4`. That moves the optimum to 672 kept rows. Measured on the
+100 mini networks: MSE -0.06% (se 0.03) vs cn78, at C/B 0.18904 (cn78 0.18970).
+Using the same mode to evaluate the final mean from the extracted cumulants of `y` (the mode is invisible to
+`E relu`) made things worse (+0.5..+0.8%): the chain's own final cumulants, calibrated by the learned step and the
+corrector, are better used as they are.
 
 ## 4. A learned carried corrector (design after 18254; implementation, objective and inputs ours)
 
