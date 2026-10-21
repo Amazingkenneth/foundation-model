@@ -36,7 +36,8 @@ graded clean since the residual cuts of cn64.
 ## 2. Chain structure
 
 cn69 = 504aldo's MIT V25/V29 factorized K = 3 cumulant chain (`LICENSE_504aldo`; docstring of `estimator.py`
-lines 1-146), plus his learned kappa operators (`k34.npz`, `mp.npz`), plus our cost engineering (cn3-cn67), plus
+lines 1-146), plus the team's learned kappa operators from its v5b submission (`k34.npz`, `mp.npz`; see the
+README), plus our cost engineering (cn3-cn67), plus
 our learned carried corrector (`corr.npz`, Section 5). All defaults below are code defaults in cn69 (env knobs in
 parentheses); no env vars are set when graded.
 
@@ -65,7 +66,7 @@ Per layer `li` (`_predict_core`, sections marked `# ---- ... ----`):
    - kappa4 is **memoryless** (V17/V25): `G = diag(g) + lambda C_off`. Lambda is the previous layer's table value
      (`LAM x 0.95`), rescaled online by `clip((mean dG0 / mean var) / REF_R, 0.5, 2)`. The transported diagonal is
      `dG = (W*W) g + lambda (var - (W*W) var_prev)`, and `g4row = 2 dG`.
-   - The **learned k34 step** (12 -> 64 -> 64 -> 2 GELU, from 504aldo) corrects the standardized D3 and g4row at
+   - The **learned k34 step** (12 -> 64 -> 64 -> 2 GELU, the team's v5b operator) corrects the standardized D3 and g4row at
      every layer with sources (li >= 1).
    - **Message passing** (`mp.npz`: MLPs A 15->192->192->88, B 175->64->64->16, O 335->64->64->2) rewrites D3, g4row
      and the (3,1) slice `wk431` from li >= `MP_LI_MIN` = 8, reading `C_off` and D21.
@@ -275,7 +276,7 @@ Seed noise: about 0.15pp at 200 training networks.
    - Value: score-neutral. It buys residual margin, so a 5-level build could replace the 4-level twin as the second
      nomination.
 3. **Fine-tune k34 + MP on exact labels.**
-   - Why: 504aldo trained them on his chain's states, and ours has drifted (tiers, masks, rank-2 feedback).
+   - Why: the team trained them on the v5b chain's states, and ours has drifted (tiers, masks, rank-2 feedback).
    - Needs a differentiable replica of the chain. Never attempted, so the gain is unknown.
    - Every closure change must also go after these learned steps.
 4. **Restructure D21 as `M W^T`** (as in 18252's v31/v33).
@@ -311,7 +312,7 @@ For cn69 it gave 3.316e-9 against a graded 3.3201e-9 (+0.12%).
 |---|---|
 | `candidates/v5b_cn69/estimator.py` | the estimator (1,855 lines). Knobs l.450-490 and l.610-620, `_predict_core` l.674-1592 (corrector l.1286), `_k34_step` l.1608, `_mp_step` l.1669, `_dslices` l.1710 |
 | `candidates/v5b_cn69/strassen4.py` | batched Winograd-form Strassen kernel (`LeftTree`, `mm`) with lazy slab views |
-| `candidates/v5b_cn69/k34.npz`, `mp.npz` | 504aldo's learned kappa3/kappa4 operators (MIT) |
+| `candidates/v5b_cn69/k34.npz`, `mp.npz` | the team's learned kappa3/kappa4 operators (v5b submission) |
 | `candidates/v5b_cn69/corr.npz` | our corrector (mu/sd 68, W0..W3, b0..b3, `relu`, `nS2` = 8, `v3`, ysd) |
 | `candidates/v5b_cn69r/` | the same with `SLEV = 4` (robust twin) |
 | `scripts/hf/` | labels (`hf_labels.py`), weight regeneration (`regen.py`), fast-mode runners (`runfast_hf.py`, `runfast_hf_ldump.py`, `gohf.sh`), paired MSE (`eval_hf.py`), dump recorder (`recorder_xs_d3/`) |

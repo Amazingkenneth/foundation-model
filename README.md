@@ -15,6 +15,8 @@ The best graded build is **`candidates/v5b_cn69`** (337211, 3.3201e-9), and its 
 `candidates/v5b_cn69r` (337220, 3.5448e-9). Both are 504aldo's factorized K=3 chain with our cost engineering and
 a learned carried corrector. The shipped estimator is not the `submission/` design described above.
 
+- **[`docs/WRITEUP_phase2.md`](docs/WRITEUP_phase2.md)**: the Phase 2 algorithmic write-up (draft): what we built on,
+  what is ours (cost engineering, the carried corrector, the studies), with graded receipts.
 - **[`docs/ALGORITHM.md`](docs/ALGORITHM.md)**: verified spec of cn69 (task and limits, chain structure, measured
   cost breakdown, learned corrector, closed ideas, open levers, validation gate, file map).
 - **[`docs/PROGRESS_2026-10-19.md`](docs/PROGRESS_2026-10-19.md)**: status, nominations and plan to the deadline.
