@@ -257,13 +257,13 @@ and with `ROWF=0` reproduces cn71 bit for bit.
 | ROWF (rows dropped) | dMSE (mini) | C/B (0.12.3, seed 1) | net |
 |---|---|---|---|
 | 0 (cn71) | 0 | 0.19145 | |
-| 0.27 (256) | **+0.07% (se 0.02), 90 nets, halves +0.06 / +0.08** | **0.18970 (-0.91%)** | **~-0.85%** -> cn78 |
+| 0.27 (256) | **+0.06% (se 0.02), 100 nets, halves +0.06 / +0.06** | **0.18970 (-0.91%)** | **~-0.85%** -> cn78 |
 | 0.31 (288) | +0.27% (se 0.10), 24 nets | ~-1.03% | ~-0.8% |
 | 0.36 (352) | +0.78% (emulation, tau 0.001) | 0.18904 (-1.26%) | ~-0.6% |
 
 **cn78** (`candidates/v5b_cn78`, ROWF 0.27 band): real Strassen m0 finite, deviation from fast mode as cn71's (5.7e-6);
 VmHWM 4.24 GB; emulator C/B 0.1905 (cn71 0.1922), residual 1.037 s (cn71 1.039 s), smoke shapes finite; 43,422 round
-trips (cn71 43,279, +0.3%). Predicted score 3.3183e-9 x (1 + 0.85 x 0.0007) x 0.18970 / 0.19145 = **3.290e-9**.
+trips (cn71 43,279, +0.3%). Predicted score 3.3183e-9 x (1 + 0.85 x 0.0006) x 0.18970 / 0.19145 = **3.290e-9**.
 Submitted Oct 21 16:10 UTC as **337555**. `candidates/v5b_cn78r` is its 4-level twin.
 
 
