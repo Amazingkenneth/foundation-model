@@ -9,11 +9,16 @@ whose ReLU step is a learned operator
 with ten small MLPs (two hidden layers of width 64, GELU, 114,427 parameters) shared by all
 neurons, pairs, layers and networks.
 
-## Current estimator (Oct 20)
+## Current estimator (Oct 21, final)
 
-The best graded build is **`candidates/v5b_cn69`** (337211, 3.3201e-9), and its 4-level robust twin is
-`candidates/v5b_cn69r` (337220, 3.5448e-9). Both are 504aldo's factorized K=3 chain with our cost engineering and
-a learned carried corrector. The shipped estimator is not the `submission/` design described above.
+The best graded build is **`candidates/v5b_cn79`** (337588, 3.2790e-9), and its 4-level robust twin is
+`candidates/v5b_cn79r` (337606, 3.4985e-9). Both are 504aldo's factorized K=3 chain with our cost engineering,
+a learned carried corrector, and the final-layer row restriction with scale-mode fill (`docs/ALGORITHM.md` section 6).
+The shipped estimator is not the `submission/` design described above.
+
+- **[`docs/SYNTHESIS_ai_assisted_research.md`](docs/SYNTHESIS_ai_assisted_research.md)**: synthesis of the whole
+  week for research on AI-assisted competitions: timeline, all 58 submissions (`docs/submissions_phase2.csv`),
+  what moved the score, everything closed, human-AI interaction, issues, self-critique, and an ideal auto-research design.
 
 - **[`docs/WRITEUP_phase2.md`](docs/WRITEUP_phase2.md)**: the Phase 2 algorithmic write-up (draft): what we built on,
   what is ours (cost engineering, the carried corrector, the studies), with graded receipts.
@@ -215,6 +220,10 @@ float32 Strassen of the shipped setting moves predictions by ~1e-5 relative (+1%
 | 337265 | **`candidates/v5b_cn71`** (cn69 + closure knobs refit end to end: all 100 mini -0.50%, held-out odd 50 -0.59%; C/B 0.19145; round trips 43.3k) | **3.3183e-9** (clean; new best, -0.05% vs cn69) | 1.7297e-8 | 0.1918 |
 | 337275 | **`candidates/v5b_cn71r`** (cn71 at 4 Strassen levels) | **3.5407e-9** (clean; best robust grade) | 1.7290e-8 | 0.2048 |
 | 337282 | `candidates/v5b_cn72` (cn71 code + the small corrector trained on all 1,098 labelled networks; in-chain mini -0.53% vs cn69, in-sample) | 3.3218e-9 (clean; +0.10% vs cn71, within noise; not nominated) | 1.7315e-8 | 0.1918 |
+| 337555 | **`candidates/v5b_cn78`** (cn71 + final-layer row restriction: D3 and source transports on the 768 rows farthest from saturation; predicted 3.290e-9) | **3.2888e-9** (clean; new best, -0.89%) | 1.7301e-8 | 0.1901 |
+| 337564 | **`candidates/v5b_cn78r`** (cn78 at 4 Strassen levels) | **3.5089e-9** (clean) | 1.7295e-8 | 0.2029 |
+| 337588 | **`candidates/v5b_cn79`** (cn78 + scale-mode surrogates for the dropped rows, 672 rows kept; predicted 3.277e-9) | **3.2790e-9** (clean; new best, -0.30% vs cn78) | 1.7311e-8 | 0.1894 |
+| 337606 | **`candidates/v5b_cn79r`** (cn79 at 4 Strassen levels) | **3.4985e-9** (clean; best robust grade) | 1.7304e-8 | 0.2022 |
 
 Prepared for Oct 17 (all on cn11a; emulator ok at 205-262 s on the loaded container, VmHWM 3.46-3.48 GB,
 smoke shapes finite): `v5b_cn12` (S21 residual rank 8, C/B 0.209), `v5b_cn13` (rank 4, 0.208),
@@ -235,7 +244,8 @@ Both are exact up to the chain's float32 chaos level (relabelling rg's own netwo
 output as much). Strassen scratch is now one flat buffer per role, which also halves the
 resident peak (rg 6.12 GB -> cn2 3.33 GB, cn3 3.50 GB).
 
-**For the final (private) selection (Oct 20, 05:12 UTC): 337265 (`v5b_cn71`, 3.3183e-9, best clean grade) and 337275 (`v5b_cn71r`, 3.5407e-9: the same estimator on the 4-level robust chain; 4-level builds have graded clean every time).**
+**For the final (private) selection (Oct 21, 20:10 UTC): 337588 (`v5b_cn79`, 3.2790e-9, best clean grade) and 337606 (`v5b_cn79r`, 3.4985e-9: the same estimator on the 4-level robust chain; 4-level builds have graded clean every time). Nominate on the website (Submissions -> Your team -> Select) by Oct 22 23:59 UTC.**
+Previous advice (Oct 20): 337265 (`v5b_cn71`) and 337275 (`v5b_cn71r`).
 earlier advice: 336414 (`v5b_cn3`) and 336295 (`v5b_rg`)): both
 graded with no failed network (cn3: -4.7% vs rg; row compaction is exactly free -- cn2 and cn3
 have the same raw MSE to 4 digits -- and the dead-column mask costs +0.6% raw for -3.3% C/B).

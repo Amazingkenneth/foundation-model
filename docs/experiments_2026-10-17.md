@@ -247,7 +247,7 @@ Measured today on 75 networks (fast gate), with the conclusion each one supports
 
 What would move the board, all of it beyond a day's work: a carried kappa4 core with scale-mode extraction
 (il.miscusi 18248: x0.66 in a lean chain, but +25% cost in production), the young-kappa4 "3+2" tree reader (Artyom 18249:
-x0.70 raw, cost about what it buys in his representation), and a kappa3 state that is not a list of sources (what
+x0.70 raw, cost about what it buys in their representation), and a kappa3 state that is not a list of sources (what
 the leaders' bill implies; unpublished).
 
 ## 14. The teammate's note-16 submission (rg-era base) against our line

@@ -91,9 +91,9 @@ How the cheaper teams got there, as far as the public record shows:
   physical core. ngmitam (same thread) shipped V29 with Strassen leaves of 8 (7 levels) on 100 networks with 0
   failures: -2.9% C locally, -0.9% on the grader (amortisation of first-network costs, the same effect that halved
   our reshape saving on the grader).
-* **Artyom_Mazur (18249, PDF):** grader wall 91 s median / 98.8 s max for his chain against the 120 s cap; the
-  leaders spend 77-95 s. One more Strassen level everywhere doubles his wall, so he deepened only the five sites
-  with the best "C saved per second of wall". His largest late gains were *consistency cuts* (remove a term on both
+* **Artyom_Mazur (18249, PDF):** grader wall 91 s median / 98.8 s max for their chain against the 120 s cap; the
+  leaders spend 77-95 s. One more Strassen level everywhere doubles their wall, so they deepened only the five sites
+  with the best "C saved per second of wall". Their largest late gains were *consistency cuts* (remove a term on both
   sides or not at all): matched dead-row + dead-column cuts, saturated rows of D removed with the kappa4 level they
   carried restored by one mat-vec (E2, x0.943 raw), and marg2.
 * **il.miscusi (18248, PDF):** e30_a (V29 descendant at C/B 0.152) uses the **per-neuron metric diag(W W^T)** in
@@ -165,7 +165,7 @@ closure loses a little more at every layer as the cumulants grow.
 
 | further idea tested (fast mode) | result | verdict |
 |---|---|---|
-| Artyom's young kappa4 "3+2" tree read into the kappa4 diagonal (12 sum_j W_aj (d2/d1)_j (W D1 C)_aj X(a,j), X = the young hub paired with the pre-transport legs; factor 12 re-derived) | before k34: -0.27% +- 0.81% (six hard networks, move 1.1e-5); after the MP: +3.5% +- 2.8% | out: k34 re-corrects it; our learned operator already carries the young kappa4 content his chain lacked |
+| Artyom's young kappa4 "3+2" tree read into the kappa4 diagonal (12 sum_j W_aj (d2/d1)_j (W D1 C)_aj X(a,j), X = the young hub paired with the pre-transport legs; factor 12 re-derived) | before k34: -0.27% +- 0.81% (six hard networks, move 1.1e-5); after the MP: +3.5% +- 2.8% | out: k34 re-corrects it; our learned operator already carries the young kappa4 content their chain lacked |
 | per-neuron metric (3,1) slot too (`XMET431`) | +0.03% +- 1.35% (75 networks) | null |
 
 ### 6.4 Zero-cost knobs on the public mini split (100 networks, exact labels, cn50 settings)

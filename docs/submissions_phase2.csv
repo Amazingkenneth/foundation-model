@@ -1,0 +1,59 @@
+n,first_seen_utc,submission_id,build,change_vs_parent,status,score,raw_mse,c_over_b,note
+1,2026-10-15 14:45,(not captured),v5b_rfhub,team v5b + Strassen min blocks 24/28 + joiner hub on Strassen,clean,4.2513e-9,1.7537e-8,0.2424,first upload; ID lost with the watch output
+2,2026-10-15 15:20,336265,v5b_s6,level-6 Strassen variant,failed,,,,"Error while scoring" (wall cap; reproduced later by the emulator)
+3,2026-10-15 15:45,336269,v5b_h6,level-6 hub variant,failed,,,,"Error while scoring" (wall cap)
+4,2026-10-15 17:01,336281,v5b_ga,level-6 family variant,failed,,,,"Error while scoring" (wall cap)
+5,2026-10-15 17:28,336284,v5b_rfhub,resubmission of #1 (control),clean,4.2513e-9,1.7537e-8,0.2424,identical to #1
+6,2026-10-15 18:38,336295,v5b_rg,rfhub + n x 384 Gram/basis products on Strassen,clean,4.1705e-9,1.7534e-8,0.2378,new best
+7,2026-10-15 19:49,336313,v5b_rg3,rg with batch-3 Strassen chunks,partial,0.0226,,0.2377,a few networks zeroed (memory 7.0 GB)
+8,2026-10-16 01:17,336359,v5b_rgc192,rg + tier-2 rank 192 + covariance at 4 levels,clean,4.1702e-9,1.7873e-8,0.2333,tie with rg
+9,2026-10-16 04:59,336410,v5b_cn2,live-column chain (dead-at-birth columns dropped) + flat Strassen pools,clean,4.0540e-9,1.7637e-8,0.2299,new best
+10,2026-10-16 05:14,336414,v5b_cn3,cn2 + next-layer transports over live rows only,clean,3.9756e-9,1.7637e-8,0.2254,new best
+11,2026-10-16 08:16,336447,v5b_cn6,cn3 + warm-started range finders + per-chunk widths,clean,3.9041e-9,1.7575e-8,0.2221,new best
+12,2026-10-16 08:16,336448,v5b_cn7,cn6 + age-law tier shift (5/320; 8/192),clean,3.8118e-9,1.7443e-8,0.2185,new best
+13,2026-10-16 09:19,336459,v5b_cn8,cn7 + oversampled D21 feedback range finder,clean,3.8110e-9,1.7365e-8,0.2195,new best
+14,2026-10-16 12:02,336483,v5b_cn9,cn8 + tier-1 basis rebuilt on alternate joins; tier 2 age 9 rank 160,clean,3.7487e-9,1.7391e-8,0.2156,new best
+15,2026-10-16 12:02,336484,v5b_cn10,cn9 + tier-1 rank 288,clean,3.7699e-9,1.7916e-8,0.2104,past the rank cliff
+16,2026-10-16 12:51,336496,v5b_cn11a,cn9 + rows at Phi < 0.01,clean,3.6860e-9,1.7367e-8,0.2122,new best
+17,2026-10-16 12:51,336497,v5b_cn11b,cn10 + rows at Phi < 0.01,clean,3.7086e-9,1.7897e-8,0.2072,
+18,2026-10-16 16:15,336544,v5b_cn21,cn11a + D21 feedback rank 2,clean,3.5816e-9,1.7950e-8,0.1995,new best; cn22/cn23 refused (403 daily limit)
+19,2026-10-17 00:01,336605,v5b_cn35,cn21 + exact per-chunk hub narrowing,clean,3.5756e-9,1.7950e-8,0.1992,new best
+20,2026-10-17 00:01,336607,v5b_cn36,cn35 + S21 residual rank 8,clean,3.5275e-9,1.8053e-8,0.1954,new best
+21,2026-10-17 00:01,336609,v5b_cn37,cn35 + S21 residual rank 4,clean,3.5262e-9,1.8235e-8,0.1934,new best
+22,2026-10-17 00:01,336610,v5b_cn40,"cn35 + (3,1) kappa4 two-term law b2=-0.5 (forum 18246)",clean,3.6151e-9,1.8160e-8,0.1991,selection effect: tuned on 6 hard nets
+23,2026-10-17 00:22,336612,v5b_cn41,cn35 + learned MP pair strength x0.4,clean,3.6782e-9,1.8478e-8,0.1991,selection effect: tuned on 6 hard nets
+24,2026-10-17 01:43,336627,v5b_cn44,cn36 + level-6 young families,failed,,,~0.194,4th level-6 failure (wall)
+25,2026-10-17 05:58,336664,v5b_cn49b,cn37 + marg2 tail rule (18249) + feedback oversampling 8,clean,3.5121e-9,1.8204e-8,0.1929,new best
+26,2026-10-17 09:15,336695,v5b_cn50,cn49b + masks columns 0.006 / rows 0.012,clean,3.5175e-9,1.8116e-8,0.1942,
+27,2026-10-17 17:27,336767,v5b_cn53b,cn49b + Strassen-Winograd + slab pool (exact),clean,3.4863e-9,1.8205e-8,0.1915,new best
+28,2026-10-17 17:27,336768,v5b_cn53,cn50 + the same (exact),clean,3.4907e-9,1.8116e-8,0.1927,
+29,2026-10-17 17:52,336770,v5b_cn54b,cn53b + elementwise term program (exact),clean,3.4544e-9,1.8202e-8,0.1898,new best
+30,2026-10-18 02:04,336850,v5b_cn54,cn53 + elementwise term program (exact),clean,3.4588e-9,1.8112e-8,0.1910,
+31,2026-10-18 02:04,336851,v5b_cn55b,cn54b + Gram cores (exact),failed,,,,"Error while scoring" (grader load day)
+32,2026-10-18 02:04,336852,v5b_cn55,cn54 + Gram cores (exact),failed,,,,"Error while scoring" (grader load day)
+33,2026-10-18 05:51,336887,v5b_cn58,cn54b + RW_TAU 0.02,partial,0.0502,0.0502,,every network zeroed
+34,2026-10-18 14:54,336962,v5b_cn59,cn58 + residual rank 6,partial,0.0310,0.0310,,~62% of networks zeroed
+35,2026-10-18 16:33,336965,v5b_cn54b,unchanged resubmission (grader-health control),partial,0.0351,0.0351,,~70% zeroed: identical code that graded clean on Oct 17 -> grader-side load
+36,2026-10-18 16:34,336966,v5b_cn61,cn54b + residual rank 6 + late dense window from layer 14,clean,3.4404e-9,1.8012e-8,0.1910,
+37,2026-10-18 17:15,336968,v5b_cn61r,cn61 at 4 Strassen levels (robust twin),clean,3.6743e-9,1.8017e-8,0.2039,first robust twin
+38,2026-10-18 18:11,336975,v5b_cn60,cn61 + RW_TAU 0.02,clean,3.4395e-9,1.8177e-8,0.1892,new best (= cn61 within noise)
+39,2026-10-18 18:46,336979,v5b_cn62,cn61 + carried created-error corrector (first upload),failed,,,,"Smoke test failed": Fortran-order arrays in corr.npz
+40,2026-10-18 18:56,336980,v5b_cn62,same as #39 with C-order arrays,partial,0.0204,0.0204,,~40% zeroed (grader load / residual cap)
+41,2026-10-18 19:37,336984,v5b_cn62r,cn61r + corrector (297-net MLP),clean,3.6369e-9,1.7745e-8,0.2050,corrector transfers: raw -1.51% vs cn61r
+42,2026-10-19 00:00,337009,v5b_cn63,cn61 + carried-state corrector S=32 (1000 nets),partial,0.0220,0.0220,,~44% zeroed (5-level build under load)
+43,2026-10-19 00:41,337017,v5b_cn63r,cn63 at 4 levels,clean,3.5984e-9,1.7507e-8,0.2055,
+44,2026-10-19 03:14,337030,v5b_cn64,cn61 + corrector S=32 + W*W channel S2=16 ReLU + lazy-view kernel,clean,3.3386e-9,1.7332e-8,0.1926,new best
+45,2026-10-19 03:50,337037,v5b_cn64r,cn64 at 4 levels,clean,3.5636e-9,1.7336e-8,0.2056,
+46,2026-10-19 05:37,337053,v5b_cn66,cn64 + 16-epoch corrector + fewer round trips,clean,3.3341e-9,1.7309e-8,0.1926,new best
+47,2026-10-19 06:22,337060,v5b_cn67r,cn66 at 4 levels + persistent PK2 buffers,clean,3.5588e-9,1.7313e-8,0.2056,
+48,2026-10-19 14:29,337134,v5b_cn68,cn67 + corrector v3 inputs (correlation structure),clean,3.3268e-9,1.7264e-8,0.1927,new best
+49,2026-10-19 15:05,337147,v5b_cn68r,cn68 at 4 levels,clean,3.5510e-9,1.7268e-8,0.2056,
+50,2026-10-19 22:19,337211,v5b_cn69,cn68 with a small corrector (H64 S16 S2 8),clean,3.3201e-9,1.7309e-8,0.1918,new best
+51,2026-10-19 22:56,337220,v5b_cn69r,cn69 at 4 levels,clean,3.5448e-9,1.7313e-8,0.2048,
+52,2026-10-20 03:39,337265,v5b_cn71,cn69 + closure knobs refit end to end (Gauss-Newton),clean,3.3183e-9,1.7297e-8,0.1918,new best (-0.05%; local -0.50%)
+53,2026-10-20 04:25,337275,v5b_cn71r,cn71 at 4 levels,clean,3.5407e-9,1.7290e-8,0.2048,
+54,2026-10-20 05:57,337282,v5b_cn72,cn71 + corrector trained on all 1098 labelled nets,clean,3.3218e-9,1.7315e-8,0.1918,+0.10% (noise)
+55,2026-10-21 16:10,337555,v5b_cn78,cn71 + final-layer row restriction (768 of 1024 rows keep D3),clean,3.2888e-9,1.7301e-8,0.1901,new best (predicted 3.290e-9)
+56,2026-10-21 16:44,337564,v5b_cn78r,cn78 at 4 levels,clean,3.5089e-9,1.7295e-8,0.2029,C/B derived as score/raw
+57,2026-10-21 18:22,337588,v5b_cn79,cn78 + scale-mode surrogate fill for dropped rows (672 kept),clean,3.2790e-9,1.7311e-8,0.1894,new best (predicted 3.277e-9); recommended nomination
+58,2026-10-21 19:12,337606,v5b_cn79r,cn79 at 4 levels,clean,3.4985e-9,1.7304e-8,0.2022,C/B derived as score/raw; recommended nomination

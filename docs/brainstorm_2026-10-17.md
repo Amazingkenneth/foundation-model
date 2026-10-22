@@ -57,7 +57,7 @@ the worst of every team within 2x of our score.
 5. **Final selection:** cn21 and cn11a are the same chain family; picking two siblings is fine for expected
    score but gives no diversification. A candidate with a different closure (e.g. the (3,1) law) is a
    reasonable second pick only if it is better on the public set.
-6. **Learned operator drift:** k34 + MP were trained by 504aldo on his chain's states. Our chain now differs
+6. **Learned operator drift:** k34 + MP were trained by the team (the v5b submission) on the v5b chain's states. Our chain now differs
    (tiers, masks, feedback rank 2). Any closure change that moves the inputs of the MP (wk431, D21) may be
    partly undone or amplified by it, so closure additions go after the learned steps.
 
@@ -73,7 +73,7 @@ the worst of every team within 2x of our score.
 | 6 | more MC samples for the six hard networks (overnight) | label se is the bottleneck of local screening | 2x sharper tests | ~1 h CPU per 2e6 samples per network | if CPU is free |
 | 7 | old tier without dense legs (the leaders' bill) | 18218 section 6 | -30% C | research; no public method | no |
 | 8 | deeper Strassen (young families at 6 levels where the array cap allows) | ngmitam (18218 #6): V29 at leaf 8 graded fine, -3.5% | **-1.2% C measured** (0.1992 -> 0.1968 on MLP 5000; 64-blocks eat part of it) | exact; the earlier level-6 failures match the per-array cap exactly ((7^5, 2, 32, 32) float32 = 137,682,944 B), not wall time | scratch xs6 ready; emulator check pending |
-| 9 | strength of the learned corrections (k34, MP node, MP pair) | 504aldo trained them on his chain; ours has drifted (tiers, masks, rank-2 feedback) | **found -2.2%** | 3 knobs, local screening only | MP pair x0.8 / 0.6 / 0.4 / 0: -0.9 / -1.7 / -2.2 / -2.6% (all six MLPs improve at 0.4-0.8); MP node x0.8 +0.4%; k34 x0.8 / 1.2: +4.4 / -0.9%; lambda x0.9 / 1.1: +0.5 / -0.1%. **cn41 (pair x0.4) submitted 336612**; held-out check on six more MLPs queued |
+| 9 | strength of the learned corrections (k34, MP node, MP pair) | the team trained them on the v5b chain; ours has drifted (tiers, masks, rank-2 feedback) | **found -2.2%** | 3 knobs, local screening only | MP pair x0.8 / 0.6 / 0.4 / 0: -0.9 / -1.7 / -2.2 / -2.6% (all six MLPs improve at 0.4-0.8); MP node x0.8 +0.4%; k34 x0.8 / 1.2: +4.4 / -0.9%; lambda x0.9 / 1.1: +0.5 / -0.1%. **cn41 (pair x0.4) submitted 336612**; held-out check on six more MLPs queued |
 | 9b | negative (3,1) term, b2 = -0.5 (undo the same overshoot) | the b2 > 0 response was linear | -1.1% | substitutes for 9 (pair 0.8 + b2 -0.5 = pair 0.6 alone: -1.7%) | **cn40 submitted 336610** |
 | 10 | message passing from layer 6 instead of 8 | MP is the strongest accuracy component | closed | out-of-distribution inputs at layers 6-7 | +1.8 +- 3.1% |
 
@@ -151,7 +151,7 @@ Board on Oct 16: the first four score 1.3-1.6e-9 with raw 1.10-1.35e-8 at 11-12.
   leaders' public telemetry (0.60-0.72 on all layers).
 - Artyom (18249, PDF section 7): the missing accuracy of a k=3 chain is the *young* kappa4. It is mostly the "3+2" tree
   that hands the whole kappa3 on through one covariance edge, born in the last two layers. A reader of those trees is
-  x0.70 of his raw (≈1.42e-8). In his representation it costs about what it buys (+5-7% FLOPs, and +23% flopscope
+  x0.70 of their raw (≈1.42e-8). In their representation it costs about what it buys (+5-7% FLOPs, and +23% flopscope
   calls, which crossed the 400 ms residual cap on 16/100 networks).
 - Both say the same thing from two sides: kappa4 needs memory, and the memory must not carry the scale mode.
 
